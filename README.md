@@ -122,6 +122,32 @@ cd ../lean4-example && lean /tmp/collatz_db2.lean   # kernel-check all 999 theor
 The lesson, in one sentence: *one new concept beat 25× more compute* — and the
 kernel made it safe to let an LLM propose that concept.
 
+### 4. Baseline: what do builtins actually solve? (`bench/`)
+
+12 mathlib-style goals, best-first search, one-shot tactics (`bench/bench_mathlib.py`):
+
+- **builtins alone: 11/12** — `ring`/`simp`/`omega`/`positivity` take the computational
+  goals, and mathlib's `exact?` (library search over all 319k theorems) takes
+  every single-lemma goal.
+- **+ premise retrieval (LibraryAgent): 11/12** — no lift on this suite, honestly
+  reported: `exact?` already covers one-lemma retrieval. The index's real role is
+  feeding *statements* to an LLM proposer (premise selection), not replacing `exact?`.
+- **the residual** (`(|a|-|b|)² ≤ (a-b)² ∨ |a-b| ≤ |a|+|b|`) needs two steps
+  (`right`, then the lemma) — structurally out of reach for one-shot tactics, and
+  solved in sherpa by an LLM/human in exactly two moves. That gap is the
+  portfolio slot an LLM proposer fills.
+
+### The premise database
+
+Mathlib **is** the theorem database — we export and index it locally:
+
+```bash
+python tools/dump_mathlib_db.py --types --shard 0 --num-shards 6 --out data/thms_types_0.tsv
+# ... (6 shards, ~15 min total)                    → 319,184 name+statement rows
+python tools/premise_index.py build "data/thms_types_*.tsv"   # → 158MB SQLite FTS5
+python tools/premise_index.py goal "|a + b| ≤ |a| + |b|"      # ranked lemmas, ~ms
+```
+
 ## What's in the box
 
 | path | what it is |
@@ -133,6 +159,8 @@ kernel made it safe to let an LLM propose that concept.
 | `core/search.py` | best-first backward search over proof states |
 | `collatz/` | the full Collatz campaign: formalization, closure lemmas, both generations of the discovery loop, and the kernel-checked theorem databases |
 | `prop_poc/` | chapter zero: the original 150-line propositional PoC (forward chaining, `A→B` + `B→C` ⇒ `A→C`) |
+| `tools/` | mathlib database export (sharded) + SQLite FTS5 premise index |
+| `bench/` | the builtins-vs-retrieval baseline (results in `bench/results.json`) |
 
 ## What this is NOT
 

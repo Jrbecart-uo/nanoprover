@@ -1,0 +1,170 @@
+{
+ "A_builtins": {
+  "binom_sq": {
+   "solved": true,
+   "proof": [
+    "linarith"
+   ],
+   "secs": 16.1
+  },
+  "sq_nonneg": {
+   "solved": true,
+   "proof": [
+    "positivity"
+   ],
+   "secs": 9.6
+  },
+  "and_swap": {
+   "solved": true,
+   "proof": [
+    "aesop"
+   ],
+   "secs": 16.9
+  },
+  "nat_arith": {
+   "solved": true,
+   "proof": [
+    "omega"
+   ],
+   "secs": 12.4
+  },
+  "abs_triangle": {
+   "solved": true,
+   "proof": [
+    "exact?"
+   ],
+   "secs": 36.9
+  },
+  "prime_two_le": {
+   "solved": true,
+   "proof": [
+    "exact?"
+   ],
+   "secs": 29.0
+  },
+  "abs_sub_comm": {
+   "solved": true,
+   "proof": [
+    "exact?"
+   ],
+   "secs": 29.3
+  },
+  "mul_self_abs": {
+   "solved": true,
+   "proof": [
+    "simp"
+   ],
+   "secs": 5.2
+  },
+  "abs_le_iff": {
+   "solved": true,
+   "proof": [
+    "exact?"
+   ],
+   "secs": 30.5
+  },
+  "min_le_max": {
+   "solved": true,
+   "proof": [
+    "simp"
+   ],
+   "secs": 5.0
+  },
+  "prime_dvd_or": {
+   "solved": true,
+   "proof": [
+    "exact?"
+   ],
+   "secs": 28.7
+  },
+  "sq_abs_sub": {
+   "solved": false,
+   "proof": null,
+   "secs": 28.7
+  }
+ },
+ "B_with_library": {
+  "binom_sq": {
+   "solved": true,
+   "proof": [
+    "linarith"
+   ],
+   "secs": 17.2
+  },
+  "sq_nonneg": {
+   "solved": true,
+   "proof": [
+    "positivity"
+   ],
+   "secs": 10.9
+  },
+  "and_swap": {
+   "solved": true,
+   "proof": [
+    "aesop"
+   ],
+   "secs": 18.1
+  },
+  "nat_arith": {
+   "solved": true,
+   "proof": [
+    "omega"
+   ],
+   "secs": 11.6
+  },
+  "abs_triangle": {
+   "solved": true,
+   "proof": [
+    "exact?"
+   ],
+   "secs": 28.5
+  },
+  "prime_two_le": {
+   "solved": true,
+   "proof": [
+    "exact?"
+   ],
+   "secs": 29.2
+  },
+  "abs_sub_comm": {
+   "solved": true,
+   "proof": [
+    "exact?"
+   ],
+   "secs": 30.2
+  },
+  "mul_self_abs": {
+   "solved": true,
+   "proof": [
+    "simp"
+   ],
+   "secs": 6.0
+  },
+  "abs_le_iff": {
+   "solved": true,
+   "proof": [
+    "exact?"
+   ],
+   "secs": 31.4
+  },
+  "min_le_max": {
+   "solved": true,
+   "proof": [
+    "simp"
+   ],
+   "secs": 5.3
+  },
+  "prime_dvd_or": {
+   "solved": true,
+   "proof": [
+    "exact?"
+   ],
+   "secs": 29.8
+  },
+  "sq_abs_sub": {
+   "solved": false,
+   "proof": null,
+   "secs": 38.5
+  }
+ }
+}

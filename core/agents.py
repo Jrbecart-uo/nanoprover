@@ -229,3 +229,40 @@ class PortfolioAgent(TacticAgent):
                     merged[c.tactic] = c
         ranked = sorted(merged.values(), key=lambda c: c.score, reverse=True)
         return ranked[:k]
+
+
+# --------------------------------------------------------------------------- #
+# Retrieval-augmented proposer -- premise selection from the local index
+# --------------------------------------------------------------------------- #
+
+class LibraryAgent(TacticAgent):
+    """
+    Proposes tactics built from mathlib lemmas retrieved from the local
+    premise index (tools/premise_index.py). No LLM involved: retrieval is
+    BM25 over lemma names + statements, and the kernel filters everything.
+    For each of the top-k retrieved lemmas L we propose the standard usage
+    forms; wrong guesses are just rejected steps.
+    """
+    name = "library"
+
+    def __init__(self, k: int = 5):
+        import os, sys
+        tools = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "tools")
+        if tools not in sys.path:
+            sys.path.insert(0, tools)
+        import premise_index
+        self._pi = premise_index
+        self._k = k
+
+    def propose(self, goal_pp: str, k: int) -> List[Candidate]:
+        terms = self._pi.goal_terms(goal_pp)
+        if not terms:
+            return []
+        out = []
+        for rank, (name, stmt, _score) in enumerate(self._pi.query(terms, self._k)):
+            base = 0.9 - 0.1 * rank        # rank 0 -> 0.9, rank 4 -> 0.5
+            out.append(Candidate("exact {}".format(name), base, self.name))
+            out.append(Candidate("apply {}".format(name), base - 0.03, self.name))
+            out.append(Candidate("simp [{}]".format(name), base - 0.06, self.name))
+        return out[:k]
