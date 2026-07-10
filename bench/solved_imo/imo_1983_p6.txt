@@ -1,0 +1,2 @@
+obtain ⟨ha, hb, hc⟩ := h₀
+nlinarith [mul_pos (sub_pos.mpr h₁) (sub_pos.mpr h₂), mul_pos (sub_pos.mpr h₂) (sub_pos.mpr h₃), mul_pos (sub_pos.mpr h₁) (sub_pos.mpr h₃), sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a), mul_pos ha hb, mul_pos hb hc, mul_pos ha hc, sq_nonneg (a + b - c), sq_nonneg (b + c - a), sq_nonneg (a + c - b)]
