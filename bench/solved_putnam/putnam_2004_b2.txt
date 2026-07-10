@@ -1,0 +1,53 @@
+import Mathlib
+
+set_option maxHeartbeats 800000
+
+open Nat Topology Filter
+
+theorem putnam_2004_b2
+(m n : ℕ)
+(mnpos : m > 0 ∧ n > 0)
+: ((m + n)! / ((m + n) ^ (m + n) : ℚ)) < (((m)! / (m ^ m : ℚ)) * ((n)! / (n ^ n : ℚ))) := by
+  obtain ⟨hm, hn⟩ := mnpos
+  have key : (m + n).choose m * (m ^ m * n ^ n) < (m + n) ^ (m + n) := by
+    have hexp : (m + n) ^ (m + n) = ∑ k ∈ Finset.range (m + n + 1),
+        m ^ k * n ^ (m + n - k) * ((m + n).choose k) := add_pow m n (m + n)
+    rw [hexp]
+    have hmem : m ∈ Finset.range (m + n + 1) := by
+      rw [Finset.mem_range]; omega
+    have h0mem : 0 ∈ Finset.range (m + n + 1) := by
+      rw [Finset.mem_range]; omega
+    have h0m : (0 : ℕ) ≠ m := by omega
+    have hpos : 0 < m ^ 0 * n ^ (m + n - 0) * ((m + n).choose 0) := by
+      simp only [pow_zero, one_mul, Nat.sub_zero, Nat.choose_zero_right, mul_one]
+      exact pow_pos hn _
+    have hlt := Finset.single_lt_sum
+      (f := fun k => m ^ k * n ^ (m + n - k) * ((m + n).choose k))
+      h0m hmem h0mem hpos (fun k _ _ => Nat.zero_le _)
+    calc (m + n).choose m * (m ^ m * n ^ n)
+        = m ^ m * n ^ (m + n - m) * ((m + n).choose m) := by
+          rw [Nat.add_sub_cancel_left]; ring
+      _ < _ := hlt
+  have hq1 : (0 : ℚ) < ((m : ℚ) + n) ^ (m + n) := by
+    have h : 0 < m + n := by omega
+    have h2 : (0 : ℚ) < ((m + n : ℕ) : ℚ) := by exact_mod_cast h
+    push_cast at h2
+    exact pow_pos h2 _
+  have hq2 : (0 : ℚ) < (m : ℚ) ^ m * (n : ℚ) ^ n := by
+    have h1 : (0 : ℚ) < (m : ℚ) := by exact_mod_cast hm
+    have h2 : (0 : ℚ) < (n : ℚ) := by exact_mod_cast hn
+    exact mul_pos (pow_pos h1 m) (pow_pos h2 n)
+  rw [_root_.div_mul_div_comm, div_lt_div_iff₀ hq1 hq2]
+  have hfact : ((m + n).choose m) * m ! * n ! = (m + n)! := by
+    have h := Nat.choose_mul_factorial_mul_factorial (show m ≤ m + n by omega)
+    rwa [Nat.add_sub_cancel_left] at h
+  have hnat : (m + n)! * (m ^ m * n ^ n) < m ! * n ! * (m + n) ^ (m + n) := by
+    calc (m + n)! * (m ^ m * n ^ n)
+        = (m ! * n !) * ((m + n).choose m * (m ^ m * n ^ n)) := by
+          rw [← hfact]; ring
+      _ < (m ! * n !) * ((m + n) ^ (m + n)) :=
+          mul_lt_mul_of_pos_left key (by positivity)
+      _ = m ! * n ! * (m + n) ^ (m + n) := by ring
+  exact_mod_cast hnat
+
+#print axioms putnam_2004_b2
