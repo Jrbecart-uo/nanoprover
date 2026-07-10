@@ -1,0 +1,33 @@
+[
+ {
+  "name": "mathd_numbertheory_100",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "mathd_numbertheory_1124",
+  "usable": true,
+  "solved_by": [
+   "omega"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_numbertheory_12",
+  "usable": true,
+  "solved_by": [
+   "exact?"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_numbertheory_127",
+  "usable": true,
+  "solved_by": [
+   "norm_num",
+   "exact?"
+  ],
+  "solved": true
+ }
+]

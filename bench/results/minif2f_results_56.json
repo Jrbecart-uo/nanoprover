@@ -1,0 +1,30 @@
+[
+ {
+  "name": "mathd_numbertheory_552",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "mathd_numbertheory_559",
+  "usable": true,
+  "solved_by": [
+   "omega"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_numbertheory_582",
+  "usable": true,
+  "solved_by": [
+   "omega"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_numbertheory_618",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ }
+]

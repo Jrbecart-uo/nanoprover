@@ -1,0 +1,28 @@
+[
+ {
+  "name": "numbertheory_2pownm1prime_nprime",
+  "usable": true,
+  "solved_by": [
+   "exact?"
+  ],
+  "solved": true
+ },
+ {
+  "name": "numbertheory_3pow2pownm1mod2pownp3eq2pownp2",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "numbertheory_4x3m7y3neq2003",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "numbertheory_aoddbdiv4asqpbsqmod8eq1",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ }
+]

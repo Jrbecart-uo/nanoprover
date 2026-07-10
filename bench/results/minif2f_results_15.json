@@ -1,0 +1,33 @@
+[
+ {
+  "name": "amc12a_2021_p3",
+  "usable": true,
+  "solved_by": [
+   "omega"
+  ],
+  "solved": true
+ },
+ {
+  "name": "amc12a_2021_p8",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "amc12a_2021_p9",
+  "usable": true,
+  "solved_by": [
+   "norm_num",
+   "exact?"
+  ],
+  "solved": true
+ },
+ {
+  "name": "amc12b_2002_p19",
+  "usable": true,
+  "solved_by": [
+   "nlinarith"
+  ],
+  "solved": true
+ }
+]

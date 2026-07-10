@@ -1,31 +1,24 @@
 [
  {
-  "name": "mathd_algebra_160",
-  "usable": true,
-  "solved_by": [
-   "linarith",
-   "nlinarith"
-  ],
-  "solved": true
- },
- {
-  "name": "mathd_algebra_215",
+  "name": "aime_1995_p7",
   "usable": true,
   "solved_by": [],
   "solved": false
  },
  {
-  "name": "mathd_algebra_296",
+  "name": "aime_1997_p9",
   "usable": true,
-  "solved_by": [
-   "norm_num",
-   "simp",
-   "exact?"
-  ],
-  "solved": true
+  "solved_by": [],
+  "solved": false
  },
  {
-  "name": "mathd_algebra_342",
+  "name": "aime_1999_p11",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "algebra_2varlineareq_fp3zeq11_3tfm1m5zeqn68_feqn10_zeq7",
   "usable": true,
   "solved_by": [],
   "solved": false

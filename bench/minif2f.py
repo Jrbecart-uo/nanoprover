@@ -79,9 +79,9 @@ def build_chunk(goals):
     return "\n".join(lines) + "\n", linemap
 
 
-def run_chunk(goals, timeout=560):
+def run_chunk(goals, ci=0, timeout=560):
     src, linemap = build_chunk(goals)
-    path = "/tmp/minif2f_chunk_probe.lean"
+    path = "/tmp/minif2f_probe_{}.lean".format(ci)
     with open(path, "w") as f:
         f.write(src)
     t0 = time.time()
@@ -90,7 +90,7 @@ def run_chunk(goals, timeout=560):
     dt = time.time() - t0
     # collect error line numbers
     err_lines = set()
-    for m in re.finditer(r"probe\.lean:(\d+):\d+: error", p.stdout + p.stderr):
+    for m in re.finditer(r"\.lean:(\d+):\d+: error", p.stdout + p.stderr):
         err_lines.add(int(m.group(1)))
 
     def has_error(gi, label):
@@ -138,7 +138,7 @@ def main():
     lo, hi = (map(int, args.chunks.split("-")) if args.chunks
               else (0, len(chunks) - 1))
     for ci in range(lo, hi + 1):
-        results, dt = run_chunk(chunks[ci])
+        results, dt = run_chunk(chunks[ci], ci)
         out = "/tmp/minif2f_results_{}.json".format(ci)
         json.dump(results, open(out, "w"), indent=1)
         for r in results:

@@ -1,0 +1,30 @@
+[
+ {
+  "name": "amc12b_2020_p2",
+  "usable": true,
+  "solved_by": [
+   "norm_num",
+   "linarith",
+   "nlinarith"
+  ],
+  "solved": true
+ },
+ {
+  "name": "amc12b_2020_p21",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "amc12b_2020_p22",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "amc12b_2020_p6",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ }
+]

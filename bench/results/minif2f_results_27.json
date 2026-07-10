@@ -1,0 +1,30 @@
+[
+ {
+  "name": "mathd_algebra_114",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "mathd_algebra_125",
+  "usable": true,
+  "solved_by": [
+   "omega",
+   "linarith",
+   "nlinarith"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_algebra_129",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "mathd_algebra_137",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ }
+]

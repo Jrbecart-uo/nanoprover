@@ -1,0 +1,42 @@
+[
+ {
+  "name": "mathd_numbertheory_765",
+  "usable": true,
+  "solved_by": [
+   "omega"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_numbertheory_769",
+  "usable": true,
+  "solved_by": [
+   "norm_num",
+   "simp",
+   "omega",
+   "exact?"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_numbertheory_85",
+  "usable": true,
+  "solved_by": [
+   "norm_num",
+   "simp",
+   "omega",
+   "linarith",
+   "nlinarith",
+   "exact?"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_numbertheory_99",
+  "usable": true,
+  "solved_by": [
+   "omega"
+  ],
+  "solved": true
+ }
+]

@@ -1,0 +1,33 @@
+[
+ {
+  "name": "mathd_algebra_314",
+  "usable": true,
+  "solved_by": [
+   "norm_num",
+   "simp",
+   "omega"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_algebra_320",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "mathd_algebra_329",
+  "usable": true,
+  "solved_by": [
+   "linarith",
+   "nlinarith"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_algebra_33",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ }
+]

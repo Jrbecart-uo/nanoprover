@@ -1,41 +1,26 @@
 [
  {
-  "name": "mathd_numbertheory_3",
-  "usable": true,
-  "solved_by": [
-   "norm_num",
-   "exact?"
-  ],
-  "solved": true
- },
- {
-  "name": "mathd_numbertheory_353",
+  "name": "algebra_amgm_sum1toneqn_prod1tonleq1",
   "usable": true,
   "solved_by": [],
   "solved": false
  },
  {
-  "name": "mathd_numbertheory_517",
+  "name": "algebra_amgm_sumasqdivbgeqsuma",
   "usable": true,
-  "solved_by": [
-   "norm_num",
-   "simp",
-   "omega",
-   "linarith",
-   "nlinarith",
-   "exact?"
-  ],
-  "solved": true
+  "solved_by": [],
+  "solved": false
  },
  {
-  "name": "mathd_numbertheory_728",
+  "name": "algebra_apbmpcneq0_aeq0anbeq0anceq0",
   "usable": true,
-  "solved_by": [
-   "norm_num",
-   "simp",
-   "omega",
-   "exact?"
-  ],
-  "solved": true
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "algebra_apbon2pownleqapownpbpowon2",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
  }
 ]

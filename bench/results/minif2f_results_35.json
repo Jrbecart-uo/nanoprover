@@ -1,0 +1,37 @@
+[
+ {
+  "name": "mathd_algebra_296",
+  "usable": true,
+  "solved_by": [
+   "norm_num",
+   "simp",
+   "exact?"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_algebra_302",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "mathd_algebra_304",
+  "usable": true,
+  "solved_by": [
+   "norm_num",
+   "simp",
+   "omega",
+   "linarith",
+   "nlinarith",
+   "exact?"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_algebra_313",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ }
+]

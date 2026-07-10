@@ -1,26 +1,24 @@
 [
  {
-  "name": "mathd_algebra_419",
-  "usable": true,
-  "solved_by": [
-   "nlinarith"
-  ],
-  "solved": true
- },
- {
-  "name": "mathd_algebra_487",
+  "name": "algebra_9onxpypzleqsum2onxpy",
   "usable": true,
   "solved_by": [],
   "solved": false
  },
  {
-  "name": "mathd_numbertheory_135",
+  "name": "algebra_abpbcpcageq3_sumaonsqrtapbgeq3onsqrt2",
   "usable": true,
   "solved_by": [],
   "solved": false
  },
  {
-  "name": "mathd_numbertheory_234",
+  "name": "algebra_absapbon1pabsapbleqsumabsaon1pabsa",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "algebra_absxm1pabsxpabsxp1eqxp2_0leqxleq1",
   "usable": true,
   "solved_by": [],
   "solved": false

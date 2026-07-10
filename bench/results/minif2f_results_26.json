@@ -1,0 +1,29 @@
+[
+ {
+  "name": "induction_prod1p1onk3le3m1onn",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "induction_sumkexp3eqsumksq",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "mathd_algebra_107",
+  "usable": true,
+  "solved_by": [
+   "linarith",
+   "nlinarith"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_algebra_113",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ }
+]

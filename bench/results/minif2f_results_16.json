@@ -1,0 +1,29 @@
+[
+ {
+  "name": "amc12b_2002_p2",
+  "usable": true,
+  "solved_by": [
+   "linarith",
+   "nlinarith"
+  ],
+  "solved": true
+ },
+ {
+  "name": "amc12b_2002_p4",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "amc12b_2002_p7",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "amc12b_2020_p13",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ }
+]

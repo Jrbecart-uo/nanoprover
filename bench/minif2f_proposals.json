@@ -8,8 +8,7 @@
   "refine ⟨n + 1, by omega, 0, ?_⟩\nsimp"
  ],
  "mathd_numbertheory_353": [
-  "have h2 := Finset.sum_range_id_mul_two 4019\nhave h3 := Finset.sum_range_id_mul_two 2010\nhave hIcc : Finset.Icc 2010 4018 = Finset.Ico 2010 4019 := by rw [Nat.Ico_succ_right]\nhave key : (∑ k ∈ Finset.range 2010, k) + (∑ k ∈ Finset.Icc 2010 4018, k) = ∑ k ∈ Finset.range 4019, k := by\n  rw [hIcc, Finset.range_eq_Ico, Finset.range_eq_Ico]\n  exact Finset.sum_Ico_consecutive _ (by omega) (by omega)\nomega",
-  "have h2 := Finset.sum_range_id_mul_two 4019\nhave h3 := Finset.sum_range_id_mul_two 2010\nhave key : (∑ k ∈ Finset.range 2010, k) + (∑ k ∈ Finset.Icc 2010 4018, k) = ∑ k ∈ Finset.range 4019, k := by\n  rw [Finset.range_eq_Ico, Finset.range_eq_Ico, ← Nat.Ico_succ_right]\n  exact Finset.sum_Ico_consecutive _ (by omega) (by omega)\nomega"
+  "have h2 := Finset.sum_range_id_mul_two 4019\nhave h3 := Finset.sum_range_id_mul_two 2010\nhave hIcc : Finset.Icc 2010 4018 = Finset.Ico 2010 4019 := by\n  ext x\n  simp only [Finset.mem_Icc, Finset.mem_Ico]\n  omega\nhave key : (∑ k ∈ Finset.range 2010, k) + (∑ k ∈ Finset.Icc 2010 4018, k) = ∑ k ∈ Finset.range 4019, k := by\n  rw [hIcc, Finset.range_eq_Ico, Finset.range_eq_Ico]\n  exact Finset.sum_Ico_consecutive _ (by omega) (by omega)\nomega"
  ],
  "mathd_algebra_342": [
   "simp [Finset.sum_range_succ, Finset.sum_range_zero] at h₀ h₁\npush_cast at h₀ h₁\nlinarith",

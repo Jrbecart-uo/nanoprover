@@ -160,16 +160,28 @@ the index → multi-step script candidates (needs `ANTHROPIC_API_KEY`).
 
 ### 4c. External benchmark: miniF2F (goals we did not write)
 
-To rule out self-play bias, `bench/minif2f.py` imports the miniF2F test split
-(244 competition problems: AIME/AMC/IMO/MATH) and re-checks a 24-problem
-sample against our mathlib — probes batched so one `import Mathlib` amortizes
-over a whole chunk:
+To rule out self-play bias, `bench/minif2f.py` imports the **full miniF2F test
+split — all 244 competition problems** (AIME/AMC/IMO/MATH) — and re-checks them
+against our mathlib, probes batched so one `import Mathlib` amortizes over a
+whole chunk (~20s per 4-goal chunk; full split in ~4 background waves):
 
-- **builtins: 7/24 (29%)** — consistent with published tactic-only baselines.
-- **+ LLM proposals on 5 attempted residuals: 4 solved** (Bernoulli via
-  `one_add_mul_le_pow`, a witness construction, arithmetic-series expansion,
-  and a full quadratic-factoring Finset argument). One goal stayed parked
-  after three attempts — proposal-writing is real work, not magic.
+- **builtins: 62/244 (25%)** — dead-center in the published tactic-only
+  baseline range. First-tactic wins: `norm_num` 23, `linarith` 17, `omega` 14,
+  `nlinarith` 4, `exact?` 4. All 244 statements elaborate (usable).
+- **+ LLM proposals on 5 attempted residuals: 5 solved**, including Bernoulli
+  via `one_add_mul_le_pow`, a quadratic-factoring Finset argument, and
+  `mathd_numbertheory_353` — which resisted three *blind* proposal rounds and
+  fell in one round of the **error-feedback retry loop** (below).
+
+### 5. The retry loop: error feedback closes the gap
+
+`core/retry.py` + `bench/retry_run.py`: proposals loop through
+propose → kernel error → revised proposal. The 353 case study: blind attempts
+died on a hallucinated lemma name; the retry loop surfaced the kernel's
+`Unknown constant 'Nat.Ico_succ_right'`, the premise index supplied real names,
+and the corrected double-Gauss proof was accepted next round. Proposers:
+`ClaudeRetryProposer` (API, premises + failure history in prompt),
+`InteractiveProposer` (human/terminal), `ScriptedProposer` (replay).
 - Found-and-fixed during this run: a **self-reference leak** where `exact?`
   cited a sibling `sorry`'d variant of the same statement (probes now use
   anonymous `example`, which never enters the environment). Benchmarks lie

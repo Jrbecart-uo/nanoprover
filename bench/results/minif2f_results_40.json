@@ -1,0 +1,34 @@
+[
+ {
+  "name": "mathd_algebra_419",
+  "usable": true,
+  "solved_by": [
+   "nlinarith"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_algebra_427",
+  "usable": true,
+  "solved_by": [
+   "linarith",
+   "nlinarith"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_algebra_432",
+  "usable": true,
+  "solved_by": [
+   "linarith",
+   "nlinarith"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_algebra_44",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ }
+]
