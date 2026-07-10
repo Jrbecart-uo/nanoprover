@@ -229,6 +229,9 @@ problem's worked example and matches brute force on N=5..80. The found list's
 certificate — 24 elements all prime, strictly increasing, sum 2026, product
 ending [withheld] — is **kernel-verified** (`euler/p1005_verify.lean`).
 Median-ness rests on the cross-validated DP; stated honestly.
+**Confirmed correct by Project Euler** (2026-07-10, "On The Ball" award —
+solved while it was the site's most recent problem): the one non-formal link
+in the chain was validated by independent external adjudication.
 
 ### The premise database
 
