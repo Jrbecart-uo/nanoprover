@@ -1,0 +1,56 @@
+import Mathlib
+
+set_option maxHeartbeats 800000
+
+open Complex
+
+theorem putnam_1989_a3
+(z : ℂ)
+(hz : 11 * z ^ 10 + 10 * I * z ^ 9 + 10 * I * z - 11 = 0)
+: (‖z‖ = 1) := by
+  have heq : z ^ 9 * (11 * z + 10 * I) = 11 - 10 * I * z := by linear_combination hz
+  have h1 : normSq z ^ 9 * normSq (11 * z + 10 * I) = normSq (11 - 10 * I * z) := by
+    have h := congrArg normSq heq
+    rwa [map_mul, map_pow] at h
+  have hs : normSq z = z.re ^ 2 + z.im ^ 2 := by rw [normSq_apply]; ring
+  have hA : normSq (11 - 10 * I * z) = (11 + 10 * z.im) ^ 2 + (10 * z.re) ^ 2 := by
+    rw [normSq_apply]
+    simp
+    ring
+  have hB : normSq (11 * z + 10 * I) = (11 * z.re) ^ 2 + (11 * z.im + 10) ^ 2 := by
+    rw [normSq_apply]
+    simp
+    ring
+  have hsz : 0 ≤ normSq z := normSq_nonneg z
+  have hBpos : 0 < normSq (11 * z + 10 * I) := by
+    rcases (normSq_nonneg (11 * z + 10 * I)).lt_or_eq with h | h
+    · exact h
+    · exfalso
+      have hB0 : normSq (11 * z + 10 * I) = 0 := h.symm
+      have hA0 : normSq (11 - 10 * I * z) = 0 := by
+        rw [← h1, hB0, mul_zero]
+      rw [hB] at hB0
+      rw [hA] at hA0
+      nlinarith [sq_nonneg z.re, sq_nonneg z.im, sq_nonneg (z.re * z.im)]
+  have key : normSq z = 1 := by
+    rcases lt_trichotomy (normSq z) 1 with h | h | h
+    · exfalso
+      have h9 : normSq z ^ 9 < 1 := pow_lt_one₀ hsz h (by norm_num)
+      have hlt := mul_lt_mul_of_pos_right h9 hBpos
+      rw [one_mul, h1] at hlt
+      linarith [hA, hB, hs, hlt]
+    · exact h
+    · exfalso
+      have h9 : 1 < normSq z ^ 9 := one_lt_pow₀ h (by norm_num)
+      have hlt := mul_lt_mul_of_pos_right h9 hBpos
+      rw [one_mul, h1] at hlt
+      linarith [hA, hB, hs, hlt]
+  have hn2 : ‖z‖ ^ 2 = 1 := by rw [← normSq_eq_norm_sq]; exact key
+  have hfac : (‖z‖ - 1) * (‖z‖ + 1) = 0 := by linear_combination hn2
+  rcases mul_eq_zero.mp hfac with h | h
+  · linarith
+  · exfalso
+    have := norm_nonneg z
+    linarith
+
+#print axioms putnam_1989_a3
