@@ -1,0 +1,28 @@
+[
+ {
+  "name": "amc12a_2002_p6",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "amc12a_2020_p25",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "amc12a_2021_p3",
+  "usable": true,
+  "solved_by": [
+   "omega"
+  ],
+  "solved": true
+ },
+ {
+  "name": "amc12b_2020_p22",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ }
+]

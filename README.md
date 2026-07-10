@@ -158,6 +158,23 @@ the goal + retrieved premises; the kernel accepted 8/8 first-choice candidates.
 `ClaudeAgent` speaks the same protocol automatically: goal + top-10 premises from
 the index → multi-step script candidates (needs `ANTHROPIC_API_KEY`).
 
+### 4c. External benchmark: miniF2F (goals we did not write)
+
+To rule out self-play bias, `bench/minif2f.py` imports the miniF2F test split
+(244 competition problems: AIME/AMC/IMO/MATH) and re-checks a 24-problem
+sample against our mathlib — probes batched so one `import Mathlib` amortizes
+over a whole chunk:
+
+- **builtins: 7/24 (29%)** — consistent with published tactic-only baselines.
+- **+ LLM proposals on 5 attempted residuals: 4 solved** (Bernoulli via
+  `one_add_mul_le_pow`, a witness construction, arithmetic-series expansion,
+  and a full quadratic-factoring Finset argument). One goal stayed parked
+  after three attempts — proposal-writing is real work, not magic.
+- Found-and-fixed during this run: a **self-reference leak** where `exact?`
+  cited a sibling `sorry`'d variant of the same statement (probes now use
+  anonymous `example`, which never enters the environment). Benchmarks lie
+  in subtle ways; the first (wrong) run scored 8/8.
+
 ### The premise database
 
 Mathlib **is** the theorem database — we export and index it locally:

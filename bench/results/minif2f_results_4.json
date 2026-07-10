@@ -1,0 +1,28 @@
+[
+ {
+  "name": "mathd_algebra_419",
+  "usable": true,
+  "solved_by": [
+   "nlinarith"
+  ],
+  "solved": true
+ },
+ {
+  "name": "mathd_algebra_487",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "mathd_numbertheory_135",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ },
+ {
+  "name": "mathd_numbertheory_234",
+  "usable": true,
+  "solved_by": [],
+  "solved": false
+ }
+]
