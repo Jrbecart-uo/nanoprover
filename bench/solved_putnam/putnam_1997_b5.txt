@@ -1,0 +1,92 @@
+import Mathlib
+
+set_option maxHeartbeats 800000
+
+def tetration : ℕ → ℕ → ℕ
+  | _, 0 => 1
+  | b, (m + 1) => b^(tetration b m)
+
+lemma tetration_succ (b m : ℕ) : tetration b (m + 1) = b ^ tetration b m := rfl
+
+lemma le_tetration : ∀ k : ℕ, k + 1 ≤ tetration 2 k
+  | 0 => Nat.le_refl 1
+  | (k + 1) => by
+      have ih := le_tetration k
+      calc k + 2 ≤ 2 ^ (k + 1) := Nat.lt_two_pow_self
+        _ ≤ 2 ^ tetration 2 k := Nat.pow_le_pow_right (by norm_num) ih
+        _ = tetration 2 (k + 1) := rfl
+
+lemma pow_exp_congr (a t : ℕ) (hco : Nat.Coprime a t) :
+    ∀ x y : ℕ, x ≡ y [MOD t.totient] → a ^ x ≡ a ^ y [MOD t] := by
+  have key : ∀ x y : ℕ, x ≤ y → x ≡ y [MOD t.totient] → a ^ x ≡ a ^ y [MOD t] := by
+    intro x y hxy h
+    obtain ⟨c, hc⟩ := (Nat.modEq_iff_dvd' hxy).mp h
+    have hy : y = x + t.totient * c := by omega
+    subst hy
+    rw [pow_add, pow_mul]
+    exact (calc a ^ x * (a ^ t.totient) ^ c
+        ≡ a ^ x * 1 ^ c [MOD t] := Nat.ModEq.mul_left _ ((Nat.ModEq.pow_totient hco).pow c)
+      _ = a ^ x := by rw [one_pow, mul_one]).symm
+  intro x y h
+  rcases le_total x y with hxy | hxy
+  · exact key x y hxy h
+  · exact (key y x hxy h.symm).symm
+
+lemma tetration_stable : ∀ m : ℕ, 1 ≤ m → ∀ a b : ℕ, m - 1 ≤ a → m - 1 ≤ b →
+    tetration 2 a ≡ tetration 2 b [MOD m] := by
+  intro m
+  induction m using Nat.strong_induction_on
+  rename_i m ih
+  intro hm a b ha hb
+  rcases Nat.lt_or_ge m 2 with hm2 | hm2
+  · have hm1 : m = 1 := by omega
+    subst hm1
+    exact Nat.modEq_one
+  · have hm0 : m ≠ 0 := by omega
+    obtain ⟨a', rfl⟩ : ∃ a', a = a' + 1 := ⟨a - 1, by omega⟩
+    obtain ⟨b', rfl⟩ : ∃ b', b = b' + 1 := ⟨b - 1, by omega⟩
+    obtain ⟨s, t, hsplit, ht_odd⟩ : ∃ s t, m = 2 ^ s * t ∧ ¬ 2 ∣ t :=
+      ⟨m.factorization 2, ordCompl[2] m,
+       (Nat.ordProj_mul_ordCompl_eq_self m 2).symm,
+       Nat.not_dvd_ordCompl Nat.prime_two hm0⟩
+    have hco2t : Nat.Coprime 2 t := (Nat.Prime.coprime_iff_not_dvd Nat.prime_two).mpr ht_odd
+    have hcopow : Nat.Coprime (2 ^ s) t := Nat.Coprime.pow_left s hco2t
+    have ht1 : 1 ≤ t := by
+      rcases Nat.eq_zero_or_pos t with h | h
+      · exfalso; rw [h, mul_zero] at hsplit; omega
+      · exact h
+    have hdvd2s : 2 ^ s ∣ m := ⟨t, hsplit⟩
+    have hdvdt : t ∣ m := ⟨2 ^ s, by rw [hsplit, mul_comm]⟩
+    have hpow_le : 2 ^ s ≤ m := Nat.le_of_dvd (by omega) hdvd2s
+    have ht_le : t ≤ m := Nat.le_of_dvd (by omega) hdvdt
+    have hs_lt : s < 2 ^ s := Nat.lt_two_pow_self
+    have hdvd_tet : ∀ c : ℕ, m - 1 ≤ c + 1 → 2 ^ s ∣ tetration 2 (c + 1) := by
+      intro c hc
+      rw [tetration_succ]
+      apply pow_dvd_pow
+      have h3 := le_tetration c
+      omega
+    have hmod2 : tetration 2 (a' + 1) ≡ tetration 2 (b' + 1) [MOD 2 ^ s] :=
+      (Nat.modEq_zero_iff_dvd.mpr (hdvd_tet a' ha)).trans
+        (Nat.modEq_zero_iff_dvd.mpr (hdvd_tet b' hb)).symm
+    have hφ_pos : 0 < t.totient := Nat.totient_pos.mpr ht1
+    have hφ_lt : t.totient < m := by
+      rcases eq_or_lt_of_le ht1 with h | h
+      · have h1 : t.totient = 1 := by rw [← h]; exact Nat.totient_one
+        omega
+      · exact lt_of_lt_of_le (Nat.totient_lt t h) ht_le
+    have hIH : tetration 2 a' ≡ tetration 2 b' [MOD t.totient] :=
+      ih t.totient hφ_lt (by omega) a' b' (by omega) (by omega)
+    have hmodt : tetration 2 (a' + 1) ≡ tetration 2 (b' + 1) [MOD t] := by
+      rw [tetration_succ, tetration_succ]
+      exact pow_exp_congr 2 t hco2t _ _ hIH
+    have hcomb := (Nat.modEq_and_modEq_iff_modEq_mul hcopow).mp ⟨hmod2, hmodt⟩
+    rwa [← hsplit] at hcomb
+
+theorem putnam_1997_b5
+(n : ℕ)
+(hn : n ≥ 2)
+: tetration 2 n ≡ tetration 2 (n-1) [MOD n] :=
+  tetration_stable n (by omega) n (n - 1) (by omega) (by omega)
+
+#print axioms putnam_1997_b5
