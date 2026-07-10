@@ -220,7 +220,10 @@ Result: **builtins 0/315 (0.0%)** — Putnam has no one-tactic proofs; every
 solve must come through the proposal channel. First scalp:
 `putnam_2000_b2` (`n ∣ gcd(m,n)·C(n,m)`) via Bézout + `Nat.succ_mul_choose_eq`
 (both located with the premise index), 2 feedback rounds
-(`bench/solved_putnam/`).
+(`bench/solved_putnam/`). Second scalp: `putnam_1972_a5`
+(`n > 1 → n ∤ 2ⁿ−1`) — minimal prime factor + multiplicative order in
+`ZMod p` + Fermat's little theorem, 2 rounds (a dependent-type rewrite error
+was dodged by switching the `p ≠ 2` step to a pure parity argument).
 
 **Project Euler #1005** (`euler/`), published days before this run: median
 increasing-prime list summing to 2026. Counting DP + lexicographic unranking
