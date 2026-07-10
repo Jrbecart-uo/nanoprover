@@ -1,0 +1,2 @@
+intro a ha b hb
+refine ⟨1, a - 1, b - 1, by omega, by omega, by omega, by ring⟩

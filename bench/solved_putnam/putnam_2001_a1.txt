@@ -1,0 +1,5 @@
+intro a b
+have h1 := hS b a
+have h2 := hS (b * a) b
+calc a * (b * a) = ((b * a) * b) * (b * a) := by rw [h1]
+  _ = b := h2

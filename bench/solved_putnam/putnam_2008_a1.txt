@@ -1,0 +1,7 @@
+use fun x => f x 0
+intro x y
+have h1 := hf x y 0
+have h2 := hf y 0 0
+have h3 := hf x 0 0
+have h4 := hf 0 0 0
+linarith
