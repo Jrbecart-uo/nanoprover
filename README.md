@@ -211,6 +211,25 @@ warning (exit 0). `LeanCLIEnv` now rejects any proof whose output mentions
 sorry. The kernel was never fooled — our wrapper was. Second benchmark lesson
 kept in the open.
 
+### 7. PutnamBench + a live competition problem
+
+**PutnamBench** (`bench/putnam.py`): the harder successor to miniF2F — 672
+Putnam problems; we run the 326-problem pure-proof subset (answer-construction
+problems excluded: their official answers sit in reference comments).
+Result: **builtins 0/315 (0.0%)** — Putnam has no one-tactic proofs; every
+solve must come through the proposal channel. First scalp:
+`putnam_2000_b2` (`n ∣ gcd(m,n)·C(n,m)`) via Bézout + `Nat.succ_mul_choose_eq`
+(both located with the premise index), 2 feedback rounds
+(`bench/solved_putnam/`).
+
+**Project Euler #1005** (`euler/`), published days before this run: median
+increasing-prime list summing to 2026. Counting DP + lexicographic unranking
+over 59,284,153,745,615 lists (enumeration impossible); reproduces the
+problem's worked example and matches brute force on N=5..80. The found list's
+certificate — 24 elements all prime, strictly increasing, sum 2026, product
+ending [withheld] — is **kernel-verified** (`euler/p1005_verify.lean`).
+Median-ness rests on the cross-validated DP; stated honestly.
+
 ### The premise database
 
 Mathlib **is** the theorem database — we export and index it locally:

@@ -1,0 +1,4 @@
+attempted: 326  usable: 315  solved: 0
+BUILTIN SOLVE RATE on PutnamBench (pure-proof subset): 0/315 = 0.0%
+first-tactic wins: {}
+solved: []

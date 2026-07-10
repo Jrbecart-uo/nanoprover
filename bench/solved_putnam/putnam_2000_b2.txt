@@ -1,0 +1,9 @@
+intro m n hm hn
+obtain ⟨M, rfl⟩ : ∃ M, m = M + 1 := ⟨m - 1, by omega⟩
+obtain ⟨N, rfl⟩ : ∃ N, n = N + 1 := ⟨n - 1, by omega⟩
+have h : (N+1) * N.choose M = (N+1).choose (M+1) * (M+1) := Nat.succ_mul_choose_eq N M
+have hb := Nat.gcd_eq_gcd_ab (M+1) (N+1)
+refine Int.natCast_dvd_natCast.mp ?_
+have hz : ((N+1 : ℕ) : ℤ) * ((N.choose M : ℕ) : ℤ) = (((N+1).choose (M+1) : ℕ) : ℤ) * ((M+1 : ℕ) : ℤ) := by exact_mod_cast h
+rw [Nat.cast_mul, hb]
+exact ⟨((M+1).gcdA (N+1)) * ((N.choose M : ℕ) : ℤ) + ((M+1).gcdB (N+1)) * (((N+1).choose (M+1) : ℕ) : ℤ), by linear_combination (-1 : ℤ) * ((M+1).gcdA (N+1)) * hz⟩
