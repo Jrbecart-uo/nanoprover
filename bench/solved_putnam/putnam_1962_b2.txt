@@ -1,0 +1,8 @@
+use fun a => {n : ℕ+ | ((((Denumerable.eqv ℕ+).trans (Denumerable.eqv ℚ).symm) n : ℚ) : ℝ) < a}
+intro a b hab
+have hsub : {n : ℕ+ | ((((Denumerable.eqv ℕ+).trans (Denumerable.eqv ℚ).symm) n : ℚ) : ℝ) < a} ⊆ {n : ℕ+ | ((((Denumerable.eqv ℕ+).trans (Denumerable.eqv ℚ).symm) n : ℚ) : ℝ) < b} := fun n hn => lt_trans hn hab
+rw [Set.ssubset_iff_of_subset hsub]
+obtain ⟨q, haq, hqb⟩ := exists_rat_btwn hab
+refine ⟨((Denumerable.eqv ℕ+).trans (Denumerable.eqv ℚ).symm).symm q, ?_, ?_⟩
+· simpa using hqb
+· simpa using not_lt.mpr haq.le

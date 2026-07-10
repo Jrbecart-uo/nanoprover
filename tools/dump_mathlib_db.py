@@ -32,7 +32,7 @@ run_cmd do
   let mut n := 0
   let mut i := 0
   for (name, info) in env.constants.toList do
-    if info.isTheorem && !name.isInternalDetail then
+    if ({thmonly} || info.isTheorem) && !name.isInternalDetail then
       i := i + 1
       let s := name.toString
       if (prefixFilter == "" || s.startsWith prefixFilter) && i % {mod} == {shard} then
@@ -51,6 +51,8 @@ EMIT_TYPES = '''let ty ← liftTermElabM do
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--prefix", default="", help="namespace filter, e.g. Nat")
+    ap.add_argument("--all-constants", action="store_true",
+                    help="include defs/abbrevs/instances, not just theorems")
     ap.add_argument("--types", action="store_true",
                     help="include pretty-printed statements (slower)")
     ap.add_argument("--out", default="mathlib_theorems.txt")
@@ -60,6 +62,7 @@ def main():
 
     out = os.path.abspath(args.out)
     src = SCRIPT.format(out=out, prefix=args.prefix,
+                        thmonly=('true' if args.all_constants else 'false'),
                         mod=args.num_shards, shard=args.shard,
                         emit=EMIT_TYPES if args.types else EMIT_NAMES)
     with tempfile.NamedTemporaryFile("w", suffix=".lean", delete=False) as f:

@@ -223,7 +223,13 @@ solve must come through the proposal channel. First scalp:
 (`bench/solved_putnam/`). Second scalp: `putnam_1972_a5`
 (`n > 1 → n ∤ 2ⁿ−1`) — minimal prime factor + multiplicative order in
 `ZMod p` + Fermat's little theorem, 2 rounds (a dependent-type rewrite error
-was dodged by switching the `p ≠ 2` step to a pure parity argument).
+was dodged by switching the `p ≠ 2` step to a pure parity argument). Third:
+`putnam_1962_b2` (a strictly ⊂-increasing family `ℝ → Set ℕ+` via a rational
+enumeration) — **solved in 5 seconds wall-clock** by the fast scalp pipeline:
+`core/scalp.py` preflights every identifier against all 470k mathlib constant
+names (milliseconds, kills hallucinated lemma names before the kernel), then
+checks a whole round of candidates in ONE batched kernel call
+(`bench/scalp_run.py`).
 
 **Project Euler #1005** (`euler/`), published days before this run: median
 increasing-prime list summing to 2026. Counting DP + lexicographic unranking
