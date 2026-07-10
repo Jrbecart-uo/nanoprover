@@ -1,0 +1,43 @@
+import Mathlib
+
+set_option maxHeartbeats 800000
+
+open Finset Polynomial
+
+theorem putnam_1968_b2
+{G : Type*}
+[Group G]
+(hG : Finite G)
+(A : Set G)
+(hA : A.ncard > (Nat.card G : ℚ)/2)
+: ∀ g : G, ∃ x ∈ A, ∃ y ∈ A, g = x * y := by
+  intro g
+  have hA2 : Nat.card G < 2 * A.ncard := by
+    have h : (Nat.card G : ℚ) < 2 * A.ncard := by linarith
+    exact_mod_cast h
+  have hinj : Function.Injective (fun a : G => g * a⁻¹) := by
+    intro a b hab
+    simp only [] at hab
+    exact inv_injective (mul_left_cancel hab)
+  have hTcard : ((fun a : G => g * a⁻¹) '' A).ncard = A.ncard :=
+    Set.ncard_image_of_injective A hinj
+  have hne : (A ∩ (fun a : G => g * a⁻¹) '' A).Nonempty := by
+    rw [Set.nonempty_iff_ne_empty]
+    intro hdisj
+    have hd : Disjoint A ((fun a : G => g * a⁻¹) '' A) :=
+      Set.disjoint_iff_inter_eq_empty.mpr hdisj
+    have hcard : (A ∪ (fun a : G => g * a⁻¹) '' A).ncard = A.ncard
+        + ((fun a : G => g * a⁻¹) '' A).ncard :=
+      Set.ncard_union_eq hd (Set.toFinite _) (Set.toFinite _)
+    have hle : (A ∪ (fun a : G => g * a⁻¹) '' A).ncard ≤ Nat.card G := by
+      have h1 : (A ∪ (fun a : G => g * a⁻¹) '' A).ncard ≤ (Set.univ : Set G).ncard :=
+        Set.ncard_le_ncard (Set.subset_univ _) Set.finite_univ
+      rwa [Set.ncard_univ] at h1
+    omega
+  obtain ⟨x, hxA, hxT⟩ := hne
+  obtain ⟨y, hyA, hxy⟩ := hxT
+  refine ⟨x, hxA, y, hyA, ?_⟩
+  rw [← hxy]
+  exact (inv_mul_cancel_right g y).symm
+
+#print axioms putnam_1968_b2
