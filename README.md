@@ -70,6 +70,14 @@ python sherpa.py --mathlib --sig "(p : ℕ) : p.Prime → 2 ≤ p" \
 
 Each check takes ~2-3s (mathlib import overhead per probe).
 
+Mathlib **is** the theorem database — ~319,000 proved theorems. Query it live
+with the `exact?` tactic (library search), or dump it for your own tooling:
+
+```bash
+python tools/dump_mathlib_db.py                          # all ~319k names, ~10s
+python tools/dump_mathlib_db.py --prefix Nat.Prime --types   # names + statements
+```
+
 ### 2. Automated search against the real kernel
 
 Best-first backward search where a portfolio of proposers (built-in tactics,

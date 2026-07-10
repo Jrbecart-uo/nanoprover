@@ -4,3 +4,4 @@ __pycache__/
 lean4-example/
 .lake/
 mathlib4/
+mathlib_theorems.txt
