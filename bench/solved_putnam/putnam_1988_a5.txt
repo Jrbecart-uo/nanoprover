@@ -1,0 +1,85 @@
+import Mathlib
+
+set_option maxHeartbeats 1600000
+
+open Filter
+
+theorem putnam_1988_a5
+: (∃ f : ℝ → ℝ, (∀ x > 0, f (f x) = 6 * x - f x ∧ f x > 0) ∧ (∀ g : ℝ → ℝ, (∀ x > 0, g (g x) = 6 * x - g x ∧ g x > 0) → (∀ x > 0, f x = g x))) := by
+  refine ⟨fun x => 2 * x, fun x hx => ⟨by ring, by linarith⟩, ?_⟩
+  intro g hg x hx
+  show 2 * x = g x
+  have hgx_pos : 0 < g x := (hg x hx).2
+  set c : ℝ := (3 * x + g x) / 5 with hcdef
+  set d : ℝ := (2 * x - g x) / 5 with hddef
+  have hc_pos : 0 < c := div_pos (by linarith) (by norm_num)
+  -- orbit positivity
+  have hpos : ∀ k : ℕ, 0 < g^[k] x := by
+    intro k
+    induction k with
+    | zero => simpa using hx
+    | succ m ih =>
+      rw [Function.iterate_succ_apply']
+      exact (hg _ ih).2
+  -- two-step recurrence
+  have hrec : ∀ k : ℕ, g^[k + 2] x = 6 * g^[k] x - g^[k + 1] x := by
+    intro k
+    rw [show k + 2 = (k + 1) + 1 from rfl, Function.iterate_succ_apply',
+      Function.iterate_succ_apply']
+    exact (hg _ (hpos k)).1
+  -- closed form
+  have hform : ∀ k : ℕ, g^[k] x = c * 2 ^ k + d * (-3 : ℝ) ^ k
+      ∧ g^[k + 1] x = c * 2 ^ (k + 1) + d * (-3 : ℝ) ^ (k + 1) := by
+    intro k
+    induction k with
+    | zero =>
+      constructor
+      · simp only [Function.iterate_zero_apply, pow_zero, mul_one]
+        rw [hcdef, hddef]
+        ring
+      · simp only [Function.iterate_succ_apply', Function.iterate_zero_apply, pow_one]
+        rw [hcdef, hddef]
+        ring
+    | succ m ih =>
+      obtain ⟨ih1, ih2⟩ := ih
+      refine ⟨ih2, ?_⟩
+      have h := hrec m
+      rw [ih1, ih2] at h
+      rw [show m + 1 + 1 = m + 2 from rfl, h]
+      ring
+  -- the (9/4)^k escape hatch
+  have h94 : Tendsto (fun k : ℕ => ((9 : ℝ) / 4) ^ k) atTop atTop :=
+    tendsto_pow_atTop_atTop_of_one_lt (by norm_num)
+  rcases lt_trichotomy d 0 with hd | hd | hd
+  · exfalso
+    obtain ⟨k, hk⟩ := (h94.eventually_gt_atTop (c / (-d))).exists
+    have hval := (hform (2 * k)).1
+    rw [pow_mul, pow_mul] at hval
+    norm_num at hval
+    -- hval : g^[2k] x = c * 4^k + d * 9^k
+    have h4 : (0 : ℝ) < 4 ^ k := by positivity
+    have h9 : (0 : ℝ) < 9 ^ k := by positivity
+    rw [div_pow, div_lt_div_iff₀ (by linarith) h4] at hk
+    -- hk : c * 4^k < 9^k * -d
+    have := hpos (2 * k)
+    nlinarith [hval, hk, this]
+  · have h : (2 * x - g x) / 5 = 0 := by rw [← hddef]; exact hd
+    rcases div_eq_zero_iff.mp h with h' | h'
+    · linarith
+    · norm_num at h'
+  · exfalso
+    obtain ⟨k, hk⟩ := (h94.eventually_gt_atTop ((2 * c) / (3 * d))).exists
+    have hval := (hform (2 * k)).2
+    rw [pow_succ, pow_succ, pow_mul, pow_mul] at hval
+    norm_num at hval
+    -- hval : g^[2k+1] x = c * 4^k * 2 + d * 9^k * -3 (some arrangement)
+    have h4 : (0 : ℝ) < 4 ^ k := by positivity
+    have h9 : (0 : ℝ) < 9 ^ k := by positivity
+    rw [div_pow, div_lt_div_iff₀ (by linarith) h4] at hk
+    -- hk : 2c * 4^k < 9^k * (3d)
+    have hthis : 0 < g^[2 * k] (g x) := by
+      rw [← Function.iterate_succ_apply]
+      exact hpos (2 * k + 1)
+    nlinarith [hval, hk, hthis]
+
+#print axioms putnam_1988_a5
