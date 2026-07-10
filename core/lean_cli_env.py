@@ -77,10 +77,18 @@ class LeanCLIEnv(ProofEnv):
             except OSError:
                 pass
 
-        if proc.returncode == 0 and not proc.stderr.strip():
-            # Kernel accepted the whole proof.
+        out_all = proc.stdout + proc.stderr
+        if proc.returncode == 0 and not proc.stderr.strip() \
+                and "sorry" not in out_all:
+            # Kernel accepted the whole proof. The `sorry` guard matters:
+            # `declaration uses 'sorry'` is only a WARNING (exit 0), so
+            # without it a proposal containing sorry would pass as Solved.
             return Solved()
-        # Rejected: surface the first error line for the log.
-        msg = (proc.stdout + proc.stderr).strip().splitlines()
-        first = next((l for l in msg if "error" in l.lower()), msg[0] if msg else "rejected")
-        return Failed(first[:200])
+        if proc.returncode == 0 and "sorry" in out_all:
+            return Failed("proof uses sorry -- not accepted")
+        # Rejected: surface the first error WITH its context (the goal state
+        # after "unsolved goals" is what an informed retry needs to see).
+        msg = out_all.strip().splitlines()
+        idx = next((i for i, l in enumerate(msg) if "error" in l.lower()), 0)
+        detail = "\n".join(msg[idx:idx + 14])
+        return Failed(detail[:1200] if detail else "rejected")

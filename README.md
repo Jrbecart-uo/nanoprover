@@ -187,6 +187,28 @@ and the corrected double-Gauss proof was accepted next round. Proposers:
   anonymous `example`, which never enters the environment). Benchmarks lie
   in subtle ways; the first (wrong) run scored 8/8.
 
+### 6. Two IMO problems from the never-solved tier
+
+We aimed the retry loop (session LLM as proposer) at the three miniF2F IMO
+problems most cited as unsolved-by-machines:
+
+| problem | result | proof shape |
+|---|---|---|
+| **imo_1981_p6** (Ackermann: `f 4 1981 = g 1983 − 3`) | ✅ **solved, 2 rounds** | four stacked inductions deriving closed forms `f 1..f 4`, linked to the tower `g` (~50 lines) |
+| **imo_1977_p6** (`f(f(n)) < f(n+1) ⟹ f(n) = n`) | ✅ **solved, 1 round** | invariant `n+1 ≤ m → n+1 ≤ f m` by induction, monotonicity bootstrap, squeeze |
+| **imo_1985_p6** (unique `a` with `fₙ(a)` increasing in `(0,1)`) | ❌ honest fail | needs a nested-interval/completeness construction (~100+ lines) — the wall is real |
+
+Proof scripts: `bench/solved_imo/`. Caveats stated plainly: the proposer knew
+the classical proof ideas (these are famous problems — contamination applies
+to any LLM), and "solved with an informed multi-step plan" is exactly the
+claim being demonstrated, not one-shot magic.
+
+The 1985 attempt also caught a **soundness hole in our harness**: a proposal
+containing `sorry` was accepted, because `declaration uses 'sorry'` is only a
+warning (exit 0). `LeanCLIEnv` now rejects any proof whose output mentions
+sorry. The kernel was never fooled — our wrapper was. Second benchmark lesson
+kept in the open.
+
 ### The premise database
 
 Mathlib **is** the theorem database — we export and index it locally:

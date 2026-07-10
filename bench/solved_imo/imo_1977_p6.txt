@@ -1,0 +1,47 @@
+have claim : ∀ n m, n + 1 ≤ m → n + 1 ≤ f m := by
+  intro n
+  induction n with
+  | zero => intro m _; exact h₀ m
+  | succ k ih =>
+    intro m hm
+    have hm1 : k + 1 ≤ m - 1 := by omega
+    have h1 := ih (m - 1) hm1
+    have h2 := ih (f (m - 1)) h1
+    have h3 := h₁ (m - 1) (by omega)
+    have hm2 : m - 1 + 1 = m := by omega
+    rw [hm2] at h3
+    omega
+have mono : ∀ n, 0 < n → f n < f (n + 1) := by
+  intro n hn
+  have hfn : n ≤ f n := by
+    have := claim (n - 1) n (by omega)
+    omega
+  have hff : f n ≤ f (f n) := by
+    have h4 := h₀ n
+    have := claim (f n - 1) (f n) (by omega)
+    omega
+  have h5 := h₁ n hn
+  omega
+have mono2 : ∀ a b, 0 < a → a ≤ b → f a ≤ f b := by
+  intro a b ha hab
+  induction b with
+  | zero => omega
+  | succ k ihb =>
+    rcases Nat.eq_or_lt_of_le hab with rfl | hlt
+    · exact le_rfl
+    · have h6 : a ≤ k := by omega
+      have h7 := ihb h6
+      have hk : 0 < k := by omega
+      have h8 := mono k hk
+      omega
+intro n hn
+have hfn : n ≤ f n := by
+  have := claim (n - 1) n (by omega)
+  omega
+rcases Nat.eq_or_lt_of_le hfn with h | h
+· omega
+· exfalso
+  have h5 : n + 1 ≤ f n := h
+  have h6 := mono2 (n + 1) (f n) (by omega) h5
+  have h7 := h₁ n hn
+  omega

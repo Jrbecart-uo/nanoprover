@@ -1,0 +1,47 @@
+have f1 : ∀ y, f 1 y = y + 2 := by
+  intro y
+  induction y with
+  | zero => rw [h₁, h₀]
+  | succ k ih => rw [h₂, ih, h₀]
+have f2 : ∀ y, f 2 y = 2 * y + 3 := by
+  intro y
+  induction y with
+  | zero => rw [h₁, f1]
+  | succ k ih => rw [h₂, ih, f1]; omega
+have f3 : ∀ y, f 3 y = 2^(y+3) - 3 := by
+  intro y
+  induction y with
+  | zero => rw [h₁, f2]; norm_num
+  | succ k ih =>
+    rw [h₂, ih, f2]
+    have hA : 8 ≤ 2^(k+3) := by
+      have := Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) (by omega : 3 ≤ k+3)
+      simpa using this
+    have hp : 2^(k+1+3) = 2 * 2^(k+3) := by
+      rw [show k+1+3 = (k+3)+1 by omega, pow_succ]
+      ring
+    omega
+have hg : ∀ n, 2 ≤ g n := by
+  intro n
+  induction n with
+  | zero => omega
+  | succ m ihm =>
+    rw [h₄]
+    have := Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) ihm
+    omega
+have f4 : ∀ y, f 4 y = g (y+2) - 3 := by
+  intro y
+  induction y with
+  | zero =>
+    rw [h₁, f3, h₄, h₄, h₃]
+    norm_num
+  | succ k ih =>
+    rw [h₂, ih, f3]
+    have hg3 : 3 ≤ g (k+2) := by
+      rw [h₄]
+      have h5 := hg (k+1)
+      have := Nat.pow_le_pow_right (by norm_num : 1 ≤ 2) h5
+      omega
+    have he : g (k+2) - 3 + 3 = g (k+2) := by omega
+    rw [he, ← h₄]
+rw [f4]
