@@ -55,6 +55,21 @@ tactic> rw [add_comm b]
 Bad tactics are rejected with the kernel's error; `:undo`, `:reset`, `:proof`
 navigate. Prove your own goals with `--sig "(p q : Prop) : p ∧ q → q ∧ p"`.
 
+### 1b. Real mathematics: mathlib mode
+
+Fetch mathlib's prebuilt binaries once (`./setup.sh --mathlib`, ~7GB, no build,
+no tracing) and sherpa can check goals over the real numbers with the full
+mathlib tactic arsenal:
+
+```bash
+python sherpa.py --theorem binom_sq     # (a b : ℝ) : (a+b)^2 = a^2 + 2ab + b^2
+python sherpa.py --theorem sq_nonneg    # try: positivity
+python sherpa.py --mathlib --sig "(p : ℕ) : p.Prime → 2 ≤ p" \
+    --preamble "import Mathlib.Data.Nat.Prime.Basic"
+```
+
+Each check takes ~2-3s (mathlib import overhead per probe).
+
 ### 2. Automated search against the real kernel
 
 Best-first backward search where a portfolio of proposers (built-in tactics,
@@ -125,13 +140,15 @@ Honesty section, because this field is prone to overclaiming:
   architecture, for learning and experimentation.
 - **The `LeanCLIEnv` backend is whole-proof checking**, not incremental proof
   states — multi-subgoal branching is where you'd graduate to the LeanDojo
-  backend (included, but requires tracing the target repo once).
+  backend (included, but requires tracing the target repo once). Note that
+  plain *mathlib imports* do NOT need the trace — `setup.sh --mathlib` uses
+  mathlib's prebuilt cache and works with the CLI backend.
 
 ## Where it could go
 
-- Point the loop at **mathlib** lemmas (needs the LeanDojo trace) or at open
-  lemma nodes in `lean-blueprint` formalization projects — small, real,
-  creditable targets.
+- Point the automated search loop at **mathlib** goals (mathlib mode already
+  works in sherpa) and at open lemma nodes in `lean-blueprint` formalization
+  projects — small, real, creditable targets.
 - Make the outer loop iterate: stall → propose gear → filter → re-run,
   autonomously.
 - Counterexample hunting: a loop that *disproves* conjectures only needs one

@@ -29,8 +29,17 @@ import tempfile
 
 REPO = os.environ.get("NANOPROVER_LEAN_DIR",
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "lean4-example"))
+MATHLIB = os.environ.get("NANOPROVER_MATHLIB_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "mathlib4"))
 
-# A couple of ready-made targets from the lean4-example repo.
+# Set in main(). Mathlib mode switches to `lake env lean` inside the mathlib4
+# checkout, which resolves `import Mathlib.*` against the prebuilt cache
+# (fetched once with `lake exe cache get` -- no build, no tracing).
+LEAN_CMD = ["lean"]
+LEAN_CWD = REPO
+LEAN_TIMEOUT = 30.0
+
+# Ready-made targets. Entries with "mathlib": True auto-enable mathlib mode.
 THEOREMS = {
     "hello_world": {
         "sig": "(a b c : Nat) : a + b + c = a + c + b",
@@ -42,10 +51,22 @@ THEOREMS = {
         "preamble": "",
         "hint": "try: rfl",
     },
+    "binom_sq": {
+        "sig": "(a b : ℝ) : (a + b)^2 = a^2 + 2*a*b + b^2",
+        "preamble": "import Mathlib.Data.Real.Basic\nimport Mathlib.Tactic.Ring",
+        "hint": "real numbers! try: ring   (or expand by hand with rw [pow_two, mul_add, add_mul])",
+        "mathlib": True,
+    },
+    "sq_nonneg": {
+        "sig": "(x : ℝ) : 0 ≤ x^2",
+        "preamble": "import Mathlib.Data.Real.Basic\nimport Mathlib.Tactic.Positivity",
+        "hint": "try: positivity   (or: exact sq_nonneg x)",
+        "mathlib": True,
+    },
 }
 
 
-def run_lean(preamble, sig, tactics, timeout=30.0):
+def run_lean(preamble, sig, tactics, timeout=None):
     """
     Typecheck `theorem __probe__ <sig> := by <tactics>` and classify the result.
     Returns (status, detail) where status is 'solved' | 'goals' | 'error'.
@@ -58,8 +79,9 @@ def run_lean(preamble, sig, tactics, timeout=30.0):
         f.write(body)
         path = f.name
     try:
-        proc = subprocess.run(["lean", path], cwd=REPO,
-                              capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(LEAN_CMD + [path], cwd=LEAN_CWD,
+                              capture_output=True, text=True,
+                              timeout=timeout or LEAN_TIMEOUT)
     except subprocess.TimeoutExpired:
         return "error", "lean timed out"
     finally:
@@ -90,13 +112,22 @@ def main(argv=None):
     ap.add_argument("--theorem", choices=list(THEOREMS), default="hello_world")
     ap.add_argument("--sig", help="custom theorem signature (overrides --theorem)")
     ap.add_argument("--preamble", default="", help="custom preamble for --sig")
+    ap.add_argument("--mathlib", action="store_true",
+                    help="check against mathlib (needs mathlib4/ + lake exe cache get)")
     args = ap.parse_args(argv)
 
     if args.sig:
         name, sig, preamble, hint = "custom", args.sig, args.preamble, None
+        use_mathlib = args.mathlib
     else:
         t = THEOREMS[args.theorem]
         name, sig, preamble, hint = args.theorem, t["sig"], t["preamble"], t["hint"]
+        use_mathlib = args.mathlib or t.get("mathlib", False)
+
+    global LEAN_CMD, LEAN_CWD, LEAN_TIMEOUT
+    if use_mathlib:
+        LEAN_CMD, LEAN_CWD, LEAN_TIMEOUT = ["lake", "env", "lean"], MATHLIB, 180.0
+        print("(mathlib mode: checking via `lake env lean` in {})".format(MATHLIB))
 
     print("=" * 66)
     print("Interactive Lean prover  --  you are the intuition engine")

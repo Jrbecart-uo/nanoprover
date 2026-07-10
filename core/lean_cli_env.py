@@ -31,18 +31,21 @@ from proof_env import ProofEnv, ProofState, Solved, Progress, Failed
 
 class LeanCLIEnv(ProofEnv):
     def __init__(self, signature: str, preamble: str = "",
-                 lean_bin: str = "lean", cwd: str | None = None,
-                 timeout: float = 30.0):
+                 lean_cmd=None, cwd: str | None = None,
+                 timeout: float = 60.0):
         """
         signature: the theorem binders + goal, e.g.
                    "(a b c : Nat) : a + b + c = a + c + b"
         preamble:  lines that must precede the theorem (imports, `open ...`).
-        cwd:       run `lean` from here so elan resolves the right toolchain
+        lean_cmd:  command list, default ["lean"]. Use ["lake", "env", "lean"]
+                   with cwd=<mathlib checkout> to resolve `import Mathlib.*`
+                   against the prebuilt cache (`lake exe cache get`).
+        cwd:       run from here so elan resolves the right toolchain
                    (a directory containing a `lean-toolchain` file).
         """
         self._sig = signature.strip()
         self._preamble = preamble
-        self._lean = lean_bin
+        self._lean_cmd = list(lean_cmd) if lean_cmd else ["lean"]
         self._cwd = cwd
         self._timeout = timeout
 
@@ -59,7 +62,7 @@ class LeanCLIEnv(ProofEnv):
             path = f.name
         try:
             proc = subprocess.run(
-                [self._lean, path],
+                self._lean_cmd + [path],
                 cwd=self._cwd, capture_output=True, text=True,
                 timeout=self._timeout,
             )

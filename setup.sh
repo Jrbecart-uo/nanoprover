@@ -28,9 +28,20 @@ fi
 echo "== 4/4 warm the Lean toolchain (first run downloads ~300MB) =="
 ( cd lean4-example && lean --version )
 
+# Optional: full mathlib via prebuilt cache (no build, no tracing; ~7GB disk).
+# Unlocks `python sherpa.py --theorem binom_sq` and all `import Mathlib.*` goals.
+if [ "${1:-}" = "--mathlib" ]; then
+  echo "== [opt] mathlib4 + prebuilt cache (~7GB, resumable) =="
+  if [ ! -d mathlib4 ]; then
+    git clone -q --depth 1 https://github.com/leanprover-community/mathlib4
+  fi
+  ( cd mathlib4 && lake exe cache get )
+fi
+
 echo
 echo "Done. Try:"
 echo "  source .venv/bin/activate && export PATH=\"\$HOME/.elan/bin:\$PATH\""
 echo "  python sherpa.py                  # prove a theorem turn-by-turn"
 echo "  python core/real_run.py           # automated search, real kernel"
 echo "  python collatz/outer_loop.py      # watch the kernel filter proposed lemmas"
+echo "  ./setup.sh --mathlib              # then: python sherpa.py --theorem binom_sq"
