@@ -1,0 +1,60 @@
+{
+ "C_with_proposals": {
+  "sq_abs_sub": {
+   "solved": true,
+   "proof": [
+    "right\nexact abs_sub a b"
+   ],
+   "secs": 34.5
+  },
+  "abs_ordered": {
+   "solved": true,
+   "proof": [
+    "rw [abs_of_nonpos (by linarith)]\nring"
+   ],
+   "secs": 31.7
+  },
+  "sq_sum_zero": {
+   "solved": true,
+   "proof": [
+    "nlinarith [sq_nonneg a, sq_nonneg b]"
+   ],
+   "secs": 32.4
+  },
+  "even_succ": {
+   "solved": true,
+   "proof": [
+    "obtain \u27e8k, hk\u27e9 := h\nobtain \u27e8j, hj\u27e9 := h2\nomega"
+   ],
+   "secs": 31.1
+  },
+  "sqrt_exists": {
+   "solved": true,
+   "proof": [
+    "exact \u27e8Real.sqrt a, Real.sq_sqrt h.le, Real.sqrt_nonneg a\u27e9"
+   ],
+   "secs": 31.4
+  },
+  "inv_lt_one": {
+   "solved": true,
+   "proof": [
+    "rw [div_lt_one (by linarith)]\nexact h"
+   ],
+   "secs": 31.7
+  },
+  "cube_dvd": {
+   "solved": true,
+   "proof": [
+    "induction n with\n| zero => simp\n| succ k ih =>\n  have step : (k+1)^3 + 3*(k+1)^2 + 2*(k+1) = (k^3 + 3*k^2 + 2*k) + 3*(k^2 + 3*k + 2) := by ring\n  rw [step]\n  exact Nat.dvd_add ih \u27e8k^2 + 3*k + 2, by ring\u27e9"
+   ],
+   "secs": 33.6
+  },
+  "max_formula": {
+   "solved": true,
+   "proof": [
+    "rcases le_total a b with h | h\n\u00b7 rw [max_eq_right h, abs_of_nonpos (by linarith)]\n  ring\n\u00b7 rw [max_eq_left h, abs_of_nonneg (by linarith)]\n  ring"
+   ],
+   "secs": 31.5
+  }
+ }
+}

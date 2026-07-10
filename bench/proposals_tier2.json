@@ -1,0 +1,34 @@
+{
+  "sq_abs_sub": [
+    "right\nexact abs_sub a b",
+    "right\nexact abs_sub_abs_le_abs_sub a b |>.trans (abs_sub a b)"
+  ],
+  "abs_ordered": [
+    "rw [abs_of_nonpos (by linarith)]\nring",
+    "rw [abs_sub_comm]\nexact abs_of_nonneg (by linarith)"
+  ],
+  "sq_sum_zero": [
+    "nlinarith [sq_nonneg a, sq_nonneg b]",
+    "have ha : a ^ 2 = 0 := by nlinarith [sq_nonneg b]\nexact pow_eq_zero_iff two_ne_zero |>.mp ha"
+  ],
+  "even_succ": [
+    "obtain ⟨k, hk⟩ := h\nobtain ⟨j, hj⟩ := h2\nomega",
+    "simp [Nat.even_add_one] at h2\nexact h2 h"
+  ],
+  "sqrt_exists": [
+    "exact ⟨Real.sqrt a, Real.sq_sqrt h.le, Real.sqrt_nonneg a⟩",
+    "refine ⟨Real.sqrt a, ?_, Real.sqrt_nonneg a⟩\nexact Real.sq_sqrt h.le"
+  ],
+  "inv_lt_one": [
+    "rw [div_lt_one (by linarith)]\nexact h",
+    "rw [div_lt_one (lt_trans one_pos h)]\nexact h"
+  ],
+  "cube_dvd": [
+    "induction n with\n| zero => simp\n| succ k ih =>\n  have step : (k+1)^3 + 3*(k+1)^2 + 2*(k+1) = (k^3 + 3*k^2 + 2*k) + 3*(k^2 + 3*k + 2) := by ring\n  rw [step]\n  exact Nat.dvd_add ih ⟨k^2 + 3*k + 2, by ring⟩",
+    "have h3 : n % 3 = 0 ∨ n % 3 = 1 ∨ n % 3 = 2 := by omega\nobtain ⟨k, rfl⟩ : ∃ k, n = 3 * k + n % 3 := ⟨n / 3, by omega⟩\nrcases h3 with h | h | h <;> simp [h] <;> ring_nf <;> omega"
+  ],
+  "max_formula": [
+    "rcases le_total a b with h | h\n· rw [max_eq_right h, abs_of_nonpos (by linarith)]\n  ring\n· rw [max_eq_left h, abs_of_nonneg (by linarith)]\n  ring",
+    "rcases le_total a b with h | h <;> [rw [max_eq_right h, abs_of_nonpos (by linarith)]; rw [max_eq_left h, abs_of_nonneg (by linarith)]] <;> ring"
+  ]
+}

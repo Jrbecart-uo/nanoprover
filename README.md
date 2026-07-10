@@ -137,6 +137,27 @@ kernel made it safe to let an LLM propose that concept.
   solved in sherpa by an LLM/human in exactly two moves. That gap is the
   portfolio slot an LLM proposer fills.
 
+### 4b. Tier 2: where the LLM slot is measured, then filled
+
+8 goals chosen to need multi-step reasoning (`--tier 2`): case splits,
+induction, existential witnesses, hypothesis manipulation.
+
+| config | solve rate |
+|---|---|
+| A: builtins (incl. `exact?`) | **0/8** |
+| B: + premise retrieval | **0/8** |
+| C: + multi-step proposals (LLM channel) | **8/8** |
+
+Config C is the proposal channel (`ProposalFileAgent` + `bench/proposals_tier2.json`):
+an external proposer — Claude via API, a session LLM, or you — submits complete
+tactic scripts, and the kernel filters each as a whole proof. The winning scripts
+include a full induction (`cube_dvd`: divisibility of n³+3n²+2n) and a case-split
+proof of `max a b = (a+b+|a-b|)/2`. Every proposal was written by an LLM reading
+the goal + retrieved premises; the kernel accepted 8/8 first-choice candidates.
+
+`ClaudeAgent` speaks the same protocol automatically: goal + top-10 premises from
+the index → multi-step script candidates (needs `ANTHROPIC_API_KEY`).
+
 ### The premise database
 
 Mathlib **is** the theorem database — we export and index it locally:

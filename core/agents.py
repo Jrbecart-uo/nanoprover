@@ -94,13 +94,15 @@ class BuiltinAgent(TacticAgent):
 # --------------------------------------------------------------------------- #
 
 CLAUDE_SYSTEM = """You are the intuition engine of a Lean 4 / mathlib theorem prover.
-You are shown the current proof goal (Lean tactic-state pretty-print). Propose
-the tactics most likely to make progress or close the goal.
+You are shown a proof goal and a list of RETRIEVED PREMISES (mathlib lemmas
+likely relevant to it). Propose complete tactic SCRIPTS -- each candidate may
+be multiple lines (e.g. "right\nexact abs_sub a b") and should aim to CLOSE
+the goal outright, since the kernel checks each candidate as a whole proof.
 
-Prefer tactics that are valid Lean 4 mathlib syntax. Order them best-first.
-Favor a mix: a direct closer (e.g. `simp`, `aesop`, `exact ...`) and one or two
-structural moves (`intro`, `rcases`, `induction`, `rw [...]`, `apply ...`).
-Return ONLY the structured JSON requested; no prose."""
+Cheap one-shot tactics (simp, omega, exact?) have already failed on this goal,
+so favor multi-step structure: case splits, intro/obtain, rw with a premise
+then a finisher, or a direct proof term using the premises. Valid Lean 4 /
+mathlib syntax only. Return ONLY the structured JSON requested; no prose."""
 
 # Structured-output schema: guarantees we get back parseable JSON, so the search
 # loop never has to defensively parse model prose.
@@ -135,7 +137,7 @@ class ClaudeAgent(TacticAgent):
     name = "claude"
 
     def __init__(self, model: str = "claude-opus-4-8", max_candidates: int = 6,
-                 effort: str = "high"):
+                 effort: str = "high", use_premises: bool = True):
         # Imported lazily so the package loads without `anthropic` installed
         # (e.g. when only running the MockEnv + BuiltinAgent offline).
         import anthropic  # type: ignore
@@ -143,12 +145,34 @@ class ClaudeAgent(TacticAgent):
         self._model = model
         self._max = max_candidates
         self._effort = effort
+        self._pi = None
+        if use_premises:
+            try:
+                import os, sys
+                tools = os.path.join(os.path.dirname(os.path.dirname(
+                    os.path.abspath(__file__))), "tools")
+                if tools not in sys.path:
+                    sys.path.insert(0, tools)
+                import premise_index
+                self._pi = premise_index
+            except Exception:
+                pass  # no index built -- proposals just get no premise context
+
+    def _premises(self, goal_pp: str, k: int = 10) -> str:
+        if self._pi is None:
+            return "(no premise index available)"
+        try:
+            rows = self._pi.query(self._pi.goal_terms(goal_pp), k)
+            return "\n".join("- {} : {}".format(n, t) for n, t, _ in rows)
+        except Exception:
+            return "(premise lookup failed)"
 
     def propose(self, goal_pp: str, k: int) -> List[Candidate]:
         user = (
             "Current Lean proof goal:\n\n```\n{}\n```\n\n"
-            "Propose up to {} tactics, best first."
-        ).format(goal_pp, min(k, self._max))
+            "Retrieved premises (may or may not help):\n{}\n\n"
+            "Propose up to {} tactic scripts, best first."
+        ).format(goal_pp, self._premises(goal_pp), min(k, self._max))
 
         # Fable 5 / Opus 4.8: no temperature/top_p (they 400); adaptive thinking
         # is optional. Effort controls depth. Structured output forces valid JSON.
@@ -266,3 +290,35 @@ class LibraryAgent(TacticAgent):
             out.append(Candidate("apply {}".format(name), base - 0.03, self.name))
             out.append(Candidate("simp [{}]".format(name), base - 0.06, self.name))
         return out[:k]
+
+
+# --------------------------------------------------------------------------- #
+# Proposal-file agent -- the channel for external multi-step proposers
+# --------------------------------------------------------------------------- #
+
+class ProposalFileAgent(TacticAgent):
+    """
+    Reads candidate proof SCRIPTS (possibly multi-line) from a JSON file:
+        { "<goal name or goal text substring>": ["script1", "script2", ...] }
+    This is the universal interface for external proposers -- a Claude API
+    call, a human, or a session LLM all submit through the same channel, and
+    the kernel filters every candidate identically. Multi-line scripts are
+    single candidates: "right\nexact abs_sub a b" is one proposal.
+    """
+    name = "proposals"
+
+    def __init__(self, path: str, goal_key: str = ""):
+        import json
+        with open(path) as f:
+            self._table = json.load(f)
+        self._key = goal_key
+
+    def propose(self, goal_pp: str, k: int) -> List[Candidate]:
+        scripts = self._table.get(self._key, [])
+        if not scripts:  # fall back to substring match on the goal text
+            for key, val in self._table.items():
+                if key and key in goal_pp:
+                    scripts = val
+                    break
+        return [Candidate(s, score=0.95 - 0.01 * i, source=self.name)
+                for i, s in enumerate(scripts[:k])]

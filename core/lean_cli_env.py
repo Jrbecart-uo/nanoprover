@@ -54,9 +54,12 @@ class LeanCLIEnv(ProofEnv):
         return ProofState(key=self._sig, pp=self._sig, handle=self._sig)
 
     def apply(self, state: ProofState, tactic: str):
-        # Build a probe file: the theorem closed by this single tactic.
-        body = "{}\ntheorem __probe__ {} := by\n  {}\n".format(
-            self._preamble, self._sig, tactic)
+        # Build a probe file: the theorem closed by this candidate. The
+        # candidate may be a multi-line tactic SCRIPT (an LLM proposing
+        # "right\nexact abs_sub a b" is one candidate, kernel-checked whole).
+        script = "\n".join("  " + line for line in tactic.splitlines())
+        body = "{}\ntheorem __probe__ {} := by\n{}\n".format(
+            self._preamble, self._sig, script)
         with tempfile.NamedTemporaryFile("w", suffix=".lean", delete=False) as f:
             f.write(body)
             path = f.name

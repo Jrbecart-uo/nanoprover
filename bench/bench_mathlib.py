@@ -51,6 +51,18 @@ GOALS = [
     ("sq_abs_sub",   PRE_REAL, "(a b : ℝ) : (|a| - |b|)^2 ≤ (a - b)^2 ∨ |a - b| ≤ |a| + |b|"),
 ]
 
+# Tier 2: goals expected to need MULTI-STEP reasoning (the LLM-proposer tier).
+GOALS2 = [
+    ("sq_abs_sub",   PRE_REAL, "(a b : ℝ) : (|a| - |b|)^2 ≤ (a - b)^2 ∨ |a - b| ≤ |a| + |b|"),
+    ("abs_ordered",  PRE_REAL, "(a b c : ℝ) (h1 : a ≤ b) (h2 : b ≤ c) : |a - c| = c - a"),
+    ("sq_sum_zero",  PRE_REAL, "(a b : ℝ) (h : a^2 + b^2 = 0) : a = 0"),
+    ("even_succ",    "import Mathlib.Tactic", "(n : ℕ) (h : Even n) (h2 : Even (n+1)) : False"),
+    ("sqrt_exists",  PRE_REAL, "(a : ℝ) (h : 0 < a) : ∃ b, b^2 = a ∧ 0 ≤ b"),
+    ("inv_lt_one",   PRE_REAL, "(x : ℝ) (h : 1 < x) : 1/x < 1"),
+    ("cube_dvd",     "import Mathlib.Tactic", "(n : ℕ) : 3 ∣ n^3 + 3*n^2 + 2*n"),
+    ("max_formula",  PRE_REAL, "(a b : ℝ) : max a b = (a + b + |a - b|) / 2"),
+]
+
 # Builtins trimmed for mathlib mode: 'decide' can hang on Real goals.
 MATHLIB_BUILTINS = ["rfl", "simp", "norm_num", "positivity", "omega",
                     "linarith", "aesop", "tauto", "ring", "exact?"]
@@ -77,29 +89,57 @@ def run_config(goals, agent, label):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--half", type=int, choices=[0, 1], default=None)
+    ap.add_argument("--tier", type=int, choices=[1, 2], default=1)
+    ap.add_argument("--proposals", default=None,
+                    help="JSON of goal->[scripts]; adds config C (builtins+proposals)")
+    ap.add_argument("--skip-ab", action="store_true", help="run only config C")
     ap.add_argument("--out", default="/tmp/bench_results.json")
     args = ap.parse_args()
 
-    goals = GOALS
+    goals = GOALS if args.tier == 1 else GOALS2
     if args.half is not None:
         mid = len(GOALS) // 2
         goals = GOALS[:mid] if args.half == 0 else GOALS[mid:]
 
-    print("== A: builtins only ==")
-    a = run_config(goals, PortfolioAgent([BuiltinAgent(MATHLIB_BUILTINS)]), "A")
-    print("== B: builtins + premise retrieval ==")
-    b = run_config(goals, PortfolioAgent([BuiltinAgent(MATHLIB_BUILTINS),
-                                          LibraryAgent(k=4)]), "B")
+    payload = {}
+    if not args.skip_ab:
+        print("== A: builtins only ==")
+        a = run_config(goals, PortfolioAgent([BuiltinAgent(MATHLIB_BUILTINS)]), "A")
+        print("== B: builtins + premise retrieval ==")
+        b = run_config(goals, PortfolioAgent([BuiltinAgent(MATHLIB_BUILTINS),
+                                              LibraryAgent(k=4)]), "B")
+        na = sum(1 for r in a.values() if r["solved"])
+        nb = sum(1 for r in b.values() if r["solved"])
+        print("\nsolve rate: builtins {}/{}   builtins+library {}/{}"
+              .format(na, len(goals), nb, len(goals)))
+        residual = [n for n in b if not b[n]["solved"]]
+        if residual:
+            print("residual (LLM/human territory): {}".format(", ".join(residual)))
+        payload = {"A_builtins": a, "B_with_library": b}
 
-    na = sum(1 for r in a.values() if r["solved"])
-    nb = sum(1 for r in b.values() if r["solved"])
-    print("\nsolve rate: builtins {}/{}   builtins+library {}/{}"
-          .format(na, len(goals), nb, len(goals)))
-    residual = [n for n in b if not b[n]["solved"]]
-    if residual:
-        print("residual (LLM/human territory): {}".format(", ".join(residual)))
-
-    payload = {"A_builtins": a, "B_with_library": b}
+    if args.proposals:
+        from agents import ProposalFileAgent
+        import json as _json
+        table = _json.load(open(args.proposals))
+        print("== C: builtins + external proposals ==")
+        c = {}
+        for name, pre, sig in goals:
+            agents_list = [BuiltinAgent(MATHLIB_BUILTINS),
+                           ProposalFileAgent(args.proposals, goal_key=name)]
+            env = LeanCLIEnv(signature=sig, preamble=pre,
+                             lean_cmd=["lake", "env", "lean"], cwd=MATHLIB,
+                             timeout=90)
+            t0 = time.time()
+            r = search(env, PortfolioAgent(agents_list),
+                       branching=16, max_expansions=1, verbose=False)
+            c[name] = {"solved": r.solved, "proof": r.proof,
+                       "secs": round(time.time() - t0, 1)}
+            print("  [C] {:14s} {}  ({}s){}".format(
+                name, "SOLVED" if r.solved else "  --  ", c[name]["secs"],
+                "  via " + " || ".join(r.proof) if r.solved else ""))
+        nc = sum(1 for r in c.values() if r["solved"])
+        print("\nsolve rate with proposals: {}/{}".format(nc, len(goals)))
+        payload["C_with_proposals"] = c
     mode = "r+" if os.path.exists(args.out) and args.half is not None else "w"
     if mode == "r+":
         with open(args.out) as f:
