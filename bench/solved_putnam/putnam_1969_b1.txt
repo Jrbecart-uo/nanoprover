@@ -1,0 +1,66 @@
+import Mathlib
+
+set_option maxHeartbeats 800000
+
+open Matrix Filter Topology Set Nat
+
+theorem putnam_1969_b1
+(n : ℕ)
+(hnpos : n > 0)
+(hn : 24 ∣ n + 1)
+: 24 ∣ ∑ d ∈ divisors n, d := by
+  have hn0 : n ≠ 0 := by omega
+  have hncast : (n : ZMod 24) = -1 := by
+    have h0 : ((n + 1 : ℕ) : ZMod 24) = 0 := (CharP.cast_eq_zero_iff (ZMod 24) 24 _).mpr hn
+    push_cast at h0
+    linear_combination h0
+  have hsq : ∀ u : (ZMod 24)ˣ, (u : ZMod 24) * (u : ZMod 24) = 1 := by decide
+  have hne : (1 : ZMod 24) ≠ -1 := by decide
+  have hco : ∀ d : ℕ, d ∣ n → Nat.Coprime d 24 := by
+    intro d hdvd
+    have hdn : Nat.gcd d 24 ∣ n := (Nat.gcd_dvd_left d 24).trans hdvd
+    have hd24 : Nat.gcd d 24 ∣ n + 1 := (Nat.gcd_dvd_right d 24).trans hn
+    have h1 : Nat.gcd d 24 ∣ n + 1 - n := Nat.dvd_sub hd24 hdn
+    have h2 : n + 1 - n = 1 := by omega
+    rw [h2] at h1
+    exact Nat.dvd_one.mp h1
+  have hdd : ∀ d : ℕ, d ∣ n → (d : ZMod 24) * (d : ZMod 24) = 1 := by
+    intro d hdvd
+    obtain ⟨u, hu⟩ := (ZMod.isUnit_iff_coprime d 24).mpr (hco d hdvd)
+    rw [← hu]
+    exact hsq u
+  have hprod : ∀ d : ℕ, d ∣ n → (d : ZMod 24) * ((n / d : ℕ) : ZMod 24) = -1 := by
+    intro d hdvd
+    have h1 : ((d * (n / d) : ℕ) : ZMod 24) = -1 := by
+      rw [Nat.mul_div_cancel' hdvd]
+      exact hncast
+    push_cast at h1
+    exact h1
+  rw [← CharP.cast_eq_zero_iff (ZMod 24) 24]
+  push_cast
+  refine Finset.sum_involution (fun d _ => n / d) ?_ ?_ ?_ ?_
+  · intro d hd
+    obtain ⟨hdvd, -⟩ := Nat.mem_divisors.mp hd
+    have hx : ((n / d : ℕ) : ZMod 24) = -(d : ZMod 24) := by
+      have h2 := hdd d hdvd
+      calc ((n / d : ℕ) : ZMod 24)
+          = ((d : ZMod 24) * (d : ZMod 24)) * ((n / d : ℕ) : ZMod 24) := by rw [h2, one_mul]
+        _ = (d : ZMod 24) * ((d : ZMod 24) * ((n / d : ℕ) : ZMod 24)) := by ring
+        _ = (d : ZMod 24) * (-1) := by rw [hprod d hdvd]
+        _ = -(d : ZMod 24) := by ring
+    rw [hx]
+    ring
+  · intro d hd _ heq
+    obtain ⟨hdvd, -⟩ := Nat.mem_divisors.mp hd
+    have h1 := hprod d hdvd
+    rw [heq] at h1
+    rw [hdd d hdvd] at h1
+    exact hne h1
+  · intro d hd
+    obtain ⟨hdvd, -⟩ := Nat.mem_divisors.mp hd
+    exact Nat.mem_divisors.mpr ⟨⟨d, (Nat.div_mul_cancel hdvd).symm⟩, hn0⟩
+  · intro d hd
+    obtain ⟨hdvd, -⟩ := Nat.mem_divisors.mp hd
+    exact Nat.div_div_self hdvd hn0
+
+#print axioms putnam_1969_b1
