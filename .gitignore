@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 lean4-example/
 .lake/
+mathlib4/
