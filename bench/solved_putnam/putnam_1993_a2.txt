@@ -1,0 +1,33 @@
+import Mathlib
+
+set_option maxHeartbeats 800000
+
+theorem putnam_1993_a2
+(x : ℕ → ℝ)
+(xnonzero : ∀ n : ℕ, x n ≠ 0)
+(hx : ∀ n ≥ 1, (x n) ^ 2 - x (n - 1) * x (n + 1) = 1)
+: ∃ a : ℝ, ∀ n ≥ 1, x (n + 1) = a * x n - x (n - 1) := by
+  use (x 0 + x 2) / x 1
+  have key : ∀ n, 1 ≤ n → (x 0 + x 2) / x 1 * x n = x (n - 1) + x (n + 1) := by
+    intro n hn
+    induction n, hn using Nat.le_induction with
+    | base =>
+      rw [div_mul_cancel₀ _ (xnonzero 1)]
+    | succ n hn ih =>
+      have h1 := hx n hn
+      have h2 := hx (n + 1) (by omega)
+      rw [Nat.add_sub_cancel] at h2
+      have hcross : x (n + 1) * (x (n - 1) + x (n + 1)) = x n * (x n + x (n + 2)) := by
+        linear_combination h2 - h1
+      have h3 : (x 0 + x 2) / x 1 * x n * x (n + 1)
+          = (x (n - 1) + x (n + 1)) * x (n + 1) := by
+        rw [ih]
+      have h5 : x n * ((x 0 + x 2) / x 1 * x (n + 1)) = x n * (x n + x (n + 2)) := by
+        linear_combination h3 + hcross
+      rw [Nat.add_sub_cancel]
+      exact mul_left_cancel₀ (xnonzero n) h5
+  intro n hn
+  have h := key n hn
+  linarith
+
+#print axioms putnam_1993_a2
