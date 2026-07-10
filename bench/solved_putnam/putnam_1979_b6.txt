@@ -1,0 +1,59 @@
+import Mathlib
+
+set_option maxHeartbeats 800000
+
+theorem putnam_1979_b6
+(n : ℕ)
+(z : Fin n → ℂ)
+: (|((∑ i : Fin n, (z i) ^ 2) ^ ((1 : ℂ) / 2)).re| ≤ ∑ i : Fin n, |(z i).re|) := by
+  have hSx : 0 ≤ ∑ i : Fin n, |(z i).re| := Finset.sum_nonneg fun i _ => abs_nonneg _
+  rcases eq_or_ne (∑ i : Fin n, (z i) ^ 2) 0 with h0 | h0
+  · rw [h0, Complex.zero_cpow (by norm_num : (1 : ℂ) / 2 ≠ 0)]
+    simpa using hSx
+  · set w : ℂ := (∑ i : Fin n, (z i) ^ 2) ^ ((1 : ℂ) / 2) with hw
+    have hw2 : w * w = ∑ i : Fin n, (z i) ^ 2 := by
+      rw [hw, ← Complex.cpow_add _ _ h0]
+      have h : (1 : ℂ) / 2 + 1 / 2 = 1 := by norm_num
+      rw [h, Complex.cpow_one]
+    have hre : w.re * w.re - w.im * w.im
+        = (∑ i : Fin n, (z i).re ^ 2) - ∑ i : Fin n, (z i).im ^ 2 := by
+      have h := congrArg Complex.re hw2
+      rw [Complex.mul_re, Complex.re_sum] at h
+      rw [h, ← Finset.sum_sub_distrib]
+      apply Finset.sum_congr rfl
+      intro i _
+      rw [pow_two, Complex.mul_re]
+      ring
+    have him : w.re * w.im + w.im * w.re = 2 * ∑ i : Fin n, (z i).re * (z i).im := by
+      have h := congrArg Complex.im hw2
+      rw [Complex.mul_im, Complex.im_sum] at h
+      rw [h, Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro i _
+      rw [pow_two, Complex.mul_im]
+      ring
+    have hRM : w.re * w.im = ∑ i : Fin n, (z i).re * (z i).im := by linarith
+    have hCS := Finset.sum_mul_sq_le_sq_mul_sq Finset.univ
+      (fun i => (z i).re) (fun i => (z i).im)
+    have hP2 : (w.re * w.im) ^ 2 = (∑ i : Fin n, (z i).re * (z i).im) ^ 2 := by rw [hRM]
+    have hXnn : 0 ≤ ∑ i : Fin n, (z i).re ^ 2 := Finset.sum_nonneg fun i _ => sq_nonneg _
+    have hY : 0 ≤ ∑ i : Fin n, (z i).im ^ 2 := Finset.sum_nonneg fun i _ => sq_nonneg _
+    have hX2 : (∑ i : Fin n, (z i).re ^ 2) ≤ (∑ i : Fin n, |(z i).re|) ^ 2 := by
+      have h1 : (∑ i : Fin n, |(z i).re| ^ 2) ≤ (∑ i : Fin n, |(z i).re|) ^ 2 :=
+        Finset.sum_sq_le_sq_sum_of_nonneg fun i _ => abs_nonneg _
+      have h2 : (∑ i : Fin n, (z i).re ^ 2) = ∑ i : Fin n, |(z i).re| ^ 2 := by
+        simp [sq_abs]
+      rw [h2]
+      exact h1
+    have hprod : (w.re ^ 2 - ∑ i : Fin n, (z i).re ^ 2)
+        * (w.re ^ 2 + ∑ i : Fin n, (z i).im ^ 2) ≤ 0 := by
+      nlinarith [hP2, hCS, hre, sq_nonneg w.re, sq_nonneg w.im]
+    have hR2 : w.re ^ 2 ≤ ∑ i : Fin n, (z i).re ^ 2 := by
+      rcases eq_or_ne w.im 0 with hM | hM
+      · nlinarith [hre, hY, hM]
+      · have hM2 : 0 < w.im ^ 2 := by positivity
+        nlinarith [hprod, hM2, hre, hXnn, hY]
+    have hR2Sx : w.re ^ 2 ≤ (∑ i : Fin n, |(z i).re|) ^ 2 := le_trans hR2 hX2
+    nlinarith [sq_abs w.re, abs_nonneg w.re, hSx, hR2Sx]
+
+#print axioms putnam_1979_b6
