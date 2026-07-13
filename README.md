@@ -253,6 +253,27 @@ python tools/premise_index.py build "data/thms_types_*.tsv"   # → 158MB SQLite
 python tools/premise_index.py goal "|a + b| ≤ |a| + |b|"      # ranked lemmas, ~ms
 ```
 
+### The persistent REPL
+
+Checking a proof used to cost a fresh `lake env lean` elaboration (~6s with
+`import Mathlib.Tactic`, ~15s with full `import Mathlib`). `tools/repl.py`
+daemonizes [leanprover-community/repl](https://github.com/leanprover-community/repl)
+with full Mathlib pre-imported, served over a unix socket:
+
+```bash
+python tools/repl.py start            # one-time boot (~6s warm, ~2min cold cache)
+python tools/repl.py check proof.lean # full Putnam proof: ~0.5s   (was ~6-8s)
+python tools/repl.py code 'example : 2+2=4 := by norm_num'         # ~0.06s
+python tools/repl.py tactic 2 'obtain ⟨k, rfl⟩ := h'  # step a proofState, see goals
+```
+
+`sorry` in a submission returns a **proofState id + the real goal**, so proofs
+can be grown hypothesis-by-hypothesis (propose a `have`, read the resulting
+goal, adjust) instead of written blind. Each check runs against the pristine
+base environment — named theorems from earlier checks are not visible, so a
+candidate can never cite a sibling variant of itself (setup: clone the repl
+repo at the toolchain matching `mathlib4/lean-toolchain`, `lake build`).
+
 ## What's in the box
 
 | path | what it is |
@@ -264,7 +285,7 @@ python tools/premise_index.py goal "|a + b| ≤ |a| + |b|"      # ranked lemmas,
 | `core/search.py` | best-first backward search over proof states |
 | `collatz/` | the full Collatz campaign: formalization, closure lemmas, both generations of the discovery loop, and the kernel-checked theorem databases |
 | `prop_poc/` | chapter zero: the original 150-line propositional PoC (forward chaining, `A→B` + `B→C` ⇒ `A→C`) |
-| `tools/` | mathlib database export (sharded) + SQLite FTS5 premise index |
+| `tools/` | mathlib database export (sharded) + SQLite FTS5 premise index + persistent REPL daemon |
 | `bench/` | the builtins-vs-retrieval baseline (results in `bench/results.json`) |
 
 ## What this is NOT

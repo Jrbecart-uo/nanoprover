@@ -8,3 +8,5 @@ mathlib_theorems.txt
 data/
 miniF2F-lean4/
 PutnamBench/
+.repl/
+repl/
