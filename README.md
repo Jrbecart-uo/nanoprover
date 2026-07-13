@@ -265,7 +265,14 @@ python tools/repl.py start            # one-time boot (~6s warm, ~2min cold cach
 python tools/repl.py check proof.lean # full Putnam proof: ~0.5s   (was ~6-8s)
 python tools/repl.py code 'example : 2+2=4 := by norm_num'         # ~0.06s
 python tools/repl.py tactic 2 'obtain ⟨k, rfl⟩ := h'  # step a proofState, see goals
+python tools/repl.py check att.lean --lemmas          # with lemmas.lean in scope
 ```
+
+At boot the daemon also elaborates `lemmas.lean` — the reusable lemma library
+distilled from solved proofs (exponent congruence via totient, divisor-pairing
+skeleton, `ZMod p²` cross-term killers, the `group_nf` normalizer) — into a
+second env that `--lemmas` selects. `KNOWN_TRAPS.md` is the matching negative
+knowledge: read it before proving, append to it after every failed round.
 
 `sorry` in a submission returns a **proofState id + the real goal**, so proofs
 can be grown hypothesis-by-hypothesis (propose a `have`, read the resulting

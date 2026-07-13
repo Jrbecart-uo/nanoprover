@@ -35,6 +35,7 @@ SOCK = os.path.join(RUN_DIR, "repl.sock")
 PIDFILE = os.path.join(RUN_DIR, "daemon.pid")
 LOG = os.path.join(RUN_DIR, "daemon.log")
 STATE = os.path.join(RUN_DIR, "state.json")
+LEMMAS = os.path.join(REPO, "lemmas.lean")
 
 DEFAULT_IMPORTS = "Mathlib"
 REQUEST_TIMEOUT = 300  # seconds per REPL command before restart
@@ -120,6 +121,24 @@ class Repl:
 
 # ------------------------------------------------------------------- server
 
+def _load_lemmas(repl):
+    """Elaborate lemmas.lean into a dedicated env; None if absent/broken."""
+    if not os.path.exists(LEMMAS):
+        return None
+    src = "\n".join(l for l in open(LEMMAS).read().splitlines()
+                    if not l.strip().startswith("import "))
+    try:
+        resp = repl.request({"cmd": src, "env": repl.base_env}, timeout=600)
+        if any(m["severity"] == "error" for m in resp.get("messages", [])):
+            log(f"lemmas.lean has errors, not loading: {resp['messages'][:1]}")
+            return None
+        log(f"lemmas.lean loaded as env {resp['env']}")
+        return resp["env"]
+    except (TimeoutError, RuntimeError) as e:
+        log(f"lemmas.lean load failed: {e}")
+        return None
+
+
 def serve(imports):
     os.makedirs(RUN_DIR, exist_ok=True)
     repl = Repl(imports)
@@ -127,7 +146,8 @@ def serve(imports):
     _write_state({"ready": False, "phase": "importing", "pid": os.getpid(),
                   "imports": imports, "started": time.time()})
     repl.start()
-    _write_state({"ready": True, "base_env": repl.base_env, "pid": os.getpid(),
+    _write_state({"ready": True, "base_env": repl.base_env,
+                  "lemmas_env": _load_lemmas(repl), "pid": os.getpid(),
                   "imports": imports, "boot_seconds": repl.boot_seconds,
                   "started": time.time()})
 
@@ -149,7 +169,10 @@ def serve(imports):
                 data += chunk
             req = json.loads(data.decode())
             if req.get("op") == "shutdown":
-                conn.sendall(b'{"ok": true}\n')
+                try:
+                    conn.sendall(b'{"ok": true}\n')
+                except OSError:
+                    pass
                 conn.close()
                 break
             cmd = req["cmd"]
@@ -166,6 +189,7 @@ def serve(imports):
                 repl = Repl(imports)
                 repl.start()
                 _write_state({"ready": True, "base_env": repl.base_env,
+                              "lemmas_env": _load_lemmas(repl),
                               "pid": os.getpid(), "imports": imports,
                               "boot_seconds": repl.boot_seconds,
                               "started": time.time()})
@@ -275,14 +299,13 @@ def main():
     s.add_argument("--imports", default=DEFAULT_IMPORTS)
     sub.add_parser("status")
     sub.add_parser("stop")
-    c = sub.add_parser("check")
-    c.add_argument("file")
-    c.add_argument("--env", type=int, default=None)
-    c.add_argument("--timeout", type=int, default=REQUEST_TIMEOUT)
-    d = sub.add_parser("code")
-    d.add_argument("snippet")
-    d.add_argument("--env", type=int, default=None)
-    d.add_argument("--timeout", type=int, default=REQUEST_TIMEOUT)
+    for name in ("check", "code"):
+        c = sub.add_parser(name)
+        c.add_argument("file" if name == "check" else "snippet")
+        c.add_argument("--env", type=int, default=None)
+        c.add_argument("--lemmas", action="store_true",
+                       help="run against the env with lemmas.lean pre-loaded")
+        c.add_argument("--timeout", type=int, default=REQUEST_TIMEOUT)
     t = sub.add_parser("tactic")
     t.add_argument("state", type=int)
     t.add_argument("tac")
@@ -312,13 +335,19 @@ def main():
             c.settimeout(10)
             c.connect(SOCK)
             c.sendall(b'{"op": "shutdown"}\n')
+            c.recv(64)  # wait for ack so the pidfile is gone before we return
             c.close()
+            for _ in range(20):
+                if _ping() is None:
+                    break
+                time.sleep(0.5)
             print("stopped")
         except OSError:
             os.kill(st["pid"], 9)
             print("killed")
     elif a.op in ("check", "code"):
-        if _ping() is None:
+        st = _ping()
+        if st is None:
             sys.exit("daemon not running; repl.py start")
         if a.op == "check":
             src = sys.stdin.read() if a.file == "-" else open(a.file).read()
@@ -328,6 +357,10 @@ def main():
         src = "\n".join(l for l in src.splitlines()
                         if not l.strip().startswith("import "))
         cmd = {"cmd": src}
+        if a.lemmas:
+            if st.get("lemmas_env") is None:
+                sys.exit("no lemmas env (lemmas.lean missing/broken at boot)")
+            cmd["env"] = st["lemmas_env"]
         if a.env is not None:
             cmd["env"] = a.env
         print_result(ask(cmd, timeout=a.timeout))
