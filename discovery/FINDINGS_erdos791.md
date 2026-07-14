@@ -143,3 +143,79 @@ Still 0.289115646. Our best automated design: 0.2824. We did not beat it, and
 after this round I believe the reason is structural rather than a lack of
 search: the ansatz is forced, its ceiling is unattainable, and the record sits
 at a very deep optimum inside it.
+
+---
+
+# Round 3 — the general (combining-tile) criterion. Still no improvement.
+
+**Result: NO. Still 0.289115646.**
+
+## What we built
+
+Kohonen's framework uses only two covering facts (a tile contains a whole
+square; two consecutive parallelograms contain one). We replaced it with the
+**exact general criterion**, which allows tiles to COMBINE:
+
+A tile `X_i + X_j` placed at square-position `p` covers
+`A_ij = (X_i+X_j) ∩ [0,t²)` of square `p`, and `B_ij = (X_i+X_j) ∩ [t²,2t²)`
+of square `p+1`. Square `s` is covered iff
+
+    Q  ==  ⋃{ A_ij : s ∈ P_i+P_j }  ∪  ⋃{ B_ij : s-1 ∈ P_i+P_j }
+
+so PARTIAL tiles can complete each other. This strictly generalises Kohonen
+(his two facts are the special cases `A = Q` and `A ∪ B = Q`). **Verified
+faithful: it reproduces his m = 510 exactly.**
+
+## What we found — and it kills his own escape route
+
+Adding the fourth segment `T` = the other diagonal (step t−1), the tile
+inventory at t=12 is:
+
+| tile | status |
+|---|---|
+| V+H, V+S | full square (Kohonen's) |
+| **V+T** | **FULL SQUARE — a genuine third square channel** |
+| H+S | parallelogram pair (Kohonen's) |
+| **H+T** | **parallelogram pair — works** |
+| **S+T** | **PARTIAL: \|A\|=84, \|B\|=72, A ∪ B ≠ Q — DEAD** |
+
+So a fourth segment really does open new channels — *but not all six*. And that
+is fatal, because of the arithmetic:
+
+* with **all six** channels alive, balanced, the ceiling is **3/8 = 0.375**;
+* with **S+T dead**, write u = |K|+|L|; the capacity becomes
+  `x·(y+u) + y·u` — which is symmetric in (x, y, u) and maximised at
+  x = y = u = ℓ/3, giving **exactly ℓ²/3 again**.
+
+**The fourth segment buys nothing.** Splitting a segment into two whose mutual
+channel is dead is worth precisely as much as not splitting it. That is why
+Kohonen's suggested escape route fails — not because no fourth segment exists
+(V+T and H+T both work!), but because **S+T is dead, and that collapses the
+ceiling straight back to 1/3.**
+
+## Searches run in the 4-segment space (general criterion)
+
+| search | result |
+|---|---|
+| single-element additions to any of the 4 placements, from Kohonen | local optimum immediately |
+| structured grafts (APs, blocks) into all 4 placements, from Kohonen | no improvement |
+| same, built from scratch | 0.2367 |
+
+A single element cannot even pay for itself: at ℓ=42, growing to ℓ=43 requires
+**+25 squares** from that one element. Segments only pay in structured groups,
+and no structured group we could construct pays.
+
+## Standing conclusion after three rounds
+
+The record is 0.289115646 and we could not move it. The evidence now says the
+obstruction is structural:
+
+1. the counting ceiling of 1/3 is **unattainable** (three perfect tilings are
+   impossible — the polynomial argument);
+2. Kohonen sits at a **deep** local optimum (19M annealing steps, exhaustive
+   coordinate descent, joint moves — all fail);
+3. the **fourth-segment escape route does not work**, and now we know exactly
+   why: S+T is dead, which restores the 1/3 ceiling.
+
+That is three independent walls. We did not beat the record, and we can now say
+something better than "the search plateaued" — we can say where the walls are.
