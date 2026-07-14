@@ -237,6 +237,31 @@
   "lines": 34
  },
  {
+  "name": "putnam_1996_a5",
+  "bench": "putnam",
+  "features": [
+   "binomial",
+   "divisibility",
+   "finset_sum",
+   "primes",
+   "set"
+  ],
+  "tactics": [
+   "induction",
+   "simp",
+   "omega",
+   "push_cast",
+   "linear_combination",
+   "ring",
+   "refine",
+   "obtain"
+  ],
+  "story": "PAIR OFF THE DANCERS, ON THE MIDDLE THIRD. p | C(p,i) lets you divide the whole problem by p, dropping it into the FIELD ZMod p. What is left is a harmonic sum over (p/3, 2p/3] — a range symmetric under i ↦ p-i, where 1/(p-i) = -1/i. The sum is its own negative: it is 0.",
+  "statement": "theorem putnam_1996_a5 (p : ℕ) (hpprime : Prime p) (hpge3 : p > 3) (k : ℕ) (hk : k = Nat.floor (2*p/(3 : ℚ))) : p^2 ∣ ∑ i ∈ Finset.Icc 1 k, Nat.choose p i :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1996_a5.txt",
+  "lines": 216
+ },
+ {
   "name": "putnam_1997_b5",
   "bench": "putnam",
   "features": [

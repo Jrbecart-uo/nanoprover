@@ -68,6 +68,11 @@ STORIES = {
     "putnam_1969_b1":
         "PAIR OFF THE DANCERS. Every divisor d has a partner n/d; the two "
         "cancel mod 24, and nobody is their own partner. Sum dies by pairing.",
+    "putnam_1996_a5":
+        "PAIR OFF THE DANCERS, ON THE MIDDLE THIRD. p | C(p,i) lets you divide "
+        "the whole problem by p, dropping it into the FIELD ZMod p. What is "
+        "left is a harmonic sum over (p/3, 2p/3] — a range symmetric under "
+        "i ↦ p-i, where 1/(p-i) = -1/i. The sum is its own negative: it is 0.",
     "putnam_1997_b5":
         "THE TOWER STOPS MATTERING. Above a certain height a power tower is "
         "invisible mod n — like a clock, only the remainder shows. Recurse on "

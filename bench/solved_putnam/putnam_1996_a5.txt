@@ -1,0 +1,215 @@
+import Mathlib
+
+set_option maxHeartbeats 800000
+
+/-!
+Putnam 1996 A5.  For a prime p > 3 and k = ⌊2p/3⌋,  p² ∣ ∑_{i=1}^{k} C(p,i).
+
+Since p ∣ C(p,i) for 1 ≤ i ≤ k < p, write C(p,i) = p·cᵢ.  Then the claim
+p² ∣ ∑ C(p,i) is exactly p ∣ ∑ cᵢ, and the whole problem drops out of the
+FIELD ZMod p — no ZMod p² arithmetic anywhere.
+
+From i·C(p,i) = p·C(p-1,i-1) we get i·cᵢ = C(p-1,i-1), and C(p-1,j) ≡ (-1)^j
+(mod p) by Pascal.  So cᵢ ≡ (-1)^(i-1)/i and
+
+    ∑_{i=1}^{k} cᵢ ≡ ∑_{i=1}^{k} (-1)^(i-1)/i = H_k - H_{k/2} = ∑_{i=k/2+1}^{k} 1/i.
+
+That last range is the MIDDLE THIRD (⌊p/3⌋, ⌊2p/3⌋], and it is symmetric under
+i ↦ p - i because ⌊p/3⌋ + ⌊2p/3⌋ = p - 1.  Since 1/(p-i) = -1/i, the sum is its
+own negative: PAIR OFF THE DANCERS and everything cancels.
+-/
+
+/-- Pascal: `C(p-1, j) ≡ (-1)^j (mod p)`.  Not in mathlib. -/
+private theorem cpred (p : ℕ) (hp : Nat.Prime p) :
+    ∀ j, j < p → (((p - 1).choose j : ℕ) : ZMod p) = (-1) ^ j := by
+  intro j
+  induction j with
+  | zero => intro _; simp
+  | succ n ih =>
+    intro hn
+    have hp1 : p - 1 + 1 = p := by have := hp.two_le; omega
+    have hpascal : p.choose (n + 1) = (p - 1).choose n + (p - 1).choose (n + 1) := by
+      conv_lhs => rw [← hp1]
+      exact Nat.choose_succ_succ (p - 1) n
+    have hdvd : p ∣ p.choose (n + 1) := hp.dvd_choose_self (by omega) hn
+    have hz : ((p.choose (n + 1) : ℕ) : ZMod p) = 0 :=
+      (CharP.cast_eq_zero_iff (ZMod p) p _).mpr hdvd
+    rw [hpascal] at hz
+    push_cast at hz
+    rw [ih (by omega)] at hz
+    have h2 : (((p - 1).choose (n + 1) : ℕ) : ZMod p) = -(-1) ^ n := by
+      linear_combination hz
+    rw [h2]; ring
+
+/-- The alternating harmonic sum vanishes mod p at length k = ⌊2p/3⌋. -/
+private theorem tzero (p k m : ℕ) (hp : Nat.Prime p) (hp3 : 3 < p) (hm : m = k / 2)
+    (hmk : m + k = p - 1) (hkp : k < p) (hk0 : 0 < k) :
+    ∑ i ∈ Finset.Icc 1 k, ((-1 : ZMod p)) ^ (i - 1) * (i : ZMod p)⁻¹ = 0 := by
+  haveI := Fact.mk hp
+  set f : ℕ → ZMod p := fun i => ((-1 : ZMod p)) ^ (i - 1) * (i : ZMod p)⁻¹ with hf
+  set g : ℕ → ZMod p := fun i => (i : ZMod p)⁻¹ with hg
+  -- the even-index part reindexes to a half-length harmonic sum
+  have himg : (Finset.Icc 1 k).filter (fun i => Even i)
+      = (Finset.Icc 1 m).image (fun j => 2 * j) := by
+    ext i
+    simp only [Finset.mem_filter, Finset.mem_Icc, Finset.mem_image]
+    constructor
+    · rintro ⟨⟨h1, h2⟩, j, rfl⟩
+      exact ⟨j, ⟨by omega, by omega⟩, by omega⟩
+    · rintro ⟨j, ⟨hj1, hj2⟩, rfl⟩
+      exact ⟨⟨by omega, by omega⟩, j, by omega⟩
+  have hinj : ∀ x ∈ Finset.Icc 1 m, ∀ y ∈ Finset.Icc 1 m, 2 * x = 2 * y → x = y := by
+    intro x _ y _ h; omega
+  have hE : ∑ i ∈ (Finset.Icc 1 k).filter (fun i => Even i), g i
+      = (2 : ZMod p)⁻¹ * ∑ j ∈ Finset.Icc 1 m, g j := by
+    rw [himg, Finset.sum_image hinj, Finset.mul_sum]
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    simp only [hg, Nat.cast_mul, Nat.cast_ofNat]
+    rw [mul_inv]
+  -- the sign is -1 on evens, +1 on odds
+  have hsign_even : ∀ i ∈ (Finset.Icc 1 k).filter (fun i => Even i), f i = - g i := by
+    intro i hi
+    simp only [Finset.mem_filter, Finset.mem_Icc] at hi
+    obtain ⟨⟨h1, _⟩, j, rfl⟩ := hi
+    have h : j + j - 1 = 2 * (j - 1) + 1 := by omega
+    simp only [hf, hg, h, pow_succ, pow_mul]
+    norm_num
+  have hsign_odd : ∀ i ∈ (Finset.Icc 1 k).filter (fun i => ¬ Even i), f i = g i := by
+    intro i hi
+    simp only [Finset.mem_filter, Finset.mem_Icc, Nat.not_even_iff_odd] at hi
+    obtain ⟨⟨h1, _⟩, j, rfl⟩ := hi
+    have h : 2 * j + 1 - 1 = 2 * j := by omega
+    simp only [hf, hg, h, pow_mul]
+    norm_num
+  have hsplit := Finset.sum_filter_add_sum_filter_not (Finset.Icc 1 k) (fun i => Even i) f
+  have hsplitg := Finset.sum_filter_add_sum_filter_not (Finset.Icc 1 k) (fun i => Even i) g
+  rw [Finset.sum_congr rfl hsign_even, Finset.sum_congr rfl hsign_odd,
+      Finset.sum_neg_distrib] at hsplit
+  have h2ne : (2 : ZMod p) ≠ 0 := by
+    intro hcon
+    have hc : ((2 : ℕ) : ZMod p) = 0 := by exact_mod_cast hcon
+    rw [CharP.cast_eq_zero_iff (ZMod p) p] at hc
+    have := Nat.le_of_dvd (by norm_num) hc
+    omega
+  have h2 : (2 : ZMod p) * (2 : ZMod p)⁻¹ = 1 := mul_inv_cancel₀ h2ne
+  -- alternating sum = H_k - H_{k/2}
+  have hT : ∑ i ∈ Finset.Icc 1 k, f i
+      = ∑ i ∈ Finset.Icc 1 k, g i - ∑ j ∈ Finset.Icc 1 m, g j := by
+    linear_combination (-1 : ZMod p) * hsplit + hsplitg - 2 * hE
+      - (∑ j ∈ Finset.Icc 1 m, g j) * h2
+  -- H_k - H_{k/2} = the sum over the middle third
+  have hunion : Finset.Icc 1 m ∪ Finset.Ioc m k = Finset.Icc 1 k := by
+    ext a
+    simp only [Finset.mem_union, Finset.mem_Icc, Finset.mem_Ioc]
+    omega
+  have hdisj : Disjoint (Finset.Icc 1 m) (Finset.Ioc m k) := by
+    rw [Finset.disjoint_left]
+    intro a ha hb
+    simp only [Finset.mem_Icc] at ha
+    simp only [Finset.mem_Ioc] at hb
+    omega
+  have hHk : ∑ i ∈ Finset.Icc 1 k, g i
+      = ∑ i ∈ Finset.Icc 1 m, g i + ∑ i ∈ Finset.Ioc m k, g i := by
+    rw [← hunion, Finset.sum_union hdisj]
+  rw [hT, hHk]
+  -- the middle third is symmetric under i ↦ p - i, and 1/(p-i) = -1/i
+  have hpair : ∑ i ∈ Finset.Ioc m k, g i = 0 := by
+    obtain ⟨t, ht⟩ : Odd p := hp.odd_of_ne_two (by omega)
+    refine Finset.sum_involution (fun i _ => p - i) ?_ ?_ ?_ ?_
+    · intro a ha
+      simp only [Finset.mem_Ioc] at ha
+      have hle : a ≤ p := by omega
+      have hcast : ((p - a : ℕ) : ZMod p) = -(a : ZMod p) := by
+        have h := Nat.cast_sub (R := ZMod p) hle
+        rw [h, ZMod.natCast_self]; ring
+      simp only [hg]
+      rw [hcast, inv_neg]; ring
+    · intro a ha _ hcon
+      simp only [Finset.mem_Ioc] at ha
+      omega
+    · intro a ha
+      simp only [Finset.mem_Ioc] at ha ⊢
+      omega
+    · intro a ha
+      simp only [Finset.mem_Ioc] at ha
+      omega
+  rw [hpair]
+  ring
+
+theorem putnam_1996_a5
+(p : ℕ)
+(hpprime : Prime p)
+(hpge3 : p > 3)
+(k : ℕ)
+(hk : k = Nat.floor (2*p/(3 : ℚ)))
+: p^2 ∣ ∑ i ∈ Finset.Icc 1 k, Nat.choose p i := by
+  have hp : Nat.Prime p := Nat.prime_iff.mpr hpprime
+  haveI := Fact.mk hp
+  -- ⌊2p/3⌋ as a natural division
+  have hkdiv : k = 2 * p / 3 := by
+    have hq : ((2 * p : ℕ) : ℚ) / ((3 : ℕ) : ℚ) = 2 * p / (3 : ℚ) := by push_cast; ring
+    rw [hk, ← hq, Nat.floor_div_natCast, Nat.floor_natCast]
+  -- p is not divisible by 3, so ⌊p/3⌋ + ⌊2p/3⌋ = p - 1 exactly
+  have h3 : p % 3 ≠ 0 := by
+    intro hcon
+    have : (3 : ℕ) ∣ p := Nat.dvd_of_mod_eq_zero hcon
+    rcases (Nat.Prime.eq_one_or_self_of_dvd hp 3 this) with h | h <;> omega
+  set m := k / 2 with hm
+  have harith : m + k = p - 1 ∧ k < p ∧ 0 < k := by
+    have h1 : p % 3 = 1 ∨ p % 3 = 2 := by omega
+    obtain ⟨q, hq⟩ : ∃ q, p = 3 * q + p % 3 := ⟨p / 3, by omega⟩
+    rcases h1 with h | h <;> rw [h] at hq <;> subst hq <;>
+      simp only [hm, hkdiv] <;> omega
+  obtain ⟨hmk, hkp, hk0⟩ := harith
+  -- C(p,i) = p * c i, so p² ∣ ∑ C(p,i)  ⟺  p ∣ ∑ c i
+  set c : ℕ → ℕ := fun i => p.choose i / p with hc
+  have hci : ∀ i ∈ Finset.Icc 1 k, p * c i = p.choose i := by
+    intro i hi
+    simp only [Finset.mem_Icc] at hi
+    exact Nat.mul_div_cancel' (hp.dvd_choose_self (by omega) (by omega))
+  have hsum : ∑ i ∈ Finset.Icc 1 k, p.choose i = p * ∑ i ∈ Finset.Icc 1 k, c i := by
+    rw [Finset.mul_sum]
+    exact (Finset.sum_congr rfl hci).symm
+  rw [hsum, pow_two]
+  refine Nat.mul_dvd_mul_left p ?_
+  -- p ∣ ∑ c i, checked in the field ZMod p
+  rw [← CharP.cast_eq_zero_iff (ZMod p) p]
+  push_cast
+  -- i * c i = C(p-1, i-1), hence  c i = (-1)^(i-1) / i  in ZMod p
+  have hterm : ∀ i ∈ Finset.Icc 1 k,
+      ((c i : ℕ) : ZMod p) = ((-1 : ZMod p)) ^ (i - 1) * (i : ZMod p)⁻¹ := by
+    intro i hi
+    simp only [Finset.mem_Icc] at hi
+    have hi0 : 0 < i := hi.1
+    have hip : i < p := by omega
+    -- p * C(p-1, i-1) = C(p,i) * i  (Nat.succ_mul_choose_eq, reindexed)
+    have hkey : p * (p - 1).choose (i - 1) = p.choose i * i := by
+      have h := Nat.succ_mul_choose_eq (p - 1) (i - 1)
+      have hp1 : (p - 1).succ = p := by have := hp.two_le; omega
+      have hi1 : (i - 1).succ = i := by omega
+      rw [hp1, hi1] at h
+      exact h
+    -- cancel the p:  i * c i = C(p-1, i-1)
+    have hnat : i * c i = (p - 1).choose (i - 1) := by
+      have hpc := hci i (by simp only [Finset.mem_Icc]; omega)
+      have : p * ((p - 1).choose (i - 1)) = p * (i * c i) := by
+        rw [hkey, ← hpc]; ring
+      exact (Nat.eq_of_mul_eq_mul_left (by omega) this).symm
+    -- in ZMod p:  i * c i = (-1)^(i-1)
+    have hz : (i : ZMod p) * ((c i : ℕ) : ZMod p) = ((-1 : ZMod p)) ^ (i - 1) := by
+      have := congrArg (fun n : ℕ => (n : ZMod p)) hnat
+      push_cast at this
+      rw [this]
+      exact cpred p hp (i - 1) (by omega)
+    -- i is invertible in the field ZMod p
+    have hine : (i : ZMod p) ≠ 0 := by
+      intro hcon
+      rw [CharP.cast_eq_zero_iff (ZMod p) p] at hcon
+      have := Nat.le_of_dvd hi0 hcon
+      omega
+    field_simp
+    linear_combination hz
+  rw [Finset.sum_congr rfl hterm]
+  exact tzero p k m hp hpge3 hm hmk hkp hk0
+
+#print axioms putnam_1996_a5
