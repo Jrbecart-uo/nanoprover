@@ -281,6 +281,58 @@ base environment — named theorems from earlier checks are not visible, so a
 candidate can never cite a sibling variant of itself (setup: clone the repl
 repo at the toolchain matching `mathlib4/lean-toolchain`, `lake build`).
 
+### When the direct attack stalls: salt, angles, analogy
+
+Three tools for the moment the obvious proof does not work. All three are built
+on the REPL, so an idea costs about a second to test — cheap enough to be wrong
+on purpose.
+
+**`tools/salt.py` — oriented random supposition.** Floods the goal with
+candidate `have` statements (from goal-aware templates, definitional
+unfoldings, and mutated corpus lemmas — a seed decides which template meets
+which atom) and lets the kernel triage every one:
+
+```bash
+python tools/salt.py shake stuck.lean --n 40 --seed 7
+```
+
+| verdict | provable? | closes goal? | meaning |
+|---|---|---|---|
+| **KEY** | yes | yes | that is a proof. insert it. |
+| **BRIDGE** | no | yes (strictly stronger) | the goal now reduces to THIS — a smaller problem |
+| **RESTATEMENT** | — | yes (equivalent) | the goal in a different coat; no progress |
+| **TRUE** | yes | no | a fact, but not this fact |
+| **POISON** | — | by ex falso | contradicts the context — a fraud, not a lemma |
+
+POISON is the interesting box. A supposition that contradicts the context
+closes *every* goal, so it looks maximally useful while being worthless; the
+first run of this tool proposed two and rated them top bridges. Every candidate
+is therefore consistency-checked before it is believed. **Usefulness without
+consistency is not evidence — it is the absence of evidence.**
+
+**`tools/angles.py` — see the problem from somewhere else.** "Try a different
+angle" is advice, not a tactic. This applies ~20 reframings (contrapose,
+by_contra, zify, `a ≤ b ↦ 0 ≤ b - a`, strong induction, parity split, …) to the
+real proof state and prints the goal each one produces. You do not imagine the
+reformulation; the kernel hands it to you.
+
+**`tools/analogy.py` — the problem you have already solved.** Indexes the solved
+corpus by statement *shape* (IDF-weighted, so rare features carry the signal)
+and retrieves the closest proofs — each with its **story**: what the proof is
+really doing, in physical terms.
+
+```
+$ python tools/analogy.py match --text "24 ∣ ∑ d ∈ n.divisors, d^2"
+putnam_1969_b1   similarity 0.97   shared: divisor_sum, divisibility, finset_sum
+  IDEA: PAIR OFF THE DANCERS. Every divisor d has a partner n/d; the two
+        cancel mod 24, and nobody is their own partner. Sum dies by pairing.
+```
+
+`Finset.sum_involution over n.divisors` retrieves nothing from a human brain.
+"Pair off the dancers" retrieves the idea instantly — and the *idea* is what
+transfers to a new problem, not the lemma name. A proof you can only recall by
+its API is a proof you can only reuse when the API matches.
+
 ## What's in the box
 
 | path | what it is |
@@ -292,7 +344,7 @@ repo at the toolchain matching `mathlib4/lean-toolchain`, `lake build`).
 | `core/search.py` | best-first backward search over proof states |
 | `collatz/` | the full Collatz campaign: formalization, closure lemmas, both generations of the discovery loop, and the kernel-checked theorem databases |
 | `prop_poc/` | chapter zero: the original 150-line propositional PoC (forward chaining, `A→B` + `B→C` ⇒ `A→C`) |
-| `tools/` | mathlib database export (sharded) + SQLite FTS5 premise index + persistent REPL daemon |
+| `tools/` | mathlib export + FTS5 premise index + REPL daemon + salt (supposition triage) / angles (reframing) / analogy (pattern retrieval) |
 | `bench/` | the builtins-vs-retrieval baseline (results in `bench/results.json`) |
 
 ## What this is NOT

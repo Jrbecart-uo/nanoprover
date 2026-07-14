@@ -1,0 +1,428 @@
+[
+ {
+  "name": "putnam_1962_b2",
+  "bench": "putnam",
+  "features": [
+   "abs_norm",
+   "inequality",
+   "real_analysis",
+   "set"
+  ],
+  "tactics": [
+   "obtain",
+   "refine"
+  ],
+  "story": null,
+  "statement": "use fun a => {n : ℕ+ | ((((Denumerable.eqv ℕ+).trans (Denumerable.eqv ℚ).symm) n : ℚ) : ℝ) < a}\nintro a b hab\nhave hsub : {n : ℕ+ | ((((Denumerable.eqv ℕ+).trans (Denumerable.eqv ℚ).symm) n : ℚ) : ℝ) < a} ⊆ {n : ℕ+ | (((",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1962_b2.txt",
+  "lines": 9
+ },
+ {
+  "name": "putnam_1968_b2",
+  "bench": "putnam",
+  "features": [
+   "cardinality",
+   "existence",
+   "group",
+   "set"
+  ],
+  "tactics": [
+   "linarith",
+   "simp",
+   "omega",
+   "obtain",
+   "refine"
+  ],
+  "story": "MORE PIGEONS THAN HOLES. Two sets whose sizes together exceed the room must overlap — and one shared element is the whole theorem.",
+  "statement": "theorem putnam_1968_b2 {G : Type*} [Group G] (hG : Finite G) (A : Set G) (hA : A.ncard > (Nat.card G : ℚ)/2) : ∀ g : G, ∃ x ∈ A, ∃ y ∈ A, g = x * y :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1968_b2.txt",
+  "lines": 44
+ },
+ {
+  "name": "putnam_1969_b1",
+  "bench": "putnam",
+  "features": [
+   "divisibility",
+   "divisor_sum",
+   "finset_sum",
+   "set"
+  ],
+  "tactics": [
+   "omega",
+   "push_cast",
+   "linear_combination",
+   "decide",
+   "obtain",
+   "refine",
+   "Finset.sum_involution",
+   "calc"
+  ],
+  "story": "PAIR OFF THE DANCERS. Every divisor d has a partner n/d; the two cancel mod 24, and nobody is their own partner. Sum dies by pairing.",
+  "statement": "theorem putnam_1969_b1 (n : ℕ) (hnpos : n > 0) (hn : 24 ∣ n + 1) : 24 ∣ ∑ d ∈ divisors n, d :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1969_b1.txt",
+  "lines": 67
+ },
+ {
+  "name": "putnam_1972_a5",
+  "bench": "putnam",
+  "features": [
+   "complex",
+   "congruence",
+   "divisibility",
+   "primes"
+  ],
+  "tactics": [
+   "omega",
+   "push_cast",
+   "ring",
+   "norm_num",
+   "calc"
+  ],
+  "story": null,
+  "statement": "intro hdvd\nhave hp : n.minFac.Prime := Nat.minFac_prime (by omega)\nhaveI := Fact.mk hp\nhave hpn : n.minFac ∣ n := Nat.minFac_dvd n\nhave hpdvd : (n.minFac : ℤ) ∣ 2^n - 1 := dvd_trans (Int.natCast_dvd_natCast.mpr hpn) hdvd",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1972_a5.txt",
+  "lines": 53
+ },
+ {
+  "name": "putnam_1972_b3",
+  "bench": "putnam",
+  "features": [
+   "existence",
+   "group"
+  ],
+  "tactics": [
+   "obtain",
+   "simp",
+   "norm_num",
+   "ring"
+  ],
+  "story": "GEARS IN A MACHINE. The relation lets you rewind any word back to the identity; grind the word down until B has finite order, then Bezout.",
+  "statement": "theorem putnam_1972_b3 (G : Type*) [Group G] (A B : G) (hab : A * B * A = B * A^2 * B ∧ A^3 = 1 ∧ (∃ n : ℤ, n > 0 ∧ B^(2*n - 1) = 1)) : B = 1 :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1972_b3.txt",
+  "lines": 70
+ },
+ {
+  "name": "putnam_1977_a5",
+  "bench": "putnam",
+  "features": [
+   "binomial",
+   "complex"
+  ],
+  "tactics": [],
+  "story": "DIGIT-WISE BOOKKEEPING (LUCAS). In base p the digits do not talk to each other — a binomial coefficient factors digit by digit.",
+  "statement": "haveI := Fact.mk hp\nexact Choose.choose_mul_mul_modEq_choose_nat\n",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1977_a5.txt",
+  "lines": 3
+ },
+ {
+  "name": "putnam_1979_b6",
+  "bench": "putnam",
+  "features": [
+   "abs_norm",
+   "complex",
+   "finset_sum",
+   "inequality"
+  ],
+  "tactics": [
+   "rcases",
+   "norm_num",
+   "ring",
+   "linarith",
+   "simp",
+   "nlinarith",
+   "positivity"
+  ],
+  "story": "A DETOUR IS NEVER SHORTER. Cauchy–Schwarz / triangle inequality: the straight-line quantity bounds the wandering one.",
+  "statement": "theorem putnam_1979_b6 (n : ℕ) (z : Fin n → ℂ) : (|((∑ i : Fin n, (z i) ^ 2) ^ ((1 : ℂ) / 2)).re| ≤ ∑ i : Fin n, |(z i).re|) :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1979_b6.txt",
+  "lines": 60
+ },
+ {
+  "name": "putnam_1988_a5",
+  "bench": "putnam",
+  "features": [
+   "existence",
+   "functional_eq",
+   "real_analysis"
+  ],
+  "tactics": [
+   "refine",
+   "ring",
+   "linarith",
+   "norm_num",
+   "positivity",
+   "induction",
+   "simp",
+   "obtain"
+  ],
+  "story": "THE RUNAWAY FEEDBACK LOOP. Any nonzero error is amplified by (9/4) each step and escapes every bound — so the error must be exactly zero.",
+  "statement": "theorem putnam_1988_a5 : (∃ f : ℝ → ℝ, (∀ x > 0, f (f x) = 6 * x - f x ∧ f x > 0) ∧ (∀ g : ℝ → ℝ, (∀ x > 0, g (g x) = 6 * x - g x ∧ g x > 0) → (∀ x > 0, f x = g x))) :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1988_a5.txt",
+  "lines": 86
+ },
+ {
+  "name": "putnam_1988_b1",
+  "bench": "putnam",
+  "features": [],
+  "tactics": [
+   "refine",
+   "omega",
+   "ring"
+  ],
+  "story": null,
+  "statement": "intro a ha b hb\nrefine ⟨1, a - 1, b - 1, by omega, by omega, by omega, by ring⟩\n",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1988_b1.txt",
+  "lines": 3
+ },
+ {
+  "name": "putnam_1989_a3",
+  "bench": "putnam",
+  "features": [
+   "complex"
+  ],
+  "tactics": [
+   "linear_combination",
+   "ring",
+   "simp",
+   "rcases",
+   "nlinarith",
+   "norm_num",
+   "linarith"
+  ],
+  "story": "PINNED TO THE RIM. Not inside the circle, not outside it — so every root lies exactly ON it. Trichotomy does the work.",
+  "statement": "theorem putnam_1989_a3 (z : ℂ) (hz : 11 * z ^ 10 + 10 * I * z ^ 9 + 10 * I * z - 11 = 0) : (‖z‖ = 1) :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1989_a3.txt",
+  "lines": 57
+ },
+ {
+  "name": "putnam_1991_b4",
+  "bench": "putnam",
+  "features": [
+   "binomial",
+   "congruence",
+   "finset_sum",
+   "parity",
+   "primes"
+  ],
+  "tactics": [
+   "omega",
+   "push_cast",
+   "rcases",
+   "simp",
+   "obtain",
+   "linear_combination",
+   "norm_num"
+  ],
+  "story": "BELOW THE NOISE FLOOR. Working mod p², anything carrying p² is dust: drop it. Cross terms vanish and a hard binomial identity goes linear.",
+  "statement": "theorem putnam_1991_b4 (p : ℕ) (podd : Odd p) (pprime : Prime p) : (∑ j : Fin (p + 1), (p.choose j) * ((p + j).choose j)) ≡ (2 ^ p + 1) [MOD (p ^ 2)] :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1991_b4.txt",
+  "lines": 85
+ },
+ {
+  "name": "putnam_1993_a2",
+  "bench": "putnam",
+  "features": [
+   "existence",
+   "real_analysis"
+  ],
+  "tactics": [
+   "induction",
+   "omega",
+   "linear_combination",
+   "linarith"
+  ],
+  "story": "A CONSERVED QUANTITY. Like energy: a ratio built from the sequence never changes. Measure it once at the start; it pins every later term.",
+  "statement": "theorem putnam_1993_a2 (x : ℕ → ℝ) (xnonzero : ∀ n : ℕ, x n ≠ 0) (hx : ∀ n ≥ 1, (x n) ^ 2 - x (n - 1) * x (n + 1) = 1) : ∃ a : ℝ, ∀ n ≥ 1, x (n + 1) = a * x n - x (n - 1) :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1993_a2.txt",
+  "lines": 34
+ },
+ {
+  "name": "putnam_1997_b5",
+  "bench": "putnam",
+  "features": [
+   "congruence"
+  ],
+  "tactics": [
+   "calc",
+   "norm_num",
+   "obtain",
+   "omega",
+   "rcases",
+   "induction"
+  ],
+  "story": "THE TOWER STOPS MATTERING. Above a certain height a power tower is invisible mod n — like a clock, only the remainder shows. Recurse on the MODULUS (Euler/totient), not on the tower.",
+  "statement": "theorem putnam_1997_b5 (n : ℕ) (hn : n ≥ 2) : tetration 2 n ≡ tetration 2 (n-1) [MOD n] :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_1997_b5.txt",
+  "lines": 93
+ },
+ {
+  "name": "putnam_2000_b2",
+  "bench": "putnam",
+  "features": [
+   "binomial",
+   "divisibility",
+   "existence"
+  ],
+  "tactics": [
+   "obtain",
+   "omega",
+   "refine",
+   "linear_combination"
+  ],
+  "story": null,
+  "statement": "intro m n hm hn\nobtain ⟨M, rfl⟩ : ∃ M, m = M + 1 := ⟨m - 1, by omega⟩\nobtain ⟨N, rfl⟩ : ∃ N, n = N + 1 := ⟨n - 1, by omega⟩\nhave h : (N+1) * N.choose M = (N+1).choose (M+1) * (M+1) := Nat.succ_mul_choose_eq N M\nhave hb :",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_2000_b2.txt",
+  "lines": 10
+ },
+ {
+  "name": "putnam_2001_a1",
+  "bench": "putnam",
+  "features": [],
+  "tactics": [
+   "calc"
+  ],
+  "story": null,
+  "statement": "intro a b\nhave h1 := hS b a\nhave h2 := hS (b * a) b\ncalc a * (b * a) = ((b * a) * b) * (b * a) := by rw [h1]\n  _ = b := h2\n",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_2001_a1.txt",
+  "lines": 6
+ },
+ {
+  "name": "putnam_2004_b2",
+  "bench": "putnam",
+  "features": [
+   "inequality"
+  ],
+  "tactics": [
+   "obtain",
+   "omega",
+   "simp",
+   "calc",
+   "ring",
+   "push_cast",
+   "positivity"
+  ],
+  "story": "ONE TERM NEVER BEATS THE WHOLE SUM. Compare a single binomial term against the full expansion it sits inside.",
+  "statement": "theorem putnam_2004_b2 (m n : ℕ) (mnpos : m > 0 ∧ n > 0) : ((m + n)! / ((m + n) ^ (m + n) : ℚ)) < (((m)! / (m ^ m : ℚ)) * ((n)! / (n ^ n : ℚ))) :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_2004_b2.txt",
+  "lines": 54
+ },
+ {
+  "name": "putnam_2008_a1",
+  "bench": "putnam",
+  "features": [
+   "inequality",
+   "sequence"
+  ],
+  "tactics": [
+   "linarith"
+  ],
+  "story": null,
+  "statement": "use fun x => f x 0\nintro x y\nhave h1 := hf x y 0\nhave h2 := hf y 0 0\nhave h3 := hf x 0 0\nhave h4 := hf 0 0 0\nlinarith\n",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_2008_a1.txt",
+  "lines": 8
+ },
+ {
+  "name": "putnam_2010_a4",
+  "bench": "putnam",
+  "features": [
+   "primes"
+  ],
+  "tactics": [
+   "obtain",
+   "omega",
+   "push_cast",
+   "ring",
+   "norm_num",
+   "rcases"
+  ],
+  "story": "A SELF-SIMILAR FACTORY. Each doubling reproduces the same structure, so one divisor found at the bottom propagates all the way up.",
+  "statement": "theorem putnam_2010_a4 : ∀ n : ℕ, n > 0 → ¬Nat.Prime (10^10^10^n + 10^10^n + 10^n - 1) :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_2010_a4.txt",
+  "lines": 69
+ },
+ {
+  "name": "putnam_2020_b5",
+  "bench": "putnam",
+  "features": [
+   "complex"
+  ],
+  "tactics": [
+   "field_simp",
+   "ring",
+   "simp",
+   "nlinarith",
+   "linarith",
+   "linear_combination"
+  ],
+  "story": "EVERYTHING STAYS ON THE RIM. The map z ↦ 1/(1-z) sends the unit circle to the line Re = 1/2; the constraint survives the transform.",
+  "statement": "theorem putnam_2020_b5 (z : Fin 4 → ℂ) (hzle1 : ∀ n, ‖z n‖ = 1) (hzne1 : ∀ n, z n ≠ 1) : 3 - z 0 - z 1 - z 2 - z 3 + (z 0) * (z 1) * (z 2) * (z 3) ≠ 0 :=",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_putnam/putnam_2020_b5.txt",
+  "lines": 81
+ },
+ {
+  "name": "imo_1964_p2",
+  "bench": "imo",
+  "features": [
+   "inequality"
+  ],
+  "tactics": [
+   "nlinarith"
+  ],
+  "story": null,
+  "statement": "nlinarith [mul_pos (sub_pos.mpr h₁) (sub_pos.mpr h₂), mul_pos (sub_pos.mpr h₂) (sub_pos.mpr h₃), mul_pos (sub_pos.mpr h₁) (sub_pos.mpr h₃), sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a), mul_pos h₀.1 h₀.2.1, mu",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_imo/imo_1964_p2.txt",
+  "lines": 2
+ },
+ {
+  "name": "imo_1977_p6",
+  "bench": "imo",
+  "features": [
+   "abs_norm",
+   "functional_eq",
+   "inequality",
+   "recurrence"
+  ],
+  "tactics": [
+   "induction",
+   "omega",
+   "rcases"
+  ],
+  "story": null,
+  "statement": "have claim : ∀ n m, n + 1 ≤ m → n + 1 ≤ f m := by\n  intro n\n  induction n with\n  | zero => intro m _; exact h₀ m\n  | succ k ih =>\n    intro m hm\n    have hm1 : k + 1 ≤ m - 1 := by omega\n    have h1 := ih (m - 1) hm1\n    ",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_imo/imo_1977_p6.txt",
+  "lines": 48
+ },
+ {
+  "name": "imo_1981_p6",
+  "bench": "imo",
+  "features": [
+   "abs_norm",
+   "recurrence"
+  ],
+  "tactics": [
+   "induction",
+   "omega",
+   "norm_num",
+   "ring"
+  ],
+  "story": "UNWIND THE RECURSION. Ackermann-style: the same instruction applied over and over; find the closed form of each layer, then induct.",
+  "statement": "have f1 : ∀ y, f 1 y = y + 2 := by\n  intro y\n  induction y with\n  | zero => rw [h₁, h₀]\n  | succ k ih => rw [h₂, ih, h₀]\nhave f2 : ∀ y, f 2 y = 2 * y + 3 := by\n  intro y\n  induction y with\n  | zero => rw [h₁, f1]\n  | suc",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_imo/imo_1981_p6.txt",
+  "lines": 48
+ },
+ {
+  "name": "imo_1983_p6",
+  "bench": "imo",
+  "features": [
+   "inequality"
+  ],
+  "tactics": [
+   "obtain",
+   "nlinarith"
+  ],
+  "story": null,
+  "statement": "obtain ⟨ha, hb, hc⟩ := h₀\nnlinarith [mul_pos (sub_pos.mpr h₁) (sub_pos.mpr h₂), mul_pos (sub_pos.mpr h₂) (sub_pos.mpr h₃), mul_pos (sub_pos.mpr h₁) (sub_pos.mpr h₃), sq_nonneg (a - b), sq_nonneg (b - c), sq_nonneg (c - a",
+  "path": "/home/jbecart/tmp/mathTest/nanoprover/bench/solved_imo/imo_1983_p6.txt",
+  "lines": 3
+ }
+]
