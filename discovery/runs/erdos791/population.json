@@ -1,0 +1,138 @@
+{
+ "programs": [
+  {
+   "id": 0,
+   "src": "\nimport time\n\nKOHONEN_I = [0, 5] + list(range(112, 138, 5))\nKOHONEN_J = list(range(10, 107, 6))\nKOHONEN_K = list(range(0, 5)) + list(range(224, 230)) + list(range(367, 373))\n\n\ndef m_of(I, J, K):\n    IJ = {a + b for a in I for b in J}\n    IK = {a + b for a in I for b in K}\n    JK = {a + b for a in J for b in K}\n    sq = IJ | IK\n    m = 0\n    while m in sq or (m in JK and (m - 1) in JK):\n        m += 1\n    return m\n\n\ndef ratio(I, J, K):\n    l = len(I) + len(J) + len(K)\n    return m_of(I, J, K) / (l * l)\n\n\ndef search(prev_best, deadline, rng):\n    \"\"\"SEED: Kohonen's placement + naive random single-element hill climbing.\n\n    Deliberately weak \u2014 it only jiggles one integer at a time and never changes\n    the SHAPE of the placement. Everything interesting lives in the shape.\"\"\"\n    if prev_best:\n        I, J, K = list(prev_best[\"I\"]), list(prev_best[\"J\"]), list(prev_best[\"K\"])\n    else:\n        I, J, K = list(KOHONEN_I), list(KOHONEN_J), list(KOHONEN_K)\n    best = (I[:], J[:], K[:])\n    bs = ratio(*best)\n\n    while time.time() < deadline:\n        I, J, K = [list(x) for x in best]\n        tgt = rng.choice([I, J, K])\n        if not tgt:\n            continue\n        i = rng.randrange(len(tgt))\n        tgt[i] = max(0, tgt[i] + rng.choice([-3, -2, -1, 1, 2, 3]))\n        cand = (sorted(set(I)), sorted(set(J)), sorted(set(K)))\n        if any(len(x) == 0 for x in cand):\n            continue\n        r = ratio(*cand)\n        if r >= bs:\n            best, bs = cand, r\n    return {\"I\": best[0], \"J\": best[1], \"K\": best[2]}\n",
+   "lens": "algorithmic",
+   "note": "SEED: randomised greedy restarts (deliberately weak)",
+   "score": 0.2891156462585034,
+   "object": {
+    "I": [
+     0,
+     5,
+     112,
+     117,
+     122,
+     127,
+     132,
+     137
+    ],
+    "J": [
+     10,
+     16,
+     22,
+     28,
+     34,
+     40,
+     46,
+     52,
+     58,
+     64,
+     70,
+     76,
+     82,
+     88,
+     94,
+     100,
+     106
+    ],
+    "K": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     367,
+     368,
+     369,
+     370,
+     371,
+     372
+    ]
+   },
+   "detail": "l=42 m=510  m/l^2 = 510/1764 = 0.289115646  (beats Mrose 2/7, below Kohonen)",
+   "error": null,
+   "seconds": 60.0
+  },
+  {
+   "id": 1,
+   "src": "import time\n\ndef m_of(I, J, K):\n    IJ = {a + b for a in I for b in J}\n    IK = {a + b for a in I for b in K}\n    JK = {a + b for a in J for b in K}\n    sq = IJ | IK\n    m = 0\n    while m in sq or (m in JK and (m - 1) in JK):\n        m += 1\n    return m\n\ndef ratio(I, J, K):\n    l = len(I) + len(J) + len(K)\n    return m_of(I, J, K) / (l * l) if l else 0.0\n\ndef search(prev_best, deadline, rng):\n    \"\"\"ALGORITHMIC LENS: simulated annealing over placements, with the SPLIT\n    itself as a search variable.\n\n    Kohonen's 8/17/17 split caps him at 0.318; a balanced split caps at 0.3333.\n    So we do NOT hold the split fixed \u2014 moves may add to or delete from any of\n    I, J, K, letting the annealer discover the right shape rather than assuming\n    Kohonen's. Objective is m/l^2 directly (the true target), with restarts.\"\"\"\n    best_obj, best_r = None, -1.0\n    if prev_best:\n        I0 = list(prev_best[\"I\"]); J0 = list(prev_best[\"J\"]); K0 = list(prev_best[\"K\"])\n        best_obj, best_r = (I0, J0, K0), ratio(I0, J0, K0)\n\n    def perturb(I, J, K):\n        I, J, K = list(I), list(J), list(K)\n        which = rng.choice([I, J, K])\n        op = rng.random()\n        if op < 0.42 and which:                 # move an element\n            i = rng.randrange(len(which))\n            which[i] = max(0, which[i] + rng.choice([-8,-5,-3,-2,-1,1,2,3,5,8]))\n        elif op < 0.71:                          # add an element\n            span = max(max(I+J+K), 10)\n            which.append(rng.randrange(0, span + 6))\n        elif which and len(which) > 2:           # delete an element\n            which.pop(rng.randrange(len(which)))\n        return sorted(set(I)), sorted(set(J)), sorted(set(K))\n\n    T0, T1 = 0.010, 0.0004\n    while time.time() < deadline:\n        # restart from incumbent (or a fresh balanced random placement)\n        if best_obj and rng.random() < 0.6:\n            cur = tuple(list(x) for x in best_obj)\n        else:\n            n = rng.randrange(4, 16)\n            cur = (sorted({rng.randrange(0, 60) for _ in range(n)}),\n                   sorted({rng.randrange(0, 120) for _ in range(n)}),\n                   sorted({rng.randrange(0, 200) for _ in range(n)}))\n            if any(len(x) < 2 for x in cur):\n                continue\n        cr = ratio(*cur)\n        steps = 2600\n        for s in range(steps):\n            if time.time() > deadline:\n                break\n            T = T0 * (T1 / T0) ** (s / steps)\n            cand = perturb(*cur)\n            if any(len(x) < 2 for x in cand):\n                continue\n            r = ratio(*cand)\n            if r >= cr or rng.random() < pow(2.718281828, (r - cr) / T):\n                cur, cr = cand, r\n                if r > best_r:\n                    best_r, best_obj = r, tuple(list(x) for x in cand)\n    I, J, K = best_obj\n    return {\"I\": I, \"J\": J, \"K\": K}\n",
+   "lens": "algorithmic",
+   "note": "simulated annealing with the I/J/K SPLIT as a free variable (Kohonen's 8/17/17 caps at 0.318; balanced caps at 1/3)",
+   "score": 0.2891156462585034,
+   "object": {
+    "I": [
+     0,
+     5,
+     112,
+     117,
+     122,
+     127,
+     132,
+     137
+    ],
+    "J": [
+     10,
+     16,
+     22,
+     28,
+     34,
+     40,
+     46,
+     52,
+     58,
+     64,
+     70,
+     76,
+     82,
+     88,
+     94,
+     100,
+     106
+    ],
+    "K": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     367,
+     368,
+     369,
+     370,
+     371,
+     372
+    ]
+   },
+   "detail": "l=42 m=510  m/l^2 = 510/1764 = 0.289115646  (beats Mrose 2/7, below Kohonen)",
+   "error": null,
+   "seconds": 420.0
+  }
+ ],
+ "history": [
+  {
+   "n": 1,
+   "best": 0.2891156462585034,
+   "this": 0.2891156462585034,
+   "lens": "algorithmic"
+  },
+  {
+   "n": 2,
+   "best": 0.2891156462585034,
+   "this": 0.2891156462585034,
+   "lens": "algorithmic"
+  }
+ ]
+}

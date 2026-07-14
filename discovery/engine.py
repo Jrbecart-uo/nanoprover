@@ -19,6 +19,34 @@ coin-flips. Every result FunSearch and AlphaEvolve ever produced came out of
 evolving programs, never raw objects. This is the single most important design
 choice in the file.
 
+WHY A SEARCH HEURISTIC AND NOT A CONSTRUCTION. The second-most important, and
+the one that makes a laptop budget viable at all. AlphaEvolve §3.2: evolve
+"heuristic search algorithms rather than directly evolving the constructions
+themselves", each given a fixed time budget and SHOWN THE BEST CONSTRUCTION
+FOUND SO FAR. The arithmetic is brutal and decides the architecture:
+
+    contract `construct() -> object` :  100 LLM calls buys 100 objects.
+        We lose to scipy with random restarts. This is what we built first,
+        and it was wrong.
+    contract `search(prev_best, deadline, rng) -> object` :  100 LLM calls buys
+        100 OPTIMISER DESIGNS, each amplified by ~10^6 cheap local steps and
+        warm-started from the incumbent.
+
+The LLM is the expensive, rare, intelligent part; the search it writes is cheap
+and runs millions of steps. Budget identity: LLM calls x per-eval seconds =
+total CPU hours. 200 calls x 300 s ~ 17 CPU-hours ~ one overnight run.
+
+THE ADVERSARY IS THE SCORER. The documented way these systems die is not weak
+search, it is REWARD HACKING: the proposer discovers that exploiting the
+evaluator scores better than solving the problem. Tao et al. (arXiv 2511.02864)
+report a scorer that "always eventually figured out a way to cheat by
+suggesting a highly irregular function that exploited the numerical integration
+methods... and got impossibly high scores". This is the same disease as the
+ex-falso POISON candidates in tools/salt.py: an answer that satisfies the
+CHECK without satisfying the PROBLEM. Hence `verify_champion`: an independent,
+deliberately naive, exact-arithmetic re-check that shares no code with the fast
+scorer. Treat every new record as fraudulent until it survives that.
+
 WHAT IS DIFFERENT HERE. FunSearch fires millions of cheap LLM samples at a weak
 mutation operator. We are keyless: the mutation operator is a session LLM (or
 its subagents), so we get TENS of proposals, not millions. That flips the
@@ -149,23 +177,33 @@ def save_db(name, db):
 
 
 # ---------------------------------------------------------------- evaluate
-def score_program(problem, src, timeout=120):
-    """Run a candidate program in a subprocess and score what it builds.
+def score_program(problem, src, budget=60, prev_best=None, seed=0, timeout=None):
+    """Run a candidate SEARCH HEURISTIC and score the object it finds.
+
+    The candidate defines  search(prev_best, deadline, rng) -> object  and is
+    handed (a) the incumbent champion object, so it can warm-start rather than
+    rediscover, and (b) a wall-clock deadline it must respect. One LLM call
+    therefore buys an entire optimiser run, not a single guess.
 
     Sandboxing is deliberately crude (separate process + timeout): the code is
     written by us, not by a stranger. The subprocess exists so an infinite loop
     or a segfault costs one candidate, not the run.
     """
+    timeout = timeout or (budget + 60)
     harness = textwrap.dedent(f"""
-        import json, sys, traceback
+        import json, sys, time, random, traceback
         sys.setrecursionlimit(100000)
         src = {src!r}
+        prev_best = json.loads({json.dumps(prev_best)!r})
+        deadline = time.time() + {budget}
+        rng = random.Random({seed})
         g = {{}}
         try:
             exec(compile(src, "candidate", "exec"), g)
-            if "construct" not in g:
-                print(json.dumps({{"error": "no construct() defined"}})); sys.exit()
-            obj = g["construct"]()
+            if "search" not in g:
+                print(json.dumps({{"error": "no search(prev_best, deadline, rng) defined"}}))
+                sys.exit()
+            obj = g["search"](prev_best, deadline, rng)
         except Exception:
             print(json.dumps({{"error": traceback.format_exc()[-800:]}})); sys.exit()
         print(json.dumps({{"object": obj}}, default=list))
@@ -174,7 +212,7 @@ def score_program(problem, src, timeout=120):
         r = subprocess.run([sys.executable, "-c", harness],
                            capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
-        return {"score": None, "error": f"timeout after {timeout}s"}
+        return {"score": None, "error": f"ignored its deadline; killed at {timeout}s"}
     if r.returncode != 0:
         return {"score": None, "error": (r.stderr or "")[-800:]}
     try:
@@ -263,17 +301,25 @@ def build_prompt(problem, name, lens=None, k_best=3):
 
 
 # ------------------------------------------------------------------ commands
-def cmd_ingest(problem, name, path, lens, note):
+def champion(db):
+    ok = [p for p in db["programs"] if p["score"] is not None]
+    return max(ok, key=lambda p: p["score"]) if ok else None
+
+
+def cmd_ingest(problem, name, path, lens, note, budget=60):
     src = open(path).read()
     db = load_db(name)
+    champ = champion(db)
+    prev = champ.get("object") if champ else None   # warm start from incumbent
     t0 = time.time()
-    res = score_program(problem, src)
+    res = score_program(problem, src, budget=budget, prev_best=prev)
     entry = {
         "id": len(db["programs"]),
         "src": src,
         "lens": lens,
         "note": note,
         "score": res.get("score"),
+        "object": res.get("object"),
         "detail": res.get("detail"),
         "error": res.get("error"),
         "seconds": round(time.time() - t0, 1),
@@ -340,7 +386,8 @@ def cmd_verify(problem, name):
     print(f"champion: score {champ['score']}  [{champ.get('lens')}] "
           f"{champ.get('note')}")
     print("rebuilding the object from its program...")
-    res = score_program(problem, champ["src"], timeout=600)
+    res = score_program(problem, champ["src"], budget=120, prev_best=None,
+                        timeout=600)
     if res.get("score") is None:
         sys.exit(f"REPRODUCTION FAILED: {res.get('error')}")
     if res["score"] != champ["score"]:
@@ -369,6 +416,8 @@ def main():
     s.add_argument("file")
     s.add_argument("--lens", required=True, choices=sorted(LENSES))
     s.add_argument("--note", required=True, help="the idea, in one line")
+    s.add_argument("--budget", type=int, default=60,
+                   help="wall-clock seconds the heuristic may search for")
     a = p.parse_args()
 
     problem = load_problem(a.problem)
@@ -379,13 +428,14 @@ def main():
             print("scoring the SEED program (the published construction)...")
             tmp = os.path.join(run_dir(a.problem), "seed.py")
             open(tmp, "w").write(problem.SEED)
-            cmd_ingest(problem, a.problem, tmp, "algebra", "SEED: published construction")
+            cmd_ingest(problem, a.problem, tmp, "algorithmic",
+                       "SEED: randomised greedy restarts (deliberately weak)")
         else:
             print(f"run already has {len(db['programs'])} candidates")
     elif a.op == "prompt":
         print(build_prompt(problem, a.problem, a.lens))
     elif a.op == "ingest":
-        cmd_ingest(problem, a.problem, a.file, a.lens, a.note)
+        cmd_ingest(problem, a.problem, a.file, a.lens, a.note, a.budget)
     elif a.op == "status":
         cmd_status(problem, a.problem)
     elif a.op == "verify":
