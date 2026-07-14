@@ -73,3 +73,73 @@ Our best automated design reaches 0.2824. A human reached 0.2891 nine years ago
 with pen and paper and a small program. The gap is not compute — we spent
 millions of evaluations. The gap is **one idea** (a block that serves two
 mechanisms at once), and we did not find it.
+
+---
+
+# Round 2 — structural results (no record, but real knowledge)
+
+Five more attacks. **The record still stands.** But three structural facts came
+out, and they are worth more than another failed annealer.
+
+## 1. The counting ceiling of 1/3 is NOT attainable (new)
+
+Kohonen bounds the three-segment ansatz by `m/ℓ² ≤ 1/3` via counting. That bound
+**cannot be met**, and here is why. To run all three channels at full capacity,
+`I+J`, `I+K` and `J+K` would each have to be a *perfect tiling* (sumset = an
+interval of size |X|·|Y|). But if `I⊕J` and `I⊕K` are both perfect, then as
+polynomials `I(q)·J(q)` and `I(q)·K(q)` are both interval polynomials, so
+**J and K are translates of each other** — and then `J+K` collapses from `n²` to
+`2n−1`. Verified numerically: block ⊕ AP ⊕ AP(shifted) gives |I+J| = |I+K| = 36
+(perfect) and |J+K| = **11**, not 36. The third channel dies.
+
+**All three channels cannot be perfect. The true ceiling is strictly below 1/3.**
+Kohonen only ever proved the loose counting bound.
+
+## 2. Kohonen is a very deep local optimum
+
+| search | result |
+|---|---|
+| structured annealing, 19M iterations | no improvement |
+| **exhaustive coordinate descent** (every parameter swept over its full range) | **strict local optimum** |
+| **joint moves** (grow I's AP *and* relocate the far blocks together) | no improvement |
+
+The joint scan mattered: the marginal value of an I element is |J|+|K| = 34,
+well above the break-even 2m/ℓ = 24.3, so *more I ought to pay* — but only if
+the far blocks move with it. Neither move helps alone. We scanned them together
+and it still fails. His placement is not luck.
+
+Where his 51 wasted capacity units go: **12** to `I+K` collisions (his far blocks
+have length 6 against a step-5 AP — a deliberate trade, since longer blocks make
+better parallelogram runs), **20** to double-covered squares, ~**19** to
+parallelogram run-boundaries.
+
+## 3. There may be NO fourth elementary segment (evidence, not proof)
+
+Kohonen's own escape route is "four or more kinds of elementary segments," which
+would lift the ceiling from 1/3 to **3/8**. We looked for one.
+
+A fourth segment T must give a square with V (`V+T ⊇ Q`) and working
+parallelograms with *both* H and S. With `T` = the other diagonal (step t−1):
+`V+T` ⊇ Q ✓, `H+T` ✓ — but **`S+T` is dead**. And with `S+T` dead the ceiling
+falls straight back to 1/3, so it buys nothing.
+
+We then searched exhaustively:
+* **all AP fourth segments** (every step, every length, t = 10,12,14,16): none.
+* **all mixed-step segments** over the forced gap alphabet {t−1, t, t+1} —
+  **180,132 candidates at t=10**: none.
+
+**Caveat, and it is a real one:** this tests the *standard mechanism*, where each
+tile must cover a square alone or in consecutive pairs. Tiles are in principle
+allowed to **combine** (a holed `V+T` could have its holes filled by another
+tile), and we did not search that. So this is strong evidence, not a theorem.
+
+But taken at face value it says the three-segment ansatz was never a choice.
+It is the only one available — which would explain why Kohonen *suggested* four
+segments and never produced one.
+
+## Honest bottom line
+
+Still 0.289115646. Our best automated design: 0.2824. We did not beat it, and
+after this round I believe the reason is structural rather than a lack of
+search: the ansatz is forced, its ceiling is unattainable, and the record sits
+at a very deep optimum inside it.
