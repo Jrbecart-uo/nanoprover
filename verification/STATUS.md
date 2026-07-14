@@ -66,4 +66,27 @@ gap where CDC was open), K₄, K₃,₃, the cube, multigraphs with parallel edg
 **20,000 random local edge-orderings** (the gauge is order-dependent, so this
 mattered). A valid cycle double cover every time. Zero failures.
 
-**We found no flaw.**
+### Adversarial pass (the one that mattered)
+
+Two "break the proof" subagents were launched; **both died on API 529 errors**, so
+the hostile review was run by hand instead. The decisive test is **real snarks** —
+bridgeless cubic graphs with **no nowhere-zero 4-flow**, i.e. exactly the graphs
+where the classical "4-flow ⟹ CDC" argument fails and the conjecture was actually
+open:
+
+| graph | 4-flow? | trials | result |
+|---|---|---|---|
+| Petersen (10v) | **no** | 3,000 + 20,000 orderings | CDC every time |
+| Flower snark J₅ (20v) | **no** | 200 | CDC every time |
+| Flower snark J₇ (28v) | **no** | 100 | CDC every time |
+| Flower snark J₉ (36v) | — | 60 | CDC every time |
+| 133 random bridgeless cubic | mixed | 133 | CDC every time |
+| multigraphs (theta, doubled edges) | — | 1,000 | CDC every time |
+
+Lemma 2.2's linear system was **never once infeasible**.
+
+**We found no flaw.** Attack surfaces checked: the gauge's dependence on an
+arbitrary local edge ordering (20,000 random orderings — no effect); parallel
+edges and digons; the duality reduction to condition (5) (traced by hand); the
+vertex parity identity (kernel-verified); Lemma 2.1 in multigraphs (formalized).
+NOT checked: Jaeger's cubic reduction and the 8-flow theorem, both cited.
