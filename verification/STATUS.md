@@ -25,6 +25,30 @@ certification of the conjecture.
 
 ---
 
+**UPDATE 2026-07-15b: the 8-flow half reduced to its combinatorial core.**
+`CDCProof.cdc_of_covering` (in `cdcproof/CDCProof/Flow.lean`, clean axioms):
+
+    a cubic graph with a local edge order + three edge-indicators
+    `w : Fin 3 → E → 𝔽₂` that are EVEN at every vertex and COVER every edge
+      ⟹  a cycle double cover.
+
+A nowhere-zero `𝔽₂³`-flow *is* three even subgraphs covering every edge (each
+coordinate is an `𝔽₂`-flow = even subgraph; nowhere-zero = covering).  So this
+strips all flow/`𝔽₂³` arithmetic out of the capstone's hypothesis, leaving a
+purely combinatorial statement.
+
+What the 8-flow theorem then reduces to (NOT formalized): *every bridgeless
+cubic multigraph has three even subgraphs covering its edges.*  This is genuine
+graph theory and is **not** cheaply reachable in Mathlib: Mathlib's matching /
+Tutte theory is all on `SimpleGraph`, which cannot express the parallel edges
+this proof needs (a digon must be a cycle), and there is no nowhere-zero-flow,
+cycle-space, or even-subgraph-cover theory at all.  Formalizing it — and
+Jaeger's reduction of bridgeless graphs to the cubic case — would require
+building multigraph flow/matching infrastructure from scratch: a large,
+separate undertaking, not an afternoon's work.
+
+---
+
 Target: OpenAI's claimed proof of the **Cycle Double Cover conjecture**
 ("A proof of the cycle double cover conjecture", 2026; the paper states
 *"The proof in this note is entirely due to GPT5.6 Sol Ultra"*).
