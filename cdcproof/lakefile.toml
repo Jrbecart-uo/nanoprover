@@ -1,0 +1,9 @@
+name = "cdcproof"
+defaultTargets = ["CDCProof"]
+
+[[require]]
+name = "mathlib"
+path = "../mathlib4"
+
+[[lean_lib]]
+name = "CDCProof"
