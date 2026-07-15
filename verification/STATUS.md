@@ -1,5 +1,30 @@
 # CDC formalization — status
 
+**UPDATE 2026-07-15: the single end-to-end capstone theorem is now proved.**
+`CDCProof.cdc_of_cubicFlow` (in `cdcproof/CDCProof/Main.lean`):
+
+    theorem cdc_of_cubicFlow (G : CF.CubicFlow V E) :
+        ∃ 𝒞 : Multiset (Finset E), G.toMG.IsCDC 𝒞
+
+*Every cubic flow graph has a cycle double cover.*  Clean axioms
+`[propext, Classical.choice, Quot.sound]` — no `sorry`, no `native_decide`.
+A `CubicFlow` is a loopless cubic multigraph with a chosen local edge order and
+a nowhere-zero `𝔽₂³`-flow.  The five modules build together as one lake project
+(`cdcproof/`) against the local Mathlib checkout.
+
+The proof chains: solve Lemma 2.2's linear system (`exists_solution`, via the
+duality reduction + `pairing_vanishes_cubic`) → build the edge family `P` →
+`|P_e| = 2` and condition (1) (`local_02`, from `cdc_local`) → `lemma21` → CDC.
+
+**Still cited, not proved (unchanged):** Jaeger's reduction of bridgeless graphs
+to the cubic case, and the 8-flow theorem (every bridgeless graph has a
+nowhere-zero `𝔽₂³`-flow).  So `cdc_of_cubicFlow` certifies the paper's *entire
+novel argument* — the reduction of a nowhere-zero `𝔽₂³`-flow to a cycle double
+cover — but NOT the two classical inputs it stands on.  This is not a full
+certification of the conjecture.
+
+---
+
 Target: OpenAI's claimed proof of the **Cycle Double Cover conjecture**
 ("A proof of the cycle double cover conjecture", 2026; the paper states
 *"The proof in this note is entirely due to GPT5.6 Sol Ultra"*).
