@@ -22,18 +22,30 @@ novel step, and we have isolated exactly what remains. Read the boundary below.
 | | `lemma22_reduction` | Lemma 2.2, modulo the vertex-local fact |
 | `cdc_assembly.lean` | **`pairing_vanishes`** | **the global half of Lemma 2.2**: incidence exchange → parity → handshake ⟹ `∑ₑ ηₑ(dₑ) = 0` |
 
-## The one remaining gap
+## The gap is now CLOSED (`cdc_glue.lean`, 2026-07-15)
 
-`pairing_vanishes` takes a hypothesis `hlocal`: *at each vertex, the gauge sum of
-`η` equals the parity of how many incident `ηₑ` are nonzero.*
+`pairing_vanishes` took a hypothesis `hlocal`: *at each vertex, the gauge sum of
+`η` equals the parity of how many incident `ηₑ` are nonzero.*  That hypothesis is
+now **proved** (`hlocal` in `cdc_glue.lean`), and chained through the handshake to
+`pairing_vanishes_cubic`.  Clean axioms, no `sorry`, no `native_decide`.
 
-That is **exactly `cdc_crux`** — which is proved. What is missing is only the
-plumbing: a cubic-multigraph-with-local-edge-order structure, the gauge
-`g(v,a)=0, g(v,b)=f(a), g(v,c)=0`, and the observation that the incidence sum at a
-cubic vertex collapses to its three edges. Mechanical, but not yet written.
+New in `cdc_glue.lean`:
+* `cdc_crux_dual` — `cdc_crux` transported from `G3` elements to functionals
+  `η : Dual 𝔽₂ G3`, via the self-duality `dotL`/`exists_dot_eq`/`dotL_eq_zero_iff`.
+* `CubicFlow` — a loopless cubic multigraph with a chosen local edge order and a
+  nowhere-zero `𝔽₂³`-flow (conservation at each vertex).
+* `vertexSum'_collapse` — a cubic vertex's incidence sum collapses to its three
+  incident edges (uses looplessness: no edge is incident on both sides).
+* **`hlocal`** — the vertex-local identity: gauge sum `= η_b(x) =` parity count.
+  The one place the cubic structure, gauge, flow, and `cdc_crux` all meet.
+* **`pairing_vanishes_cubic`** — for any `CubicFlow` and any dual family `η`
+  satisfying condition (5), `∑_e η_e(d_e) = 0` (d built from the gauge).  Exactly
+  the hypothesis `lemma22_reduction` consumes.
 
-So: **every mathematical idea in the paper's step 3 is now kernel-verified.
-The remaining work is bookkeeping, not mathematics.**
+**So every link of the paper's novel step 3 is now individually kernel-proved.**
+The only reason there is no single `theorem cdc : ...` is the standalone-REPL
+limitation (each file re-imports Mathlib; there is no lake project tying the five
+files into one module). That is packaging, not mathematics.
 
 ## Not formalized at all (cited by the paper, and by us)
 
