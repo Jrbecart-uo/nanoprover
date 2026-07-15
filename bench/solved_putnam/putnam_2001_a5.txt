@@ -1,0 +1,119 @@
+import Mathlib
+
+set_option maxHeartbeats 1600000
+
+/-!
+Putnam 2001 A5.  There are unique positive integers `a, n` with
+`a^(n+1) - (a+1)^n = 2001`.  The solution is `(a, n) = (13, 2)`
+(`13³ - 14² = 2197 - 196 = 2001`).
+
+Uniqueness, all elementary:
+* mod `a`:   `(a+1)^n ≡ 1`, `a^(n+1) ≡ 0`, so `a ∣ 2002`.
+* mod `a+1`: `a ≡ -1`, so `a+1 ∣ 2001 - (-1)^(n+1)`, i.e. `2000` (n odd) or `2002` (n even).
+  Enumerating the divisors of `2002` forces `a ∈ {1, 7, 13}`.
+* `a = 1`:  `1 - 2^n = 2001` needs `2^n = -2000`, impossible.
+* `a = 7`:  forces `n` odd, and then `7^(n+1) ≡ 2 (mod 9)`, impossible
+            (`7^even ∈ {1,4,7} mod 9`).
+* `a = 13`: `13^(n+1) - 14^n = 2001`; `13^(m+1) < 14^m` for `m ≥ 35`, so `n < 35`,
+            and a finite check leaves only `n = 2`.
+-/
+
+/-- `13^(m+1) < 14^m` for `m ≥ 35`: `14^n` overtakes `13^(n+1)` and stays ahead. -/
+private theorem grow_13_14 : ∀ m : ℕ, 35 ≤ m → (13:ℤ)^(m+1) < 14^m := by
+  intro m hm
+  induction m with
+  | zero => omega
+  | succ k ih =>
+    rcases Nat.lt_or_ge k 35 with hk | hk
+    · interval_cases k <;> first | omega | norm_num
+    · have := ih hk
+      calc (13:ℤ)^(k+1+1) = 13 * 13^(k+1) := by ring
+        _ < 13 * 14^k := by linarith
+        _ ≤ 14 * 14^k := by nlinarith [pow_nonneg (by norm_num : (0:ℤ) ≤ 14) k]
+        _ = 14^(k+1) := by ring
+
+/-- `a = 13` branch: `13^(n+1) - 14^n = 2001` forces `n = 2`. -/
+private theorem case_13 (n : ℕ) (hn : n > 0) (heq : (13:ℤ)^(n+1) - 14^n = 2001) :
+    n = 2 := by
+  by_contra hne
+  rcases Nat.lt_or_ge n 35 with h | h
+  · interval_cases n <;> simp_all <;> norm_num at heq
+  · have := grow_13_14 n h; linarith
+
+/-- `a = 7` branch: `n` odd and `7^(n+1) - 8^n = 2001` is impossible mod 9. -/
+private theorem case_7 (n : ℕ) (hodd : Odd n) (heq : (7:ℤ)^(n+1) - 8^n = 2001) :
+    False := by
+  have h4 : ∀ j : ℕ, (4 : ZMod 9)^j ≠ 2 := by
+    intro j
+    have h3 : (4 : ZMod 9)^3 = 1 := by decide
+    have hh : (4:ZMod 9)^j = 4^(j % 3) := by
+      conv_lhs => rw [← Nat.div_add_mod j 3, pow_add, pow_mul, h3, one_pow, one_mul]
+    rw [hh]; have : j % 3 < 3 := Nat.mod_lt _ (by norm_num)
+    interval_cases (j % 3) <;> decide
+  have hc : (7:ZMod 9)^(n+1) - (8:ZMod 9)^n = 3 := by
+    have h0 : (((7:ℤ)^(n+1) - 8^n : ℤ) : ZMod 9) = ((2001:ℤ) : ZMod 9) := by rw [heq]
+    push_cast at h0
+    rw [show (3:ZMod 9) = 2001 from by decide]; exact h0
+  obtain ⟨k, rfl⟩ := hodd
+  have e8 : (8:ZMod 9)^(2*k+1) = 8 := by
+    rw [show (8:ZMod 9) = -1 from by decide, Odd.neg_one_pow ⟨k, rfl⟩]
+  have e7 : (7:ZMod 9)^(2*k+1+1) = (4:ZMod 9)^(k+1) := by
+    rw [show 2*k+1+1 = 2*(k+1) from by ring, pow_mul, show (7:ZMod 9)^2 = 4 from by decide]
+  rw [e7, e8, sub_eq_iff_eq_add, show (3:ZMod 9)+8 = 2 from by decide] at hc
+  exact h4 (k+1) hc
+
+set_option maxRecDepth 100000 in
+theorem putnam_2001_a5
+: ∃! an : ℤ × ℕ, let (a, n) := an; a > 0 ∧ n > 0 ∧ a^(n+1) - (a+1)^n = 2001 := by
+  refine ⟨(13, 2), ⟨by norm_num, by norm_num, by norm_num⟩, ?_⟩
+  rintro ⟨a, n⟩ ⟨ha, hn, heq⟩
+  -- a ∣ 2002
+  have hd1 : a ∣ 2002 := by
+    have h1 : a ∣ a^(n+1) := dvd_pow_self a (by omega)
+    have h2 : a ∣ ((a+1)^n - 1^n) := by simpa using sub_dvd_pow_sub_pow (a+1) 1 n
+    have h3 : a ∣ (a^(n+1) - ((a+1)^n - 1^n)) := dvd_sub h1 h2
+    have e2 : a^(n+1) - ((a+1)^n - 1^n) = 2002 := by rw [one_pow]; linarith
+    rwa [e2] at h3
+  -- a+1 ∣ 2001 - (-1)^(n+1)
+  have hd2 : (a+1) ∣ (2001 - (-1)^(n+1)) := by
+    have h1 : (a+1) ∣ (a+1)^n := dvd_pow_self (a+1) (by omega)
+    have h2 : (a+1) ∣ (a^(n+1) - (-1)^(n+1)) := by
+      simpa using sub_dvd_pow_sub_pow a (-1) (n+1)
+    have h3 : a^(n+1) - (-1)^(n+1) - (a+1)^n = 2001 - (-1)^(n+1) := by linarith
+    have := dvd_sub h2 h1
+    rwa [h3] at this
+  -- narrow to a ∈ {1, 7, 13}
+  have hA : a = 1 ∨ a = 7 ∨ a = 13 := by
+    lift a to ℕ using ha.le with a
+    have hn2 : a ∣ 2002 := by exact_mod_cast hd1
+    have hmem : a ∈ Nat.divisors 2002 := Nat.mem_divisors.mpr ⟨hn2, by norm_num⟩
+    have hpm : (-1:ℤ)^(n+1) = 1 ∨ (-1)^(n+1) = -1 := neg_one_pow_eq_or ℤ (n+1)
+    fin_cases hmem <;> rcases hpm with h | h <;> rw [h] at hd2 <;> omega
+  rcases hA with rfl | rfl | rfl
+  · -- a = 1 : 1 - 2^n = 2001, impossible
+    exfalso
+    simp only [one_pow] at heq
+    have : (0:ℤ) ≤ 2^n := by positivity
+    have h2 : (2:ℤ)^n = ((1:ℤ)+1)^n := by norm_num
+    rw [← h2] at heq; omega
+  · -- a = 7 : n odd, then mod 9
+    exfalso
+    have hodd : Odd n := by
+      rcases Nat.even_or_odd n with he | ho
+      · exfalso
+        obtain ⟨j, hj⟩ := he
+        have : (-1:ℤ)^(n+1) = -1 := Odd.neg_one_pow ⟨j, by omega⟩
+        rw [this] at hd2; norm_num at hd2
+      · exact ho
+    have h8 : (7:ℤ)^(n+1) - 8^n = 2001 := by
+      have : ((7:ℤ)+1) = 8 := by norm_num
+      rw [this] at heq; exact heq
+    exact case_7 n hodd h8
+  · -- a = 13 : n = 2
+    have h13 : (13:ℤ)^(n+1) - 14^n = 2001 := by
+      have : ((13:ℤ)+1) = 14 := by norm_num
+      rw [this] at heq; exact heq
+    have : n = 2 := case_13 n hn h13
+    subst this; rfl
+
+#print axioms putnam_2001_a5
