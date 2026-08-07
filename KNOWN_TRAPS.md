@@ -74,3 +74,29 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
 - RAM caps parallelism at 2 concurrent `import Mathlib` processes.
 - First REPL boot on a cold page cache is disk-bound (minutes); warm boots
   are ~6s. Don't kill it early.
+
+## Elaboration / tactic traps (added 2026-07-15, from CDC glue + putnam_2001_a5)
+
+- **`decide` over `ZMod n` / products (e.g. `𝔽₂³`) needs raised limits.** A `∀`
+  over a finite ZMod-product with `if`/`≠` (like `cdc_local`, `local_02`) fails
+  instance synthesis by default. Escape:
+  `set_option synthInstance.maxSize 1000 in` + `set_option maxRecDepth 40000 in`.
+- **`fin_cases` over `Nat.divisors N` needs `set_option maxRecDepth 100000`.**
+  Factoring N during `fin_cases` blows the default depth. (Divisor enumeration:
+  `a ∣ N`, `a>0` → `lift a to ℕ`, `a ∈ Nat.divisors N`, `fin_cases <;> omega`.)
+- **`ring`/`linear_combination` does NOT reduce the characteristic in `ZMod n`.**
+  A goal that is true only because `n = 0` in `ZMod n` (e.g. `9 = 0` in ZMod 9)
+  will fail with "ring expressions not equal". Escape: avoid needing it —
+  `sub_eq_iff_eq_add` then `decide` on the concrete residue, or manual rewriting.
+- **Rewriting a `Prop` inside `if _ then _ else _` fails ("motive is not type
+  correct")** — the `Decidable` instance depends on the Prop. Escape: prove the
+  if-VALUE equality with `if_congr (h : c ↔ c') rfl rfl`, then `rw` that.
+- **Structure fields cannot use grouped binders** `fst snd : E → V` — Lean reads
+  `snd` as autoImplicit. Each field on its own line: `fst : E → V` / `snd : E → V`.
+- **`gauge` is a Mathlib identifier** (Minkowski gauge, returns ℝ). Don't reuse
+  it as a local def name — you get baffling `ℝ`-typed errors. (Used `cdcGauge`.)
+- **char-2 module algebra without `•`:** `linear_combination` chokes on scalar
+  `•`. Case on `ε : ZMod 2` first (`by decide : ∀ z:ZMod 2, z=0∨z=1`), turning
+  `ε • x` into `0` or `x`, then use `CF.neg_self` / `CF.add_self_zero`.
+- Name renames seen: `Finset.card_insert_of_not_mem` → `card_insert_of_notMem`;
+  `Finset.filter_sdiff` does not exist (prove by `ext; tauto`).
