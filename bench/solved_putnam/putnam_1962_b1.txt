@@ -1,0 +1,30 @@
+import Mathlib
+
+/-!
+Putnam 1962 B1.  Binomial theorem for falling factorials `p n x = x (x-1) ⋯ (x-n+1)`:
+`p n (x+y) = ∑ₖ C(n,k) p k x · p (n-k) y`.  This is Mathlib's
+`Ring.descPochhammer_smeval_add` once `p k z = (descPochhammer ℤ k).smeval z`
+(via `aeval_eq_smeval`, `descPochhammer_map`, `descPochhammer_eval_eq_prod_range`).
+-/
+theorem putnam_1962_b1
+(p : ℕ → ℝ → ℝ)
+(x y : ℝ)
+(n : ℕ)
+(h0 : p 0 = fun x : ℝ => 1)
+(hp : ∀ n > 0, p n = fun x : ℝ => ∏ i ∈ Finset.range n, (x - i))
+: p n (x+y) = ∑ k ∈ Finset.range (n+1), Nat.choose n k * (p k x) * (p (n - k) y) := by
+  have hp' : ∀ k z, p k z = ∏ i ∈ Finset.range k, (z - i) := by
+    intro k z
+    rcases Nat.eq_zero_or_pos k with rfl | hk
+    · simp [h0]
+    · simp [hp k hk]
+  have hs : ∀ k z, (descPochhammer ℤ k).smeval z = p k z := by
+    intro k z
+    rw [hp', ← Polynomial.aeval_eq_smeval, Polynomial.aeval_def, ← Polynomial.eval_map,
+      descPochhammer_map, descPochhammer_eval_eq_prod_range]
+  rw [← hs, Ring.descPochhammer_smeval_add n (Commute.all x y),
+    Finset.Nat.sum_antidiagonal_eq_sum_range_succ_mk]
+  refine Finset.sum_congr rfl fun k _ => ?_
+  rw [hs, hs, mul_assoc]
+
+#print axioms putnam_1962_b1
