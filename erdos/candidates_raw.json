@@ -1,0 +1,3141 @@
+[
+{
+"n": 5,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A001223"
+]
+},
+{
+"n": 9,
+"prize": "no",
+"tags": [
+"number theory",
+"additive basis",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A006286"
+]
+},
+{
+"n": 10,
+"prize": "no",
+"tags": [
+"number theory",
+"additive basis",
+"primes"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A387053"
+]
+},
+{
+"n": 14,
+"prize": "no",
+"tags": [
+"number theory",
+"sidon sets",
+"additive combinatorics"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A143824"
+]
+},
+{
+"n": 15,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 17,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A038133"
+]
+},
+{
+"n": 18,
+"prize": "no",
+"tags": [
+"number theory",
+"divisors",
+"factorials"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A005153"
+]
+},
+{
+"n": 32,
+"prize": "no",
+"tags": [
+"number theory",
+"additive basis"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 33,
+"prize": "no",
+"tags": [
+"number theory",
+"additive basis"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 44,
+"prize": "no",
+"tags": [
+"number theory",
+"sidon sets",
+"additive combinatorics"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 60,
+"prize": "no",
+"tags": [
+"graph theory",
+"cycles"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A006855"
+]
+},
+{
+"n": 61,
+"prize": "no",
+"tags": [
+"graph theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 65,
+"prize": "no",
+"tags": [
+"graph theory",
+"cycles"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 68,
+"prize": "no",
+"tags": [
+"number theory",
+"irrationality"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A331373"
+]
+},
+{
+"n": 70,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory",
+"set theory"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": []
+},
+{
+"n": 80,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 82,
+"prize": "no",
+"tags": [
+"graph theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A120414",
+"A390256",
+"A390257",
+"A390919",
+"A392636",
+"A394400",
+"A394462",
+"A394539",
+"A394563",
+"A394564",
+"A394573",
+"A394574",
+"A394930",
+"A394933"
+]
+},
+{
+"n": 85,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A006672"
+]
+},
+{
+"n": 87,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A059442"
+]
+},
+{
+"n": 91,
+"prize": "no",
+"tags": [
+"geometry",
+"distances"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A186704"
+]
+},
+{
+"n": 96,
+"prize": "no",
+"tags": [
+"geometry",
+"distances",
+"convex"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 98,
+"prize": "no",
+"tags": [
+"geometry",
+"distances"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 100,
+"prize": "no",
+"tags": [
+"geometry",
+"distances"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 108,
+"prize": "no",
+"tags": [
+"graph theory",
+"chromatic number",
+"cycles"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 137,
+"prize": "no",
+"tags": [
+"number theory",
+"powerful"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 141,
+"prize": "no",
+"tags": [
+"additive combinatorics",
+"primes",
+"arithmetic progressions"
+],
+"fc": true,
+"fc_open": 4,
+"ai": false,
+"oeis": [
+"A006560"
+]
+},
+{
+"n": 145,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A005117"
+]
+},
+{
+"n": 153,
+"prize": "no",
+"tags": [
+"sidon sets"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 155,
+"prize": "no",
+"tags": [
+"additive combinatorics",
+"sidon sets"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A143824",
+"A227590",
+"A003022"
+]
+},
+{
+"n": 156,
+"prize": "no",
+"tags": [
+"sidon sets"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A382397"
+]
+},
+{
+"n": 158,
+"prize": "no",
+"tags": [
+"sidon sets"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 159,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 160,
+"prize": "no",
+"tags": [
+"additive combinatorics",
+"arithmetic progressions"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 168,
+"prize": "no",
+"tags": [
+"additive combinatorics"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A004059",
+"A057561",
+"A094708",
+"A386439"
+]
+},
+{
+"n": 172,
+"prize": "no",
+"tags": [
+"additive combinatorics",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 181,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 184,
+"prize": "no",
+"tags": [
+"graph theory",
+"cycles"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 195,
+"prize": "no",
+"tags": [
+"arithmetic progressions"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 196,
+"prize": "no",
+"tags": [
+"arithmetic progressions"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 197,
+"prize": "no",
+"tags": [
+"arithmetic progressions"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 200,
+"prize": "no",
+"tags": [
+"primes",
+"arithmetic progressions"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A005115"
+]
+},
+{
+"n": 203,
+"prize": "no",
+"tags": [
+"primes",
+"covering systems"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 208,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A005117",
+"A076259"
+]
+},
+{
+"n": 212,
+"prize": "no",
+"tags": [
+"geometry",
+"distances"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 213,
+"prize": "no",
+"tags": [
+"geometry",
+"distances"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 234,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 236,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A039669",
+"A109925"
+]
+},
+{
+"n": 238,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 243,
+"prize": "no",
+"tags": [
+"number theory",
+"irrationality"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A000058"
+]
+},
+{
+"n": 244,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 247,
+"prize": "no",
+"tags": [
+"number theory",
+"irrationality"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 249,
+"prize": "no",
+"tags": [
+"number theory",
+"irrationality"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A256936"
+]
+},
+{
+"n": 252,
+"prize": "no",
+"tags": [
+"number theory",
+"irrationality"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A227988",
+"A227989",
+"A307036",
+"A359060"
+]
+},
+{
+"n": 257,
+"prize": "no",
+"tags": [
+"irrationality"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 261,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": []
+},
+{
+"n": 267,
+"prize": "no",
+"tags": [
+"irrationality"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 269,
+"prize": "no",
+"tags": [
+"irrationality"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 272,
+"prize": "no",
+"tags": [
+"additive combinatorics",
+"arithmetic progressions"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 273,
+"prize": "no",
+"tags": [
+"number theory",
+"covering systems"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 274,
+"prize": "no",
+"tags": [
+"group theory",
+"covering systems"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 276,
+"prize": "no",
+"tags": [
+"number theory",
+"covering systems"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 279,
+"prize": "no",
+"tags": [
+"number theory",
+"covering systems",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 282,
+"prize": "no",
+"tags": [
+"number theory",
+"unit fractions"
+],
+"fc": true,
+"fc_open": 4,
+"ai": false,
+"oeis": []
+},
+{
+"n": 289,
+"prize": "no",
+"tags": [
+"number theory",
+"unit fractions"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 291,
+"prize": "no",
+"tags": [
+"number theory",
+"unit fractions"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A110566"
+]
+},
+{
+"n": 295,
+"prize": "no",
+"tags": [
+"number theory",
+"unit fractions"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A192881"
+]
+},
+{
+"n": 302,
+"prize": "no",
+"tags": [
+"number theory",
+"unit fractions"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A390395"
+]
+},
+{
+"n": 304,
+"prize": "no",
+"tags": [
+"number theory",
+"unit fractions"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A097847",
+"A097849"
+]
+},
+{
+"n": 312,
+"prize": "no",
+"tags": [
+"number theory",
+"unit fractions"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 313,
+"prize": "no",
+"tags": [
+"number theory",
+"unit fractions"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A054377"
+]
+},
+{
+"n": 317,
+"prize": "no",
+"tags": [
+"number theory",
+"unit fractions"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 319,
+"prize": "no",
+"tags": [
+"number theory",
+"unit fractions"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 322,
+"prize": "no",
+"tags": [
+"number theory",
+"powers"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A025456",
+"A025418"
+]
+},
+{
+"n": 323,
+"prize": "no",
+"tags": [
+"number theory",
+"powers"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A004825",
+"A004831",
+"A004832",
+"A004833",
+"A004842",
+"A004843",
+"A004844",
+"A004845",
+"A004857",
+"A004869"
+]
+},
+{
+"n": 324,
+"prize": "no",
+"tags": [
+"number theory",
+"powers",
+"sidon sets"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 329,
+"prize": "no",
+"tags": [
+"number theory",
+"sidon sets"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 332,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 340,
+"prize": "no",
+"tags": [
+"number theory",
+"additive combinatorics",
+"sidon sets"
+],
+"fc": true,
+"fc_open": 6,
+"ai": false,
+"oeis": [
+"A080200",
+"A005282"
+]
+},
+{
+"n": 348,
+"prize": "no",
+"tags": [
+"number theory",
+"complete sequences"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 357,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 15,
+"ai": false,
+"oeis": [
+"A364132",
+"A364153"
+]
+},
+{
+"n": 359,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A002048"
+]
+},
+{
+"n": 361,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 371,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A070089"
+]
+},
+{
+"n": 373,
+"prize": "no",
+"tags": [
+"number theory",
+"factorials"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A003135"
+]
+},
+{
+"n": 376,
+"prize": "no",
+"tags": [
+"number theory",
+"binomial coefficients",
+"base representations"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A030979"
+]
+},
+{
+"n": 377,
+"prize": "no",
+"tags": [
+"number theory",
+"binomial coefficients"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 383,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 385,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A322292"
+]
+},
+{
+"n": 386,
+"prize": "no",
+"tags": [
+"number theory",
+"binomial coefficients"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A280992"
+]
+},
+{
+"n": 389,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A375071"
+]
+},
+{
+"n": 394,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A344005"
+]
+},
+{
+"n": 406,
+"prize": "no",
+"tags": [
+"number theory",
+"base representations"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 409,
+"prize": "no",
+"tags": [
+"number theory",
+"iterated functions"
+],
+"fc": true,
+"fc_open": 12,
+"ai": false,
+"oeis": [
+"A039651",
+"A229487"
+]
+},
+{
+"n": 410,
+"prize": "no",
+"tags": [
+"number theory",
+"iterated functions"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A007497"
+]
+},
+{
+"n": 412,
+"prize": "no",
+"tags": [
+"number theory",
+"iterated functions"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A007497",
+"A051572"
+]
+},
+{
+"n": 413,
+"prize": "no",
+"tags": [
+"number theory",
+"iterated functions"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A005236"
+]
+},
+{
+"n": 414,
+"prize": "no",
+"tags": [
+"number theory",
+"iterated functions"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A064491"
+]
+},
+{
+"n": 416,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A264810"
+]
+},
+{
+"n": 417,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A264810",
+"A061070"
+]
+},
+{
+"n": 422,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 4,
+"ai": false,
+"oeis": [
+"A005185"
+]
+},
+{
+"n": 424,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A005244"
+]
+},
+{
+"n": 428,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 431,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 445,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 450,
+"prize": "no",
+"tags": [
+"number theory",
+"divisors"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 452,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 454,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A389676",
+"A389677"
+]
+},
+{
+"n": 455,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 462,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A032742"
+]
+},
+{
+"n": 463,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 478,
+"prize": "no",
+"tags": [
+"number theory",
+"factorials"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A210184"
+]
+},
+{
+"n": 479,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A036236",
+"A015919",
+"A050259",
+"A015921",
+"A006521",
+"A006517",
+"A015940"
+]
+},
+{
+"n": 495,
+"prize": "no",
+"tags": [
+"diophantine approximation",
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 508,
+"prize": "no",
+"tags": [
+"geometry",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 509,
+"prize": "no",
+"tags": [
+"analysis",
+"polynomials"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 510,
+"prize": "no",
+"tags": [
+"analysis"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 517,
+"prize": "no",
+"tags": [
+"analysis"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 522,
+"prize": "no",
+"tags": [
+"analysis",
+"polynomials",
+"probability"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 538,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 544,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A000791"
+]
+},
+{
+"n": 545,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A059442"
+]
+},
+{
+"n": 552,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A006672"
+]
+},
+{
+"n": 562,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory",
+"hypergraphs"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 563,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory",
+"hypergraphs"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 566,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 567,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": []
+},
+{
+"n": 568,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 569,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 572,
+"prize": "no",
+"tags": [
+"graph theory",
+"turan number",
+"cycles"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 579,
+"prize": "no",
+"tags": [
+"graph theory",
+"turan number"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 596,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory",
+"set theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 600,
+"prize": "no",
+"tags": [
+"graph theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 609,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 624,
+"prize": "no",
+"tags": [
+"combinatorics"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 653,
+"prize": "no",
+"tags": [
+"geometry",
+"distances"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 655,
+"prize": "no",
+"tags": [
+"geometry",
+"distances"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 660,
+"prize": "no",
+"tags": [
+"geometry",
+"distances",
+"convex"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 677,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 680,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 681,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A389680"
+]
+},
+{
+"n": 683,
+"prize": "no",
+"tags": [
+"number theory",
+"primes",
+"binomial coefficients"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A006530",
+"A074399",
+"A121359"
+]
+},
+{
+"n": 688,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 695,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A061092"
+]
+},
+{
+"n": 700,
+"prize": "no",
+"tags": [
+"number theory",
+"binomial coefficients"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A091963"
+]
+},
+{
+"n": 701,
+"prize": "no",
+"tags": [
+"combinatorics",
+"intersecting family"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 714,
+"prize": "no",
+"tags": [
+"graph theory",
+"turan number"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 726,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 727,
+"prize": "no",
+"tags": [
+"number theory",
+"factorials"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A002503",
+"A343507",
+"A389396"
+]
+},
+{
+"n": 740,
+"prize": "no",
+"tags": [
+"graph theory",
+"chromatic number"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 757,
+"prize": "no",
+"tags": [
+"geometry",
+"distances",
+"sidon sets"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 769,
+"prize": "no",
+"tags": [
+"number theory",
+"geometry"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A014544"
+]
+},
+{
+"n": 770,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 4,
+"ai": false,
+"oeis": [
+"A263647"
+]
+},
+{
+"n": 773,
+"prize": "no",
+"tags": [
+"number theory",
+"sidon sets",
+"squares"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A390813"
+]
+},
+{
+"n": 774,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 786,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A143301"
+]
+},
+{
+"n": 789,
+"prize": "no",
+"tags": [
+"additive combinatorics"
+],
+"fc": true,
+"fc_open": 5,
+"ai": false,
+"oeis": []
+},
+{
+"n": 812,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A059442"
+]
+},
+{
+"n": 817,
+"prize": "no",
+"tags": [
+"additive combinatorics"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 821,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A014197"
+]
+},
+{
+"n": 826,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 828,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 830,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A259180"
+]
+},
+{
+"n": 839,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 849,
+"prize": "no",
+"tags": [
+"number theory",
+"binomial coefficients"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A003016",
+"A003015",
+"A059233",
+"A098565",
+"A090162",
+"A180058",
+"A182237"
+]
+},
+{
+"n": 850,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A343101"
+]
+},
+{
+"n": 853,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A001223",
+"A390769"
+]
+},
+{
+"n": 855,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A023193"
+]
+},
+{
+"n": 857,
+"prize": "no",
+"tags": [
+"combinatorics"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 859,
+"prize": "no",
+"tags": [
+"number theory",
+"divisors"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 881,
+"prize": "no",
+"tags": [
+"number theory",
+"additive basis"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 883,
+"prize": "no",
+"tags": [
+"number theory",
+"graph theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 885,
+"prize": "no",
+"tags": [
+"number theory",
+"divisors"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 886,
+"prize": "no",
+"tags": [
+"number theory",
+"divisors"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 887,
+"prize": "no",
+"tags": [
+"number theory",
+"divisors"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": []
+},
+{
+"n": 889,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 4,
+"ai": false,
+"oeis": []
+},
+{
+"n": 890,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 891,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 893,
+"prize": "no",
+"tags": [
+"number theory",
+"divisors"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A046801"
+]
+},
+{
+"n": 912,
+"prize": "no",
+"tags": [
+"number theory",
+"factorials"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A071626"
+]
+},
+{
+"n": 913,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A359747"
+]
+},
+{
+"n": 918,
+"prize": "no",
+"tags": [
+"graph theory",
+"chromatic number"
+],
+"fc": true,
+"fc_open": 4,
+"ai": false,
+"oeis": []
+},
+{
+"n": 930,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 932,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A387864"
+]
+},
+{
+"n": 933,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 936,
+"prize": "no",
+"tags": [
+"number theory",
+"powerful"
+],
+"fc": true,
+"fc_open": 4,
+"ai": false,
+"oeis": [
+"A146968"
+]
+},
+{
+"n": 938,
+"prize": "no",
+"tags": [
+"number theory",
+"powerful"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A001694",
+"A076446"
+]
+},
+{
+"n": 939,
+"prize": "no",
+"tags": [
+"number theory",
+"powerful"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A297867",
+"A036966"
+]
+},
+{
+"n": 940,
+"prize": "no",
+"tags": [
+"number theory",
+"powerful"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": []
+},
+{
+"n": 944,
+"prize": "no",
+"tags": [
+"graph theory",
+"chromatic number"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 945,
+"prize": "no",
+"tags": [
+"number theory",
+"divisors"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A048892"
+]
+},
+{
+"n": 950,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 5,
+"ai": false,
+"oeis": []
+},
+{
+"n": 952,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 955,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 959,
+"prize": "no",
+"tags": [
+"geometry",
+"distances"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 961,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A213253"
+]
+},
+{
+"n": 962,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A327909"
+]
+},
+{
+"n": 968,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A387591"
+]
+},
+{
+"n": 970,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A048669"
+]
+},
+{
+"n": 972,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 975,
+"prize": "no",
+"tags": [
+"number theory",
+"divisors",
+"polynomials"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A147807"
+]
+},
+{
+"n": 978,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 979,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A385316"
+]
+},
+{
+"n": 1002,
+"prize": "no",
+"tags": [
+"analysis",
+"diophantine approximation"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1003,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A001274"
+]
+},
+{
+"n": 1030,
+"prize": "no",
+"tags": [
+"graph theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A000791",
+"A059442"
+]
+},
+{
+"n": 1035,
+"prize": "no",
+"tags": [
+"graph theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1049,
+"prize": "no",
+"tags": [
+"irrationality"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1055,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A005113"
+]
+},
+{
+"n": 1056,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A060427"
+]
+},
+{
+"n": 1057,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A006931"
+]
+},
+{
+"n": 1059,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A064152"
+]
+},
+{
+"n": 1060,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A327153"
+]
+},
+{
+"n": 1063,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A389360"
+]
+},
+{
+"n": 1065,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A074781",
+"A339465"
+]
+},
+{
+"n": 1068,
+"prize": "no",
+"tags": [
+"graph theory",
+"set theory",
+"chromatic number"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1072,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": [
+"A073944",
+"A072937",
+"A154554"
+]
+},
+{
+"n": 1073,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A256519"
+]
+},
+{
+"n": 1074,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 5,
+"ai": false,
+"oeis": [
+"A063980",
+"A064164"
+]
+},
+{
+"n": 1083,
+"prize": "no",
+"tags": [
+"geometry",
+"distances"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A186704"
+]
+},
+{
+"n": 1085,
+"prize": "no",
+"tags": [
+"geometry",
+"distances"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A186705"
+]
+},
+{
+"n": 1088,
+"prize": "no",
+"tags": [
+"geometry"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1093,
+"prize": "no",
+"tags": [
+"number theory",
+"binomial coefficients"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1094,
+"prize": "no",
+"tags": [
+"number theory",
+"binomial coefficients"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1106,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A194259",
+"A194260"
+]
+},
+{
+"n": 1107,
+"prize": "no",
+"tags": [
+"number theory",
+"powerful"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A056828",
+"A392342",
+"A392343"
+]
+},
+{
+"n": 1108,
+"prize": "no",
+"tags": [
+"number theory",
+"factorials"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A051761",
+"A115645",
+"A025494"
+]
+},
+{
+"n": 1109,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A392164",
+"A392165"
+]
+},
+{
+"n": 1110,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1113,
+"prize": "no",
+"tags": [
+"number theory",
+"covering systems"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": [
+"A076336"
+]
+},
+{
+"n": 1137,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A083550",
+"A005250"
+]
+},
+{
+"n": 1142,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": [
+"A039669"
+]
+},
+{
+"n": 1145,
+"prize": "no",
+"tags": [
+"additive combinatorics",
+"additive basis"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1146,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1159,
+"prize": "no",
+"tags": [
+"combinatorics"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1167,
+"prize": "no",
+"tags": [
+"set theory",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 5,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1175,
+"prize": "no",
+"tags": [
+"set theory",
+"chromatic number"
+],
+"fc": true,
+"fc_open": 3,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1192,
+"prize": "no",
+"tags": [
+"additive combinatorics",
+"additive basis"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1199,
+"prize": "no",
+"tags": [
+"additive combinatorics",
+"ramsey theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1203,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1206,
+"prize": "no",
+"tags": [
+"number theory",
+"sidon sets"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1207,
+"prize": "no",
+"tags": [
+"geometry",
+"distances"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1210,
+"prize": "no",
+"tags": [
+"number theory"
+],
+"fc": true,
+"fc_open": 2,
+"ai": false,
+"oeis": []
+},
+{
+"n": 1212,
+"prize": "no",
+"tags": [
+"number theory",
+"primes"
+],
+"fc": true,
+"fc_open": 1,
+"ai": false,
+"oeis": []
+}
+]

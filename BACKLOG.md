@@ -3,7 +3,7 @@
 Durable handoff. A new session can read this + the auto-memory (`nanoprover-project`,
 `nanoprover-env`, `nanoprover-roadmap`, `cdc-formalization`, `naskrecki-problem`)
 and propose next tasks. Ranked by leverage within each track. Last updated
-2026-07-15.
+2026-09-24.
 
 ## Session-start ritual
 1. `export PATH="$HOME/.elan/bin:$PATH"`
@@ -38,7 +38,10 @@ Current: **21 scalps**. Reachable wins live here.
       lands. File: `miniF2F-lean4/MiniF2F/Test/imo_1985_p6.lean` (statement uses
       `f : ℕ → NNReal → ℝ` — expect cast friction).
 
-## Track C — CDC formalization (finish the certification)
+## Track C — CDC formalization (DEPRIORITISED 2026-09-24)
+NOTE: the full CDC proof (incl. classical parts) has reportedly been formalized in Lean 4
+several times since July (OpenAI endpoint for finite loopless bridgeless multigraphs;
+Guo, Bajpai, Okur). Finishing our own copy is no longer novel — verify before investing.
 The paper's **novel argument is fully certified** (`cdcproof/`: `cdc_of_cubicFlow`,
 `cdc_of_covering`, clean axioms, one lake project). What remains is CLASSICAL and
 needs multigraph infrastructure Mathlib lacks (its matching/Tutte theory is
@@ -55,6 +58,29 @@ essential here — a digon must be a cycle).
       honest summary; `verification/cdc*.py` are the computational checks
       (Petersen, flower snarks, 133 random cubic graphs — no flaw found).
 - Boundary, always state honestly: this is NOT a certification of the conjecture.
+
+## Track F — Erdős / formal-conjectures (NEW 2026-09-24; see `erdos/TRIAGE.md`)
+- LESSON: Tao's AI-contributions wiki froze 2026-06-30; since July the whole Erdős long
+  tail is swarmed (GPT-5.6/6 Astra, Claude, Codex users + Justin Sun Prize bounty with
+  hundreds of Lean PRs). ALWAYS check `erdosproblems.com/forum/thread/N/proof-claims`
+  and FC issues before attacking anything.
+- [ ] (needs user OK — public) FC issue/PR: re-tag 6 statements tagged `research open`
+      that are known/trivial: 261 `two_representations` (our kernel proof:
+      `erdos/erdos_261_two_reps.lean`), 357 `hegyvari`, 44 `empty_start`, 184 `covering`,
+      80 `erdos_80` (Fox–Loh), 319 `isTheta`. Evidence in `erdos/litcheck_C.md`.
+- [ ] Only residual genuine target: #1110 density clause — positive lower density of
+      representables for (7,2) or (4,3) (finite-certificate search + Lean counting).
+- [ ] Re-check the 261 proof inside the FC environment (Lean v4.33.1) before submitting.
+
+## Track G — Navier–Stokes (OpenAI, Sep 2026) — AUDIT DONE 2026-09-24
+- ✅ `verification/NS_AUDIT.md`: statements faithful to Clay (C)/(D); Euler statement
+  audited; full build + Comparator in a fresh clone; **nanoda + Lean kernels accept both
+  challenges**; clean axioms. Tools built locally in `external/tools/` (landrun
+  best-effort: WSL Landlock ABI v3 only).
+- [ ] Follow-up candidates (`external/ns_followups_report.md`): independent Euler
+      statement for FC; Looi's unforced viscous Obukhov-model regularity (ODE);
+      exact-arithmetic checks of exponent thresholds (e.g. (22−8√7)/9).
+- Pick-up item 4 (Millennium problems head-on) deferred by user decision.
 
 ## Track D — Discovery engine / open problems (LOWER priority — see lesson)
 - LESSON (paid for twice): construction-search over WELL-STUDIED open problems

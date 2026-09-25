@@ -10,3 +10,5 @@ miniF2F-lean4/
 PutnamBench/
 .repl/
 repl/
+external/
+erdos/triage_batch*.txt
