@@ -1,0 +1,28 @@
+import Mathlib
+
+open Set
+
+/-!
+Putnam 1978 A4.  For a "bypass" operation `(ab)(cd) = ad`:
+(1) `ab = c ⇒ cc = (ab)(ab) = ab = c`;  (2) `ad = (ab)(ad) = (cc)(ad) = cd`.
+Witness for (A)(B)(C): the rectangular band on `Bool × Bool`, `(p, q) * (r, s) = (p, s)`.
+-/
+theorem putnam_1978_a4
+(bypass : (S : Type) → [inst : Mul S] → Prop)
+(hbypass : bypass = fun S [Mul S] ↦ ∀ a b c d : S, (a * b) * (c * d) = a * d)
+: ((∀ (S : Type) (_ : Mul S), bypass S → ∀ a b c : S, a * b = c → (c * c = c ∧ ∀ d : S, a * d = c * d))
+  ∧ (∃ (S : Type) (_ : Mul S) (_ : Fintype S), bypass S ∧ (∀ a : S, a * a = a) ∧ (∃ a b : S, a * b = a ∧ a ≠ b) ∧ (∃ a b : S, a * b ≠ a))) := by
+  subst hbypass
+  refine ⟨fun S _ h a b c hc => ?_, ?_⟩
+  · have hcc : c * c = c := by rw [← hc, h]
+    refine ⟨hcc, fun d => ?_⟩
+    calc a * d = (a * b) * (a * d) := (h a b a d).symm
+      _ = (c * c) * (a * d) := by rw [hc, hcc]
+      _ = c * d := h c c a d
+  · refine ⟨Bool × Bool, ⟨fun p q => (p.1, q.2)⟩, inferInstance, ?_, ?_, ?_, ?_⟩
+    · intro a b c d; rfl
+    · intro a; rfl
+    · exact ⟨(false, false), (true, false), rfl, by decide⟩
+    · exact ⟨(false, false), (false, true), by decide⟩
+
+#print axioms putnam_1978_a4

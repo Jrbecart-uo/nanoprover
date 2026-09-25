@@ -1,0 +1,26 @@
+import Mathlib
+
+open Set MvPolynomial
+
+/-!
+Putnam 1971 B1.  `x * x = x` and `(x * y) * z = (y * z) * x` force `*` to be commutative
+and associative.  Commutativity: `xy = (xy)(xy) = (y(xy))x = ((xy)x)y`, and
+`(xy)x = (yx)x = (xx)y = xy`, so `xy = (xy)y = (yy)x = yx`.  Then `(xy)z = (yz)x = x(yz)`.
+-/
+theorem putnam_1971_b1
+(S : Type*) [Mul S]
+(hself : ∀ x : S, x * x = x)
+(h2 : ∀ x y z : S, (x * y) * z = (y * z) * x)
+: (∀ x y z : S, (x * y) * z = x * (y * z)) ∧ (∀ x y : S, x * y = y * x) := by
+  have hxyx : ∀ x y : S, (x * y) * x = x * y := fun x y => by
+    rw [h2 x y x, h2 y x x, hself]
+  have comm : ∀ x y : S, x * y = y * x := fun x y =>
+    calc x * y = (x * y) * (x * y) := (hself _).symm
+      _ = (y * (x * y)) * x := h2 x y (x * y)
+      _ = ((x * y) * x) * y := h2 y (x * y) x
+      _ = (x * y) * y := by rw [hxyx]
+      _ = (y * y) * x := h2 x y y
+      _ = y * x := by rw [hself]
+  exact ⟨fun x y z => by rw [h2, comm], comm⟩
+
+#print axioms putnam_1971_b1

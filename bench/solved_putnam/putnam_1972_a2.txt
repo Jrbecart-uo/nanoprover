@@ -1,0 +1,26 @@
+import Mathlib
+
+open EuclideanGeometry Filter Topology Set
+
+/-!
+Putnam 1972 A2.  `x(xy) = y` and `(yx)x = y` force commutativity: `(xy)y = x`, hence
+`(xy)((xy)y) = y`, i.e. `(xy)x = y`, and then `yx = ((xy)x)x = xy`.
+Not necessarily associative: `ℤ` with `x * y = -x - y` (0(01) = 1, (00)1 = -1).
+-/
+theorem putnam_1972_a2
+: (∀ (S : Type*) (_ : Mul S), (∀ x y : S, x * (x * y) = y ∧ ((y * x) * x) = y) → (∀ x y : S, x * y = y * x)) ∧ ∃ (S : Type*) (_ : Mul S), (∀ x y : S, x * (x * y) = y ∧ ((y * x) * x) = y) ∧ ¬(∀ x y z : S, x * (y * z) = (x * y) * z) := by
+  refine ⟨fun S _ h x y => ?_, ?_⟩
+  · have h1 : (x * y) * x = y := by
+      have := (h (x * y) y).1
+      rwa [(h y x).2] at this
+    calc x * y = ((x * y) * x) * x := ((h x (x * y)).2).symm
+      _ = y * x := by rw [h1]
+  · refine ⟨ULift ℤ, ⟨fun a b => ULift.up (-a.down - b.down)⟩, ?_, ?_⟩
+    · intro x y
+      constructor <;> apply ULift.ext <;> simp only [HMul.hMul, Mul.mul] <;> ring
+    · intro h
+      have := congrArg ULift.down (h (ULift.up 0) (ULift.up 0) (ULift.up 1))
+      simp only [HMul.hMul, Mul.mul] at this
+      norm_num at this
+
+#print axioms putnam_1972_a2
