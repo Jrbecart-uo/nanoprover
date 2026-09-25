@@ -1,0 +1,64 @@
+import Mathlib
+
+/-!
+Putnam 2018 B2.  `fₙ(z) = ∑_{i<n} (n-i) zⁱ` has no zero with `|z| ≤ 1`.
+`(1 - z) fₙ(z) = n - ∑_{i<n} z^{i+1}` (induction, geometric sum).  A zero forces
+`∑ Re z^{i+1} = n` with every `Re z^{i+1} ≤ |z|^{i+1} ≤ 1`, so `Re z = 1`, hence `z = 1`;
+but `fₙ(1) = ∑ (n - i) > 0`.
+-/
+theorem putnam_2018_b2
+(n : ℕ)
+(hn : n > 0)
+(f : ℕ → ℂ → ℂ)
+(hf : ∀ z : ℂ, f n z = ∑ i ∈ Finset.range n, (n - i) * z^i)
+: ∀ z : ℂ, ‖z‖ ≤ 1 → f n z ≠ 0 := by
+  intro z hz hzero
+  have key : ∀ m : ℕ, (1 - z) * ∑ i ∈ Finset.range m, ((m : ℂ) - i) * z ^ i
+      = m - ∑ i ∈ Finset.range m, z ^ (i + 1) := by
+    intro m
+    induction m with
+    | zero => simp
+    | succ m ih =>
+      have e : ∑ i ∈ Finset.range (m + 1), (((m + 1 : ℕ) : ℂ) - i) * z ^ i
+          = ∑ i ∈ Finset.range m, ((m : ℂ) - i) * z ^ i + ∑ i ∈ Finset.range (m + 1), z ^ i := by
+        rw [Finset.sum_range_succ, Finset.sum_range_succ (fun i => z ^ i)]
+        have : ∑ i ∈ Finset.range m, (((m + 1 : ℕ) : ℂ) - i) * z ^ i
+            = ∑ i ∈ Finset.range m, ((m : ℂ) - i) * z ^ i + ∑ i ∈ Finset.range m, z ^ i := by
+          rw [← Finset.sum_add_distrib]
+          exact Finset.sum_congr rfl fun i _ => by push_cast; ring
+        rw [this]; push_cast; ring
+      rw [e, mul_add, ih, Finset.sum_range_succ (fun i => z ^ (i + 1))]
+      have g := geom_sum_mul z (m + 1)
+      push_cast
+      linear_combination -g
+  rw [hf] at hzero
+  have hsum : ∑ i ∈ Finset.range n, z ^ (i + 1) = n := by
+    have := key n; rw [hzero, mul_zero] at this; linear_combination this
+  have hre : ∑ i ∈ Finset.range n, (z ^ (i + 1)).re = ∑ i ∈ Finset.range n, (1 : ℝ) := by
+    have := congrArg Complex.re hsum
+    rw [Complex.re_sum] at this
+    simpa using this
+  have hle : ∀ i ∈ Finset.range n, (z ^ (i + 1)).re ≤ 1 := fun i _ =>
+    (Complex.re_le_norm _).trans (by rw [norm_pow]; exact pow_le_one₀ (norm_nonneg z) hz)
+  have hall := (Finset.sum_eq_sum_iff_of_le hle).mp hre
+  have hre1 : z.re = 1 := by simpa using hall 0 (Finset.mem_range.mpr hn)
+  have him : z.im = 0 := by
+    have h2 : ‖z‖ ^ 2 = z.re * z.re + z.im * z.im := by
+      rw [Complex.sq_norm, Complex.normSq_apply]
+    have h3 : ‖z‖ ^ 2 ≤ 1 := pow_le_one₀ (norm_nonneg z) hz
+    rw [hre1] at h2
+    nlinarith [sq_nonneg z.im]
+  have hz1 : z = 1 := Complex.ext (by simpa using hre1) (by simpa using him)
+  subst hz1
+  have hpos : 0 < ∑ i ∈ Finset.range n, ((n : ℝ) - i) := by
+    apply Finset.sum_pos
+    · intro i hi
+      have : (i : ℝ) < n := by exact_mod_cast Finset.mem_range.mp hi
+      linarith
+    · exact ⟨0, Finset.mem_range.mpr hn⟩
+  have := congrArg Complex.re hzero
+  rw [Complex.re_sum] at this
+  simp only [one_pow, mul_one, Complex.sub_re, Complex.natCast_re, Complex.zero_re] at this
+  linarith
+
+#print axioms putnam_2018_b2
