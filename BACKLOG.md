@@ -15,14 +15,22 @@ and propose next tasks. Ranked by leverage within each track. Last updated
 ---
 
 ## Track A — Putnam scalps (theorem-mode; where we are strongest)
-Current: **23 scalps** (2026-09-25: 1974_b3, 2007_a5 — scoped-out list now EMPTY). Reachable wins live here.
+Current: **41 scalps** (2026-09-25: +18 — scoped-out list emptied, then a triage-driven sweep of the unsolved pure-proof set). Reachable wins live here.
 - ✅ **Scoped-out list cleared** (4/4 fell when re-examined: 1996_a5, 2001_a5, 1974_b3,
       2007_a5). 1974_b3 needed no algebraic integers (denominators 3^(2^k) grow under
       angle doubling); 2007_a5 passed first try via `card_fixedPoints_modEq` on the
       `vectorsProdEqOne` rotation. LESSON: our "too hard" labels were wrong 4 times out of 4.
-- [ ] **Mine the ~310 unsolved pure-proof PutnamBench problems** — number-theory
-      / congruence ones fall well to full developments. Use `analogy.py match`
-      to find the closest solved proof, then the REPL loop.
+- [~] **Mine the unsolved pure-proof PutnamBench problems** (2026-09-25 sweep: 160 with no
+      analysis keywords triaged by 3 agents → 16 solved in a row, most first-try:
+      1971_b1 1972_a2 1978_a4 2012_a2 2000_a2 1995_a1 1997_a4 1968_a2 1967_b2 1965_a4
+      1992_a1 1987_a1 1966_a1 1962_a6 1965_b3 1978_a1 2007_b1 1963_a2).
+      NEXT from the ranked lists (triage score ≥7): 2012_a1 (sort d, Fibonacci growth),
+      1964_b2 (exactly one of T,Tᶜ in P), 1971_a1 (parity pigeonhole in (ZMod 2)³),
+      1965_b2 (2Σw = n(n-1)), 1964_a4, 1983_b4, 1982_a5, 2002_a5, 2000_b5, 1992_b2,
+      1995_a3, 1986_b3 (Hensel), 2008_b4, 2018_b2, 2017_a2, 2003_b4, 2009_b1.
+      Findings: 2017_b3 is FALSE as formalized (`Irrational (f 1/2)` parses as (f 1)/2);
+      1991_a6 is VACUOUS (`→` binds looser than `∧` in `hA`) — if proved, label as such.
+      ALWAYS finish with `python3 tools/verify_scalps.py --kernel NAME`.
 - [ ] **Exercise `salt.py` / `angles.py` on a real scalp** — built this session
       but only REPL+`premise_index` were used end-to-end (on 2001_a5). Confirm
       the supposition-triage / reframing tools actually help on a stuck goal.
