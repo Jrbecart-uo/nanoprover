@@ -74,6 +74,10 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
 - RAM caps parallelism at 2 concurrent `import Mathlib` processes.
 - First REPL boot on a cold page cache is disk-bound (minutes); warm boots
   are ~6s. Don't kill it early.
+- **Parallel subagents + `lake build` in the same project collide** (two builds write the
+  same `.lake/build`). When delegating review of a Lean repo, tell agents NOT to build
+  (build once yourself; they may `lake env lean` small files in a scratch dir), and use
+  `tools/claimcheck.py`, whose build/comparator steps take a per-claim lock.
 - **`pgrep -f PATTERN` inside a wait loop matches the loop's own command line**
   (the pattern is in it), so "wait until X exits" never ends. Escape: wait on a
   sentinel line in X's log, or `pgrep -f '[n]s_script.sh'` (bracket trick).
