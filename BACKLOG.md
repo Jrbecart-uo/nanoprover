@@ -83,9 +83,8 @@ essential here — a digon must be a cycle).
 - Item 4 PICKED 2026-09-25: no Millennium problem is attackable head-on at our scale; instead
   pre-emptive statement audits (`verification/MILLENNIUM_STATEMENTS.md`): RH, P vs NP, BSD
   judged faithful. ✅ 2026-09-25 Hodge statement (Paul-Lez/HodgeConjecture @ 5d0b87f) audited:
-  no misformalization (`verification/HODGE_AUDIT.md`). [ ] Upstream (needs user OK — public):
-  offer the sanity lemmas in `verification/hodge/` + residual gaps (nonzero cycle-class
-  section, CI axiom gate) to that repo; re-audit when it lands in formal-conjectures.
+  no misformalization (`verification/HODGE_AUDIT.md`). User decision 2026-09-25: NOT reported
+  upstream (a negative result, modest value) — focus on our own project.
 
 ## Track D — Discovery engine / open problems (LOWER priority — see lesson)
 - LESSON (paid for twice): construction-search over WELL-STUDIED open problems
