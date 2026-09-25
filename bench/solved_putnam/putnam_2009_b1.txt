@@ -1,0 +1,85 @@
+import Mathlib
+
+open Topology MvPolynomial Filter Set
+
+/-!
+Putnam 2009 B1.  Every positive rational is a quotient of products of factorials of primes.
+Representable rationals are closed under products (`Fin.append` the prime lists) and
+inverses (swap them).  By strong induction every `n ≥ 1` and `n!` are representable: for
+prime `n`, `n!` is a prime factorial and `n = n!/(n-1)!`; for composite `n = a b`
+(`a = minFac n`), `n` is a product and `n! = n (n-1)!`.  Then `q = num/den`.
+-/
+theorem putnam_2009_b1
+(isquotprodprimefact : ℚ → Prop)
+(hisquotprodprimefact : ∀ q, isquotprodprimefact q ↔
+  (∃ (k m : ℕ) (a : Fin k → ℕ) (b : Fin m → ℕ),
+    (∀ i : Fin k, Nat.Prime (a i)) ∧ (∀ j : Fin m, Nat.Prime (b j))
+    ∧ (q = (∏ i : Fin k, Nat.factorial (a i))/(∏ j : Fin m, Nat.factorial (b j)))))
+: ∀ q : ℚ, q > 0 → isquotprodprimefact q := by
+  have hR := hisquotprodprimefact
+  have rep_mul : ∀ q r, isquotprodprimefact q → isquotprodprimefact r → isquotprodprimefact (q * r) := by
+    intro q r hq hr
+    rw [hR] at hq hr ⊢
+    obtain ⟨k, m, a, b, ha, hb, rfl⟩ := hq
+    obtain ⟨k2, m2, a2, b2, ha2, hb2, rfl⟩ := hr
+    refine ⟨k + k2, m + m2, Fin.append a a2, Fin.append b b2, ?_, ?_, ?_⟩
+    · intro i
+      refine Fin.addCases (fun i => ?_) (fun i => ?_) i
+      · simpa using ha i
+      · simpa using ha2 i
+    · intro j
+      refine Fin.addCases (fun j => ?_) (fun j => ?_) j
+      · simpa using hb j
+      · simpa using hb2 j
+    · rw [Fin.prod_univ_add, Fin.prod_univ_add]
+      simp only [Fin.append_left, Fin.append_right]
+      push_cast
+      rw [div_mul_div_comm]
+  have rep_inv : ∀ q, isquotprodprimefact q → isquotprodprimefact q⁻¹ := by
+    intro q hq
+    rw [hR] at hq ⊢
+    obtain ⟨k, m, a, b, ha, hb, rfl⟩ := hq
+    exact ⟨m, k, b, a, hb, ha, by rw [inv_div]⟩
+  have rep_fact : ∀ p : ℕ, p.Prime → isquotprodprimefact (p.factorial : ℚ) := by
+    intro p hp
+    rw [hR]
+    exact ⟨1, 0, fun _ => p, Fin.elim0, fun _ => hp, fun j => j.elim0, by simp⟩
+  have rep_one : isquotprodprimefact 1 := by
+    rw [hR]
+    exact ⟨0, 0, Fin.elim0, Fin.elim0, fun i => i.elim0, fun j => j.elim0, by simp⟩
+  have main : ∀ n : ℕ, 1 ≤ n → isquotprodprimefact (n : ℚ) ∧ isquotprodprimefact (n.factorial : ℚ) := by
+    intro n
+    induction n using Nat.strong_induction_on with
+    | _ n ih =>
+      intro hn
+      rcases Nat.lt_or_ge n 2 with h2 | h2
+      · obtain rfl : n = 1 := by omega
+        simpa using rep_one
+      have hprev := (ih (n - 1) (by omega) (by omega)).2
+      have hfact : ((n : ℚ) * ((n - 1).factorial : ℚ)) = (n.factorial : ℚ) := by
+        exact_mod_cast Nat.mul_factorial_pred (by omega : n ≠ 0)
+      by_cases hp : n.Prime
+      · refine ⟨?_, rep_fact n hp⟩
+        have := rep_mul _ _ (rep_fact n hp) (rep_inv _ hprev)
+        have hne : ((n - 1).factorial : ℚ) ≠ 0 := by positivity
+        rwa [← hfact, mul_assoc, mul_inv_cancel₀ hne, mul_one] at this
+      · have hlt := (Nat.not_prime_iff_minFac_lt h2).mp hp
+        have ha2 : 2 ≤ n.minFac := (Nat.minFac_prime (by omega)).two_le
+        obtain ⟨b, hb⟩ := Nat.minFac_dvd n
+        have hb2 : 2 ≤ b := by
+          by_contra h
+          interval_cases b <;> omega
+        have hblt : b < n := by nlinarith
+        have hn' : isquotprodprimefact (n : ℚ) := by
+          have := rep_mul _ _ (ih _ hlt (by omega)).1 (ih b hblt (by omega)).1
+          rwa [show ((n.minFac : ℕ) : ℚ) * (b : ℚ) = n by exact_mod_cast hb.symm] at this
+        refine ⟨hn', ?_⟩
+        have := rep_mul _ _ hn' hprev
+        rwa [hfact] at this
+  intro q hq
+  have hnum : 0 < q.num := Rat.num_pos.mpr hq
+  have := rep_mul _ _ (main q.num.toNat (by omega)).1 (rep_inv _ (main q.den q.den_pos).1)
+  have e : ((q.num.toNat : ℕ) : ℚ) = (q.num : ℚ) := by exact_mod_cast Int.toNat_of_nonneg hnum.le
+  rwa [e, ← div_eq_mul_inv, Rat.num_div_den] at this
+
+#print axioms putnam_2009_b1
