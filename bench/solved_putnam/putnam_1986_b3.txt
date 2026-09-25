@@ -1,0 +1,48 @@
+import Mathlib
+
+open  Real Equiv Polynomial
+
+/-!
+Putnam 1986 B3 (Hensel lifting).  Write `P = C p`; congruence mod `m` is `C m ∣ (f - g)`.
+Given `F ≡ f`, `G ≡ g (mod p)` and `F G - h = P^(j+1) e`, put `rF + sG - 1 = P u` (true since
+`rf + sg ≡ 1`), `F' = F - P^(j+1) s e`, `G' = G - P^(j+1) r e`: then
+`F' G' - h = P^(j+2) (r s e² P^j - e u)`, and still `F' ≡ f`, `G' ≡ g (mod p)`.
+-/
+theorem putnam_1986_b3
+    (n p : ℕ)
+    (nppos : n > 0 ∧ p > 0)
+    (pprime : Nat.Prime p)
+    (cong : Polynomial ℤ → Polynomial ℤ → ℤ → Prop)
+    (hcong : ∀ f g m, cong f g m ↔ ∀ i : ℕ, m ∣ (f - g).coeff i)
+    (f g h r s : Polynomial ℤ)
+    (hcoprime : cong (r * f + s * g) 1 p)
+    (hprod : cong (f * g) h p)
+    : (∃ F G : Polynomial ℤ, cong F f p ∧ cong G g p ∧ cong (F * G) h (p ^ n)) := by
+  have hC : ∀ a b m, cong a b m ↔ C m ∣ a - b := fun a b m => by
+    rw [hcong, Polynomial.C_dvd_iff_dvd_coeff]
+  set P : Polynomial ℤ := C (p : ℤ) with hP
+  have h1 : P ∣ r * f + s * g - 1 := (hC _ _ _).mp hcoprime
+  have h2 : P ∣ f * g - h := (hC _ _ _).mp hprod
+  have lift : ∀ j : ℕ, ∃ F G : Polynomial ℤ, P ∣ F - f ∧ P ∣ G - g ∧ P ^ (j + 1) ∣ F * G - h := by
+    intro j
+    induction j with
+    | zero => exact ⟨f, g, by simp, by simp, by simpa using h2⟩
+    | succ j ih =>
+      obtain ⟨F, G, hF, hG, ⟨e, he⟩⟩ := ih
+      obtain ⟨u, hu⟩ : P ∣ r * F + s * G - 1 := by
+        have : r * F + s * G - 1 = (r * f + s * g - 1) + r * (F - f) + s * (G - g) := by ring
+        rw [this]
+        exact dvd_add (dvd_add h1 (dvd_mul_of_dvd_right hF r)) (dvd_mul_of_dvd_right hG s)
+      refine ⟨F - P ^ (j + 1) * (s * e), G - P ^ (j + 1) * (r * e), ?_, ?_, ?_⟩
+      · have : F - P ^ (j + 1) * (s * e) - f = (F - f) - P * (P ^ j * (s * e)) := by ring
+        rw [this]; exact dvd_sub hF (dvd_mul_right _ _)
+      · have : G - P ^ (j + 1) * (r * e) - g = (G - g) - P * (P ^ j * (r * e)) := by ring
+        rw [this]; exact dvd_sub hG (dvd_mul_right _ _)
+      · refine ⟨r * s * e ^ 2 * P ^ j - e * u, ?_⟩
+        linear_combination he - P ^ (j + 1) * e * hu
+  obtain ⟨j, rfl⟩ : ∃ j, n = j + 1 := ⟨n - 1, by omega⟩
+  obtain ⟨F, G, hF, hG, hFG⟩ := lift j
+  refine ⟨F, G, (hC _ _ _).mpr hF, (hC _ _ _).mpr hG, (hC _ _ _).mpr ?_⟩
+  simpa [hP, map_pow] using hFG
+
+#print axioms putnam_1986_b3
