@@ -65,6 +65,12 @@ FEATURES = {
 # know what the proof does (from the solve itself) — never invented to fill a
 # row. A missing story is reported as missing.
 STORIES = {
+    "putnam_2007_a5":
+        "COUNT THE NECKLACES. Write down every p-bead necklace whose beads "
+        "multiply to 1: there are |G|^(p-1) of them, a multiple of p. Turning "
+        "a necklace one click moves it; only the one-colour necklaces "
+        "(g,...,g) with g^p = 1 stay put. Everything else comes in orbits of "
+        "size p, so the still ones are also a multiple of p: 1 + n.",
     "putnam_1974_b3":
         "THE DENOMINATOR THAT KEEPS GROWING. Doubling the angle squares the "
         "cosine (2x^2-1): starting from 1/3 the denominators run 3, 9, 81, "

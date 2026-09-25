@@ -1,0 +1,104 @@
+import Mathlib
+
+/-!
+Putnam 2007 A5.  If `n` is the number of elements of order `p` (prime) in a finite group,
+then `n = 0` or `p ∣ n + 1`.
+
+* `{g | g ^ p = 1} = {1} ⊔ {g | orderOf g = p}` (p prime), so it has `n + 1` elements.
+* If `p ∤ |G|` there is no element of order `p` (Lagrange): `n = 0`.
+* If `p ∣ |G|`: rotate the `p`-tuples with product 1 (McKay). There are `|G|^(p-1) ≡ 0`
+  of them; the rotation has order `p`, so their number is `≡` the number of fixed
+  tuples mod `p`; the fixed tuples are the constant ones `(g, …, g)` with `g ^ p = 1`.
+-/
+
+open Equiv.Perm in
+theorem putnam_2007_a5
+(G : Type*) [Group G] [Fintype G]
+(p n : ℕ)
+(hp : Nat.Prime p)
+(hn : n = {g : G | orderOf g = p}.encard)
+: n = 0 ∨ p ∣ (n + 1) := by
+  classical
+  haveI := Fact.mk hp
+  set A := Finset.univ.filter fun g : G => orderOf g = p with hA
+  have hnA : n = A.card := by
+    have : ({g : G | orderOf g = p}).encard = (A.card : ℕ∞) := by
+      rw [Set.encard_eq_coe_toFinset_card]
+      congr 2
+      ext g
+      simp [hA]
+    exact_mod_cast hn.trans this
+  set T := Finset.univ.filter fun g : G => g ^ p = 1 with hT
+  have hTA : T.card = A.card + 1 := by
+    have hins : T = insert 1 A := by
+      ext g
+      simp only [hT, hA, Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_insert]
+      constructor
+      · intro h
+        by_cases h1 : g = 1
+        · exact Or.inl h1
+        · exact Or.inr (orderOf_eq_prime_iff.mpr ⟨h, h1⟩)
+      · rintro (rfl | h)
+        · simp
+        · exact (orderOf_eq_prime_iff.mp h).1
+    rw [hins, Finset.card_insert_of_notMem]
+    simp [hA, hp.one_lt.ne]
+  by_cases hdvd : p ∣ Fintype.card G
+  · right
+    rw [hnA, ← hTA]
+    -- McKay: rotation on tuples with product one
+    let f : Function.End (vectorsProdEqOne G p) := fun v => VectorsProdEqOne.rotate v 1
+    have hpow : ∀ k v, (f ^ k) v = VectorsProdEqOne.rotate v k := by
+      intro k
+      induction k with
+      | zero => intro v; exact (VectorsProdEqOne.rotate_zero v).symm
+      | succ k ih =>
+        intro v
+        rw [_root_.pow_succ', Function.End.mul_def]
+        show f ((f ^ k) v) = _
+        rw [ih]
+        exact VectorsProdEqOne.rotate_rotate v k 1
+    have hfp : f ^ p ^ 1 = 1 := by
+      funext v
+      rw [pow_one, hpow]
+      exact VectorsProdEqOne.rotate_length v
+    have hmod := Equiv.Perm.card_fixedPoints_modEq hfp
+    rw [VectorsProdEqOne.card] at hmod
+    -- fixed points = constant tuples (g, …, g) with g ^ p = 1
+    have hfix : Fintype.card {g : G // g ^ p = 1} = Fintype.card (Function.fixedPoints f) := by
+      apply Fintype.card_of_bijective
+        (f := fun g => ⟨⟨⟨List.replicate p g.1, List.length_replicate⟩, by
+          show (List.replicate p g.1).prod = 1
+          rw [List.prod_replicate, g.2]⟩, by
+          show VectorsProdEqOne.rotate _ 1 = _
+          apply Subtype.ext; apply Subtype.ext
+          exact List.rotate_replicate g.1 p 1⟩)
+      constructor
+      · intro a b hab
+        have := congrArg (fun v : Function.fixedPoints f => v.1.1.1) hab
+        exact Subtype.ext (List.replicate_right_injective hp.ne_zero this)
+      · rintro ⟨v, hv⟩
+        have hrot : v.1.1.rotate 1 = v.1.1 := congrArg (fun w => w.1.1) hv
+        obtain ⟨a, ha⟩ := List.rotate_one_eq_self_iff_eq_replicate.mp hrot
+        have hlen : v.1.1.length = p := v.1.2
+        rw [hlen] at ha
+        have hap : a ^ p = 1 := by
+          rw [← List.prod_replicate, ← ha]
+          exact v.2
+        refine ⟨⟨a, hap⟩, ?_⟩
+        apply Subtype.ext; apply Subtype.ext; apply Subtype.ext
+        exact ha.symm
+    have hTcard : T.card = Fintype.card {g : G // g ^ p = 1} := by
+      rw [Fintype.card_subtype]
+    rw [hTcard, hfix, ← Nat.modEq_zero_iff_dvd]
+    refine hmod.symm.trans ?_
+    rw [Nat.modEq_zero_iff_dvd]
+    exact dvd_pow hdvd (Nat.sub_ne_zero_of_lt hp.one_lt)
+  · left
+    rw [hnA, Finset.card_eq_zero]
+    apply Finset.eq_empty_of_forall_notMem
+    intro g hg
+    simp only [hA, Finset.mem_filter, Finset.mem_univ, true_and] at hg
+    exact hdvd (hg ▸ orderOf_dvd_card)
+
+#print axioms putnam_2007_a5

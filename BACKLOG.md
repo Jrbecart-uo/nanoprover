@@ -15,13 +15,11 @@ and propose next tasks. Ranked by leverage within each track. Last updated
 ---
 
 ## Track A — Putnam scalps (theorem-mode; where we are strongest)
-Current: **21 scalps**. Reachable wins live here.
-- [ ] **Re-examine the scoped-out list** — "too hard" was judged under old 6–8s
-      checks; `putnam_1996_a5` and `putnam_2001_a5` both fell once re-examined
-      with the REPL. Remaining flagged: `putnam_2007_a5` (McKay counting via
-      `Equiv.Perm.card_compl_support_modEq` + `vectorsProdEqOne` rotation —
-      plumbing-heavy), `putnam_1974_b3` (Niven-style, needs an algebraic-integer
-      argument mathlib may lack — check first).
+Current: **23 scalps** (2026-09-25: 1974_b3, 2007_a5 — scoped-out list now EMPTY). Reachable wins live here.
+- ✅ **Scoped-out list cleared** (4/4 fell when re-examined: 1996_a5, 2001_a5, 1974_b3,
+      2007_a5). 1974_b3 needed no algebraic integers (denominators 3^(2^k) grow under
+      angle doubling); 2007_a5 passed first try via `card_fixedPoints_modEq` on the
+      `vectorsProdEqOne` rotation. LESSON: our "too hard" labels were wrong 4 times out of 4.
 - [ ] **Mine the ~310 unsolved pure-proof PutnamBench problems** — number-theory
       / congruence ones fall well to full developments. Use `analogy.py match`
       to find the closest solved proof, then the REPL loop.

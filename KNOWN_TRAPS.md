@@ -105,5 +105,9 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
 - **char-2 module algebra without `•`:** `linear_combination` chokes on scalar
   `•`. Case on `ε : ZMod 2` first (`by decide : ∀ z:ZMod 2, z=0∨z=1`), turning
   `ε • x` into `0` or `x`, then use `CF.neg_self` / `CF.add_self_zero`.
+- **`open Nat` (PutnamBench headers) hijacks `pow_succ`/`pow_succ'`** to the `Nat.`
+  versions, so a monoid rewrite fails with "function expected". Escape: write
+  `_root_.pow_succ'`, and ALWAYS re-check a finished proof under the benchmark file's
+  own `open …` line before counting the scalp (2007_a5 passed without it, failed with it).
 - Name renames seen: `Finset.card_insert_of_not_mem` → `card_insert_of_notMem`;
   `Finset.filter_sdiff` does not exist (prove by `ext; tauto`).
