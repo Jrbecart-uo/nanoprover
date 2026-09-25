@@ -1,0 +1,70 @@
+import Mathlib
+
+open Topology Filter
+
+/-!
+Putnam 1963 A2.  `f` strictly increasing on `n ≥ 1`, `f 2 = 2`, multiplicative on coprime
+arguments ⇒ `f n = n`.
+* `f 1 = 1` (from `f 2 = f 1 · f 2`); strict increase gives `f n ≥ n` and
+  `f a + (b - a) ≤ f b`, so any fixed point `M` forces `f n = n` for `n ≤ M`.
+* `f 3 = 3`: `f3·f5 = f15 < f18 = 2 f9 < 2 f10 = 4 f5`, and `f3 > f2 = 2`.
+* `f (2m+1) = 2m+1 ⇒ f (4m+2) = 2 f(2m+1) = 4m+2 ⇒ f (4m+1) = 4m+1`: fixed points
+  `2·2^j + 1` for every `j`.
+-/
+theorem putnam_1963_a2
+(f : ℕ → ℕ)
+(hfpos : ∀ n, f n > 0)
+(hfinc : StrictMonoOn f (Set.Ici 1))
+(hf2 : f 2 = 2)
+(hfmn : ∀ m n, m > 0 → n > 0 → IsRelPrime m n → f (m * n) = f m * f n)
+: ∀ n > 0, f n = n := by
+  have rp : ∀ a b : ℕ, Nat.Coprime a b → IsRelPrime a b := fun a b h => Nat.coprime_iff_isRelPrime.mp h
+  have mono : ∀ a b, 1 ≤ a → a < b → f a < f b := fun a b ha hab =>
+    hfinc (Set.mem_Ici.mpr ha) (Set.mem_Ici.mpr (by omega)) hab
+  have f1 : f 1 = 1 := by
+    have := hfmn 1 2 (by norm_num) (by norm_num) (rp 1 2 (by norm_num))
+    rw [one_mul, hf2] at this
+    omega
+  have hgap : ∀ a b, 1 ≤ a → a ≤ b → f a + (b - a) ≤ f b := by
+    intro a b ha hab
+    induction b, hab using Nat.le_induction with
+    | base => simp
+    | succ b hab ih => have := mono b (b + 1) (by omega) (by omega); omega
+  have squeeze : ∀ M, 1 ≤ M → f M = M → ∀ n, 1 ≤ n → n ≤ M → f n = n := by
+    intro M hM hfM n hn hnM
+    have h1 := hgap 1 n le_rfl hn
+    have h2 := hgap n M hn hnM
+    omega
+  have f3 : f 3 = 3 := by
+    have e15 := hfmn 3 5 (by norm_num) (by norm_num) (rp 3 5 (by norm_num))
+    have e18 := hfmn 2 9 (by norm_num) (by norm_num) (rp 2 9 (by norm_num))
+    have e10 := hfmn 2 5 (by norm_num) (by norm_num) (rp 2 5 (by norm_num))
+    norm_num at e15 e18 e10
+    have a1 := mono 15 18 (by norm_num) (by norm_num)
+    have a2 := mono 9 10 (by norm_num) (by norm_num)
+    have a3 := mono 2 3 (by norm_num) (by norm_num)
+    have h5 := hfpos 5
+    rw [e15, e18, hf2] at a1
+    rw [e10, hf2] at a2
+    rw [hf2] at a3
+    have : f 3 < 4 := by nlinarith
+    omega
+  have hP : ∀ j : ℕ, f (2 * 2 ^ j + 1) = 2 * 2 ^ j + 1 := by
+    intro j
+    induction j with
+    | zero => simpa using f3
+    | succ j ih =>
+      set m := 2 ^ j
+      have hdouble : f (2 * (2 * m + 1)) = 2 * (2 * m + 1) := by
+        rw [hfmn 2 (2 * m + 1) (by norm_num) (by omega)
+          (rp 2 _ (Nat.coprime_two_left.mpr ⟨m, by ring⟩)), hf2, ih]
+      have := squeeze (2 * (2 * m + 1)) (by omega) hdouble (4 * m + 1) (by omega) (by omega)
+      rw [pow_succ]
+      convert this using 2 <;> ring
+  intro n hn
+  have hbig : n ≤ 2 * 2 ^ n + 1 := by
+    have := Nat.lt_two_pow_self (n := n)
+    omega
+  exact squeeze _ (by omega) (hP n) n hn hbig
+
+#print axioms putnam_1963_a2
