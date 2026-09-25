@@ -57,6 +57,8 @@ Lean PRs since mid-Sep) have hit exactly this tail. Proof claims live at
 - 332, 319, 361, 409, 450, 452, 538, 552, 272, 33, 195, 168: `answer(sorry)` fillable by the defining expression — ill-posed as "find the value".
 - 357 `monotone.*`: distinct-sums forces StrictMono ⇒ duplicates `parts.i/ii`.
 
-None of items 261/357/44/184/80/319 has an FC issue or PR yet (checked tracking issues
-#4927, #6448, #4923, #4896). Candidate FC contribution: one issue/PR re-tagging them,
-with our kernel proof for 261.
+**Reported 2026-09-25**: 357/44/184/80/319 posted as a comment on tracking issue #6448
+(https://github.com/google-deepmind/formal-conjectures/issues/6448#issuecomment-5832484464).
+261 NOT posted: duplicate of #6538 (opened 2026-09-24 15:41 UTC by an automated LM audit,
+label `ai-audit`, with a compiled trivial proof). Our proof was re-checked in the FC
+environment (Lean v4.33.1, FC definitions, `answer(True)`): clean axioms.

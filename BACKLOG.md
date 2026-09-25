@@ -64,13 +64,13 @@ essential here — a digon must be a cycle).
   tail is swarmed (GPT-5.6/6 Astra, Claude, Codex users + Justin Sun Prize bounty with
   hundreds of Lean PRs). ALWAYS check `erdosproblems.com/forum/thread/N/proof-claims`
   and FC issues before attacking anything.
-- [ ] (needs user OK — public) FC issue/PR: re-tag 6 statements tagged `research open`
-      that are known/trivial: 261 `two_representations` (our kernel proof:
-      `erdos/erdos_261_two_reps.lean`), 357 `hegyvari`, 44 `empty_start`, 184 `covering`,
-      80 `erdos_80` (Fox–Loh), 319 `isTheta`. Evidence in `erdos/litcheck_C.md`.
+- ✅ 2026-09-25: 357/44/184/80/319 reported on FC tracking issue #6448 (comment
+      5832484464); 261 already filed as #6538 by an automated LM audit (`ai-audit` label —
+      such audits now sweep FC continuously; search before filing). Follow-up: a PR
+      re-tagging them needs the Google CLA signed.
 - [ ] Only residual genuine target: #1110 density clause — positive lower density of
       representables for (7,2) or (4,3) (finite-certificate search + Lean counting).
-- [ ] Re-check the 261 proof inside the FC environment (Lean v4.33.1) before submitting.
+- ✅ 261 proof re-checked in the FC environment (clean axioms).
 
 ## Track G — Navier–Stokes (OpenAI, Sep 2026) — AUDIT DONE 2026-09-24
 - ✅ `verification/NS_AUDIT.md`: statements faithful to Clay (C)/(D); Euler statement
@@ -80,7 +80,11 @@ essential here — a digon must be a cycle).
 - [ ] Follow-up candidates (`external/ns_followups_report.md`): independent Euler
       statement for FC; Looi's unforced viscous Obukhov-model regularity (ODE);
       exact-arithmetic checks of exponent thresholds (e.g. (22−8√7)/9).
-- Pick-up item 4 (Millennium problems head-on) deferred by user decision.
+- Item 4 PICKED 2026-09-25: no Millennium problem is attackable head-on at our scale; instead
+  pre-emptive statement audits (`verification/MILLENNIUM_STATEMENTS.md`): RH, P vs NP, BSD
+  judged faithful. [ ] NEXT: audit the Hodge statement at github.com/Paul-Lez/HodgeConjecture
+  (clone: `external/hodge`, Lean v4.33.1) — the one with rumored AI progress and no
+  settled statement yet.
 
 ## Track D — Discovery engine / open problems (LOWER priority — see lesson)
 - LESSON (paid for twice): construction-search over WELL-STUDIED open problems
