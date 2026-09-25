@@ -5,6 +5,18 @@ Durable handoff. A new session can read this + the auto-memory (`nanoprover-proj
 and propose next tasks. Ranked by leverage within each track. Last updated
 2026-09-24.
 
+## Where the last session (2026-09-24/25) left off
+- All work is on branch **`session-2026-09-24`** (pushed; NOT merged into `main` — merge or
+  open a PR when convenient). Read `CLAUDE.md` for commands.
+- Done that session: Putnam 23 → **53** scalps; Navier–Stokes Lean audit (two kernels,
+  hardened sandbox) `verification/NS_AUDIT.md`; pre-emptive Millennium statement audits
+  `verification/MILLENNIUM_STATEMENTS.md` + Hodge `verification/HODGE_AUDIT.md`; Erdős
+  triage `erdos/TRIAGE.md`; tools `tools/claimcheck.py`, `tools/verify_scalps.py`.
+- Suggested next: re-triage the 143 unsolved PutnamBench problems excluded by the
+  analysis-keyword filter (cheap wins first), then the harder ranked list in Track A.
+- Heavy local state (gitignored, may be deleted to free ~25 GB): `external/` (NS clones +
+  builds, formal-conjectures, erdosproblems, Hodge clone, tools, claims).
+
 ## Session-start ritual
 1. `export PATH="$HOME/.elan/bin:$PATH"`
 2. `cd ~/tmp/mathTest/nanoprover && python3 tools/repl.py start` (warm ~6s; cold
