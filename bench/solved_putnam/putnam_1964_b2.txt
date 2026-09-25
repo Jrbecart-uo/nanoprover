@@ -1,0 +1,56 @@
+import Mathlib
+
+open Set Function Filter Topology
+
+/-!
+Putnam 1964 B2.  A maximal family `P` of pairwise intersecting subsets of an `n`-set has
+`2^(n-1)` members.  For every `T`, exactly one of `T`, `Tᶜ` is in `P`: not both
+(`T ∩ Tᶜ = ∅`); and if neither, maximality gives `U, V ∈ P` with `T ∩ U = ∅ = Tᶜ ∩ V`,
+so `U ∩ V = ∅`.  Hence complementation maps `P` onto its complement: `2|P| = 2ⁿ`.
+-/
+theorem putnam_1964_b2
+(S : Type*) [Fintype S] [Nonempty S]
+(P : Finset (Set S))
+(hPP : ∀ T ∈ P, ∀ U ∈ P, T ∩ U ≠ ∅)
+(hPS : ¬∃ T : Set S, T ∉ P ∧ (∀ U ∈ P, T ∩ U ≠ ∅))
+: (P.card = 2 ^ (Fintype.card S - 1)) := by
+  classical
+  push_neg at hPS
+  have hone : ∀ T : Set S, T ∈ P ↔ Tᶜ ∉ P := by
+    intro T
+    constructor
+    · intro hT hTc
+      exact hPP T hT Tᶜ hTc (Set.inter_compl_self T)
+    · intro hTc
+      by_contra hT
+      obtain ⟨U, hU, hTU⟩ := hPS T hT
+      obtain ⟨V, hV, hTV⟩ := hPS Tᶜ hTc
+      apply hPP U hU V hV
+      rw [Set.eq_empty_iff_forall_notMem] at hTU hTV ⊢
+      rintro x ⟨hxU, hxV⟩
+      by_cases hx : x ∈ T
+      · exact hTU x ⟨hx, hxU⟩
+      · exact hTV x ⟨hx, hxV⟩
+  have hmap : P.map ⟨compl, compl_injective⟩ = Pᶜ := by
+    ext T
+    simp only [Finset.mem_map, Function.Embedding.coeFn_mk, Finset.mem_compl]
+    constructor
+    · rintro ⟨T', hT', rfl⟩
+      exact (hone T').mp hT'
+    · intro hT
+      refine ⟨Tᶜ, ?_, compl_compl T⟩
+      rw [hone, compl_compl]
+      exact hT
+  have hcard : P.card + P.card = 2 ^ Fintype.card S := by
+    have h1 := congrArg Finset.card hmap
+    rw [Finset.card_map, Finset.card_compl, Fintype.card_set] at h1
+    have : P.card ≤ 2 ^ Fintype.card S := by
+      calc P.card ≤ Fintype.card (Set S) := Finset.card_le_univ P
+        _ = 2 ^ Fintype.card S := Fintype.card_set
+    omega
+  have hpos : 0 < Fintype.card S := Fintype.card_pos
+  have : 2 ^ Fintype.card S = 2 * 2 ^ (Fintype.card S - 1) := by
+    rw [← pow_succ']; congr 1; omega
+  omega
+
+#print axioms putnam_1964_b2

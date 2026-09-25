@@ -1,0 +1,42 @@
+import Mathlib
+
+open Set
+
+/-!
+Putnam 1971 A1.  Among 9 lattice points in `ℤ³` two, `P ≠ Q`, have the same parity pattern
+(only 8 exist), so their midpoint (`t = 1/2`) is a lattice point on the open segment.
+-/
+theorem putnam_1971_a1
+(S : Set (ℤ × ℤ × ℤ))
+(hS : S.ncard = 9)
+(L : (ℤ × ℤ × ℤ) × (ℤ × ℤ × ℤ) → Set (ℝ × ℝ × ℝ))
+(hL : L = fun ((a, b, c), (d, e, f)) =>
+{(t*a + (1-t)*d, t*b + (1-t)*e, t*c + (1-t)*f) | t ∈ Ioo (0 : ℝ) 1})
+: ∃ x y z : ℤ, ∃ P Q : ℤ × ℤ × ℤ, P ∈ S ∧ Q ∈ S ∧ P ≠ Q ∧ ((x : ℝ), (y : ℝ), (z : ℝ)) ∈ L (P, Q) := by
+  let par : ℤ × ℤ × ℤ → ZMod 2 × ZMod 2 × ZMod 2 := fun p => ((p.1 : ZMod 2), (p.2.1 : ZMod 2), (p.2.2 : ZMod 2))
+  have hlt : (Set.univ : Set (ZMod 2 × ZMod 2 × ZMod 2)).ncard < S.ncard := by
+    rw [hS, Set.ncard_univ]
+    simp [Nat.card_prod]
+  obtain ⟨⟨a, b, c⟩, hP, ⟨d, e, g⟩, hQ, hne, hpar⟩ :=
+    Set.exists_ne_map_eq_of_ncard_lt_of_maps_to hlt (f := par) (fun _ _ => Set.mem_univ _)
+  simp only [par, Prod.mk.injEq] at hpar
+  obtain ⟨h1, h2, h3⟩ := hpar
+  have half : ∀ u v : ℤ, (u : ZMod 2) = v → ∃ k, u - v = 2 * k := by
+    intro u v h
+    have : ((u - v : ℤ) : ZMod 2) = 0 := by push_cast; rw [h, sub_self]
+    obtain ⟨k, hk⟩ := (ZMod.intCast_zmod_eq_zero_iff_dvd _ 2).mp this
+    exact ⟨k, by simpa using hk⟩
+  obtain ⟨k1, hk1⟩ := half a d h1
+  obtain ⟨k2, hk2⟩ := half b e h2
+  obtain ⟨k3, hk3⟩ := half c g h3
+  refine ⟨d + k1, e + k2, g + k3, (a, b, c), (d, e, g), hP, hQ, hne, ?_⟩
+  subst hL
+  refine ⟨1 / 2, ⟨by norm_num, by norm_num⟩, ?_⟩
+  have r1 : (a : ℝ) = d + 2 * k1 := by exact_mod_cast (by linarith : a = d + 2 * k1)
+  have r2 : (b : ℝ) = e + 2 * k2 := by exact_mod_cast (by linarith : b = e + 2 * k2)
+  have r3 : (c : ℝ) = g + 2 * k3 := by exact_mod_cast (by linarith : c = g + 2 * k3)
+  simp only [Prod.mk.injEq]
+  push_cast
+  refine ⟨?_, ?_, ?_⟩ <;> [rw [r1]; rw [r2]; rw [r3]] <;> ring
+
+#print axioms putnam_1971_a1
