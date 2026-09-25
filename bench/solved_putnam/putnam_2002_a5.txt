@@ -1,0 +1,85 @@
+import Mathlib
+
+open Nat Set
+
+/-!
+Putnam 2002 A5.  Stern's sequence `a 0 = 1`, `a (2n+1) = a n`, `a (2n+2) = a n + a (n+1)`:
+every positive rational is `a (n-1) / a n` for some `n ≥ 1`.  With `R n = a (n-1) / a n`
+(all `a n > 0`): `R (2n+1) = R n + 1` and `R (2m) = R m / (R m + 1)`.  Strong induction on
+`p + d` reaches every `p / d` (`p, d > 0`): `p = d` is `R 1`; `p > d` uses `(p-d)/d`;
+`p < d` uses `p/(d-p)`.
+-/
+theorem putnam_2002_a5
+(a : ℕ → ℚ)
+(ha : a 0 = 1 ∧ ∀ n : ℕ, a (2*n + 1) = a n ∧ a (2*n + 2) = a n + a (n + 1))
+: ∀ q : ℚ, q > 0 → q ∈ {a (n - 1) / a n | n ∈ Ici 1} := by
+  obtain ⟨h0, hrec⟩ := ha
+  have hpos : ∀ n, 0 < a n := by
+    intro n
+    induction n using Nat.strong_induction_on with
+    | _ n ih =>
+      rcases Nat.even_or_odd' n with ⟨m, rfl | rfl⟩
+      · rcases m with _ | m
+        · simp [h0]
+        · rw [show 2 * (m + 1) = 2 * m + 2 by ring, (hrec m).2]
+          exact add_pos (ih m (by omega)) (ih (m + 1) (by omega))
+      · rw [(hrec m).1]; exact ih m (by omega)
+  have hodd : ∀ k : ℕ, a (2 * (k + 1) + 1 - 1) / a (2 * (k + 1) + 1) = a (k + 1 - 1) / a (k + 1) + 1 := by
+    intro k
+    rw [show 2 * (k + 1) + 1 - 1 = 2 * k + 2 by omega, (hrec k).2, (hrec (k + 1)).1,
+      show k + 1 - 1 = k by omega]
+    have := (hpos (k + 1)).ne'
+    field_simp
+  have heven : ∀ k : ℕ, a (2 * (k + 1) - 1) / a (2 * (k + 1)) =
+      (a (k + 1 - 1) / a (k + 1)) / (a (k + 1 - 1) / a (k + 1) + 1) := by
+    intro k
+    rw [show 2 * (k + 1) - 1 = 2 * k + 1 by omega, show 2 * (k + 1) = 2 * k + 2 by omega,
+      (hrec k).1, (hrec k).2, show k + 1 - 1 = k by omega]
+    have := (hpos (k + 1)).ne'
+    have := (hpos k).ne'
+    have : a k + a (k + 1) ≠ 0 := (add_pos (hpos k) (hpos (k + 1))).ne'
+    field_simp
+  have main : ∀ s p d : ℕ, 0 < p → 0 < d → p + d ≤ s →
+      ∃ n, 1 ≤ n ∧ a (n - 1) / a n = (p : ℚ) / d := by
+    intro s
+    induction s with
+    | zero => intro p d hp hd hs; omega
+    | succ s ih =>
+      intro p d hp hd hs
+      rcases lt_trichotomy p d with hlt | rfl | hgt
+      · obtain ⟨m, hm1, hm⟩ := ih p (d - p) hp (by omega) (by omega)
+        obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
+        refine ⟨2 * (k + 1), by omega, ?_⟩
+        rw [heven, hm]
+        have hdp : ((d - p : ℕ) : ℚ) = (d : ℚ) - p := by push_cast [Nat.cast_sub hlt.le]; ring
+        rw [hdp]
+        have : (d : ℚ) - p ≠ 0 := by
+          have : (p : ℚ) < d := by exact_mod_cast hlt
+          linarith
+        have : (d : ℚ) ≠ 0 := by positivity
+        field_simp
+        rw [show (p : ℚ) + (d - p) = d by ring]; exact div_self this
+      · refine ⟨1, le_rfl, ?_⟩
+        have ha1 : a 1 = 1 := by rw [show 1 = 2 * 0 + 1 by rfl, (hrec 0).1, h0]
+        have : (p : ℚ) ≠ 0 := by positivity
+        simp [h0, ha1, this]
+      · obtain ⟨m, hm1, hm⟩ := ih (p - d) d (by omega) hd (by omega)
+        obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
+        refine ⟨2 * (k + 1) + 1, by omega, ?_⟩
+        rw [hodd, hm]
+        have : (d : ℚ) ≠ 0 := by positivity
+        push_cast [Nat.cast_sub hgt.le]
+        field_simp
+        ring
+  intro q hq
+  have hnum : 0 < q.num := Rat.num_pos.mpr hq
+  obtain ⟨n, hn1, hn⟩ := main (q.num.toNat + q.den) q.num.toNat q.den (by omega) q.den_pos le_rfl
+  refine ⟨n, hn1, ?_⟩
+  rw [hn]
+  have : ((q.num.toNat : ℕ) : ℚ) = (q.num : ℚ) := by
+    have := Int.toNat_of_nonneg hnum.le
+    exact_mod_cast this
+  rw [this]
+  exact Rat.num_div_den q
+
+#print axioms putnam_2002_a5
