@@ -86,6 +86,13 @@ essential here — a digon must be a cycle).
   no misformalization (`verification/HODGE_AUDIT.md`). User decision 2026-09-25: NOT reported
   upstream (a negative result, modest value) — focus on our own project.
 
+## Track H — Claim-check readiness (DONE 2026-09-25)
+- ✅ `tools/claimcheck.py`: setup / probe / selftest / fetch / build / axioms / surface /
+  comparator / status. Validated: sandbox probe blocks all escape routes; comparator's 20
+  adversarial self-tests agree under the sandbox (attacks rejected for the right reason);
+  `surface` reproduces the Hodge audit's 499-constant list exactly; lock refuses concurrent
+  builds. Not yet re-run end-to-end on a Mathlib-scale comparator claim (NS takes ~3 h).
+
 ## Track D — Discovery engine / open problems (LOWER priority — see lesson)
 - LESSON (paid for twice): construction-search over WELL-STUDIED open problems
   hits disjointness-threshold walls. Erdős #791 (Rohrbach 2-bases) and #840

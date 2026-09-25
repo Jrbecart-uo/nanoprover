@@ -45,6 +45,15 @@ python3 bench/scalp_run.py --bench putnam --name <problem> --scripts cands.json 
 
 cd cdcproof && lake build                  # CDC lake project, ~60s warm (requires ../mathlib4 cache)
 
+# Checking someone else's claimed Lean proof (pipeline behind verification/NS_AUDIT.md, HODGE_AUDIT.md)
+python3 tools/claimcheck.py setup v4.34.0-rc2       # landrun/nanoda + lean4export/comparator for that Lean
+python3 tools/claimcheck.py probe                   # sandbox self-test (must print PROBE OK)
+python3 tools/claimcheck.py selftest v4.34.0-rc2    # comparator's 20 adversarial cases under the sandbox
+python3 tools/claimcheck.py fetch NAME URL [--rev R]  # pristine clone in external/claims/NAME/src
+python3 tools/claimcheck.py comparator NAME cfg.json --detach   # fresh clone only; never `build` first
+python3 tools/claimcheck.py build NAME TARGET --detach; ... axioms NAME MOD DECL; ... surface NAME MOD ROOT
+python3 tools/claimcheck.py status NAME             # waits: grep the CLAIMCHECK_DONE line, never pgrep -f
+
 python tests/test_offline.py               # only test suite (no Lean/network); this is what CI runs
 ```
 
