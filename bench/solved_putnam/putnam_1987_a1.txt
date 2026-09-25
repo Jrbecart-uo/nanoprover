@@ -1,0 +1,50 @@
+import Mathlib
+
+/-!
+Putnam 1987 A1.  With `r = x² + y²`, `A' = (x²-y²) r - x`, `B' = 2xy r + y - 3r`,
+`C' = x³ - 3xy² + 3y - 1`, `D' = 3x²y - 3x - y³`:
+`r C' = x A' - y B'`, `r D' = y A' + x B'`, `A' = x C' + y D'`, `B' = -y C' + x D'`;
+and `C' = 0` excludes `x = y = 0`.
+-/
+theorem putnam_1987_a1
+(A B C D : Set (ℝ × ℝ))
+(hA : A = {(x, y) : ℝ × ℝ | x ^ 2 + y ^ 2 ≠ 0 ∧ x ^ 2 - y ^ 2 = x / (x ^ 2 + y ^ 2)})
+(hB : B = {(x, y) : ℝ × ℝ | x ^ 2 + y ^ 2 ≠ 0 ∧ 2 * x * y + y / (x ^ 2 + y ^ 2) = 3})
+(hC : C = {(x, y) : ℝ × ℝ | x ^ 3 - 3 * x * y ^ 2 + 3 * y = 1})
+(hD : D = {(x, y) : ℝ × ℝ | 3 * x ^ 2 * y - 3 * x - y ^ 3 = 0})
+: A ∩ B = C ∩ D := by
+  subst hA hB hC hD
+  ext ⟨x, y⟩
+  simp only [Set.mem_inter_iff, Set.mem_setOf_eq]
+  constructor
+  · rintro ⟨⟨hr, ha⟩, ⟨-, hb⟩⟩
+    have ha' : (x ^ 2 - y ^ 2) * (x ^ 2 + y ^ 2) = x := by rw [eq_div_iff hr] at ha; exact ha
+    have hb' : 2 * x * y * (x ^ 2 + y ^ 2) + y = 3 * (x ^ 2 + y ^ 2) := by
+      have : y / (x ^ 2 + y ^ 2) * (x ^ 2 + y ^ 2) = y := div_mul_cancel₀ y hr
+      linear_combination (x ^ 2 + y ^ 2) * hb - this
+    constructor
+    · have h0 : (x ^ 2 + y ^ 2) * (x ^ 3 - 3 * x * y ^ 2 + 3 * y - 1) = 0 := by
+        linear_combination x * ha' - y * hb'
+      have := (mul_eq_zero.mp h0).resolve_left hr
+      linarith
+    · have h0 : (x ^ 2 + y ^ 2) * (3 * x ^ 2 * y - 3 * x - y ^ 3) = 0 := by
+        linear_combination y * ha' + x * hb'
+      exact (mul_eq_zero.mp h0).resolve_left hr
+  · rintro ⟨hc, hd⟩
+    have hr : x ^ 2 + y ^ 2 ≠ 0 := by
+      intro h0
+      have hx : x = 0 := by nlinarith [sq_nonneg x, sq_nonneg y]
+      have hy : y = 0 := by nlinarith [sq_nonneg x, sq_nonneg y]
+      subst hx hy
+      norm_num at hc
+    refine ⟨⟨hr, ?_⟩, ⟨hr, ?_⟩⟩
+    · rw [eq_div_iff hr]
+      linear_combination x * hc + y * hd
+    · have : y / (x ^ 2 + y ^ 2) * (x ^ 2 + y ^ 2) = y := div_mul_cancel₀ y hr
+      have hb' : 2 * x * y * (x ^ 2 + y ^ 2) + y = 3 * (x ^ 2 + y ^ 2) := by
+        linear_combination -y * hc + x * hd
+      have hr' : (x ^ 2 + y ^ 2) ≠ 0 := hr
+      field_simp
+      linear_combination hb'
+
+#print axioms putnam_1987_a1

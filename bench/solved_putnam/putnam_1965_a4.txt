@@ -1,0 +1,39 @@
+import Mathlib
+
+open EuclideanGeometry Topology Filter Complex
+
+/-!
+Putnam 1965 A4.  No boy dances with every girl, every girl dances with someone ⇒ there are
+`g, h, b, c` with `g~b, h~c, h≁b, g≁c`.  Take `b` with the most partners, a girl `h ≁ b`,
+and `c ~ h`.  If every partner of `b` danced with `c`, `c` would have strictly more partners
+(`h` too): so some `g ~ b` has `g ≁ c`.
+-/
+theorem putnam_1965_a4
+{G B : Type*}
+[Fintype G] [Nonempty G]
+[Fintype B] [Nonempty B]
+(dances : G → B → Prop)
+(h : (¬∃ b : B, ∀ g : G, dances g b) ∧ ∀ g : G, ∃ b : B, dances g b)
+: ∃ g h : G, ∃ b c : B, dances g b ∧ dances h c ∧ ¬dances h b ∧ ¬dances g c := by
+  classical
+  let cnt : B → ℕ := fun b => (Finset.univ.filter fun g => dances g b).card
+  obtain ⟨b, -, hb⟩ := Finset.exists_max_image Finset.univ cnt Finset.univ_nonempty
+  obtain ⟨hno, hall⟩ := h
+  push_neg at hno
+  obtain ⟨g0, hg0⟩ := hno b
+  obtain ⟨c, hc⟩ := hall g0
+  have : ∃ g, dances g b ∧ ¬ dances g c := by
+    by_contra hne
+    push_neg at hne
+    have hsub : (Finset.univ.filter fun g => dances g b) ⊆ (Finset.univ.filter fun g => dances g c) := by
+      intro g; simp only [Finset.mem_filter, Finset.mem_univ, true_and]; exact hne g
+    have hss : (Finset.univ.filter fun g => dances g b) ⊂ (Finset.univ.filter fun g => dances g c) :=
+      (Finset.ssubset_iff_of_subset hsub).mpr ⟨g0, by simpa using hc, by simpa using hg0⟩
+    have := Finset.card_lt_card hss
+    have := hb c (Finset.mem_univ _)
+    simp only [cnt] at *
+    omega
+  obtain ⟨g, hgb, hgc⟩ := this
+  exact ⟨g, g0, b, c, hgb, hc, hg0, hgc⟩
+
+#print axioms putnam_1965_a4
