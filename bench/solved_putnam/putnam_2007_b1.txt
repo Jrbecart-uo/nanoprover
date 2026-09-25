@@ -1,0 +1,54 @@
+import Mathlib
+
+open Set Nat
+
+/-!
+Putnam 2007 B1.  For a nonconstant polynomial with nonnegative integer coefficients and
+`n > 0`: `f(n) ∣ f(f(n) + 1) ↔ n = 1`.  Since `f(n) = (f(n)+1) - 1` divides
+`f(f(n)+1) - f(1)`, the left side is `f(n) ∣ f(1)`.  For `n ≥ 2`, `0 < f(1) < f(n)`
+(termwise `c_i ≤ c_i n^i`, strict at a positive coefficient of positive degree).
+-/
+theorem putnam_2007_b1
+(f : Polynomial ℤ)
+(hf : ∀ n : ℕ, f.coeff n ≥ 0)
+(hfnconst : ∃ n : ℕ, n > 0 ∧ f.coeff n > 0)
+(n : ℤ)
+(hn : n > 0)
+: f.eval n ∣ f.eval (f.eval n + 1) ↔ n = 1 := by
+  obtain ⟨k, hk0, hkpos⟩ := hfnconst
+  have hkdeg : k ≤ f.natDegree := Polynomial.le_natDegree_of_ne_zero hkpos.ne'
+  have hk_mem : k ∈ Finset.range (f.natDegree + 1) := Finset.mem_range.mpr (by omega)
+  have hdiv : f.eval n ∣ f.eval (f.eval n + 1) - f.eval 1 := by
+    have := Polynomial.sub_dvd_eval_sub (f.eval n + 1) 1 f
+    simpa using this
+  have hiff : f.eval n ∣ f.eval (f.eval n + 1) ↔ f.eval n ∣ f.eval 1 := by
+    constructor
+    · intro h; have := dvd_sub h hdiv; simpa using this
+    · intro h; have := dvd_add hdiv h; simpa using this
+  rw [hiff]
+  constructor
+  · intro h
+    by_contra hn1
+    have hn2 : (2 : ℤ) ≤ n := by omega
+    have h1pos : 0 < f.eval 1 := by
+      rw [Polynomial.eval_eq_sum_range]
+      simp only [one_pow, mul_one]
+      calc (0 : ℤ) < f.coeff k := hkpos
+        _ ≤ ∑ i ∈ Finset.range (f.natDegree + 1), f.coeff i :=
+          Finset.single_le_sum (fun i _ => hf i) hk_mem
+    have hlt : f.eval 1 < f.eval n := by
+      rw [Polynomial.eval_eq_sum_range, Polynomial.eval_eq_sum_range]
+      apply Finset.sum_lt_sum
+      · intro i _
+        simp only [one_pow, mul_one]
+        exact le_mul_of_one_le_right (hf i) (one_le_pow₀ (by omega))
+      · refine ⟨k, hk_mem, ?_⟩
+        simp only [one_pow, mul_one]
+        have : (1 : ℤ) < n ^ k := one_lt_pow₀ (by omega) (by omega)
+        nlinarith
+    have := Int.le_of_dvd h1pos h
+    omega
+  · rintro rfl
+    exact dvd_refl _
+
+#print axioms putnam_2007_b1

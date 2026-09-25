@@ -1,0 +1,37 @@
+import Mathlib
+
+/-!
+Putnam 1978 A1.  Any 20 elements of `{1, 4, 7, …, 100}` contain two distinct ones summing to
+104.  Otherwise `k ↦ min k (104 - k)` is injective on `T` and lands in `{1, 4, …, 52}`
+(18 values), contradicting `|T| = 20`.
+-/
+theorem putnam_1978_a1
+(S T : Set ℤ)
+(hS : S = {k | ∃ j : ℤ, 0 ≤ j ∧ j ≤ 33 ∧ k = 3 * j + 1})
+(hT : T ⊆ S ∧ T.ncard = 20)
+: (∃ m ∈ T, ∃ n ∈ T, m ≠ n ∧ m + n = 104) := by
+  by_contra hno
+  push_neg at hno
+  obtain ⟨hTS, hcard⟩ := hT
+  let U : Finset ℤ := (Finset.Icc (0 : ℤ) 17).image fun j => 3 * j + 1
+  have hmaps : ∀ k ∈ T, min k (104 - k) ∈ (U : Set ℤ) := by
+    intro k hk
+    have := hTS hk
+    rw [hS] at this
+    obtain ⟨j, hj0, hj1, rfl⟩ := this
+    simp only [U, Finset.coe_image, Finset.coe_Icc, Set.mem_image, Set.mem_Icc]
+    refine ⟨min j (34 - j), ⟨by omega, by omega⟩, by omega⟩
+  have hinj : Set.InjOn (fun k => min k (104 - k)) T := by
+    intro m hm n hn hmn
+    simp only at hmn
+    by_contra hne
+    have := hno m hm n hn hne
+    omega
+  have hle := Set.ncard_le_ncard_of_injOn _ hmaps hinj (Finset.finite_toSet U)
+  rw [Set.ncard_coe_finset, hcard] at hle
+  have : U.card ≤ 18 := by
+    calc U.card ≤ (Finset.Icc (0 : ℤ) 17).card := Finset.card_image_le
+      _ = 18 := by simp
+  omega
+
+#print axioms putnam_1978_a1
