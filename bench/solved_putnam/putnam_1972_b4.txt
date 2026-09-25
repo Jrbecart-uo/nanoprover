@@ -1,0 +1,32 @@
+import Mathlib
+
+open EuclideanGeometry Filter Topology Set MeasureTheory Metric
+
+/-!
+Putnam 1972 B4.  With `a = xⁿ`, `b = x^(n+1)`, `c = x + x^(n+2) = x (1 + b)`:
+`c ∑_{i<n-1} (-b)ⁱ = x (1 - (-b)^(n-1))` and `x (-b)^(n-1) = (-1)^(n-1) x^(n²) = (-1)^(n-1) aⁿ`,
+so `P = Z ∑_{i<n-1} (-Y)ⁱ + (-1)^(n-1) Xⁿ` works.
+-/
+theorem putnam_1972_b4
+(n : ℕ)
+(hn : n > 1)
+(vars : ℤ → ℤ → ℤ → (Fin 3 → ℤ))
+(hvars : vars = fun a b c ↦ fun i ↦ ite (i = 0) a (ite (i = 1) b c))
+: ∃ P : MvPolynomial (Fin 3) ℤ, ∀ x : ℤ, x = MvPolynomial.eval (vars (x^n) (x^(n+1)) (x + x^(n+2))) P := by
+  obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := ⟨n - 1, by omega⟩
+  refine ⟨MvPolynomial.X 2 * ∑ i ∈ Finset.range m, (-MvPolynomial.X 1) ^ i
+    + (-1) ^ m * MvPolynomial.X 0 ^ (m + 1), fun x => ?_⟩
+  subst hvars
+  simp only [map_add, map_mul, map_sum, map_pow, map_neg, map_one, MvPolynomial.eval_X,
+    Fin.isValue, show ((2 : Fin 3) = 0) ↔ False by decide, show ((2 : Fin 3) = 1) ↔ False by decide,
+    show ((1 : Fin 3) = 0) ↔ False by decide, if_true, if_false, add_tsub_cancel_right]
+  have g := geom_sum_mul (-(x ^ (m + 1 + 1))) m
+  have e1 : (x ^ (m + 1)) ^ (m + 1) = x * (x ^ (m + 1 + 1)) ^ m := by
+    rw [← pow_mul, ← pow_mul, ← pow_succ']
+    congr 1; ring
+  have e2 : x + x ^ (m + 1 + 2) = x * (1 + x ^ (m + 1 + 1)) := by ring
+  rw [e1, e2]
+  have e3 : (-(x ^ (m + 1 + 1))) ^ m = (-1) ^ m * (x ^ (m + 1 + 1)) ^ m := by rw [neg_pow]
+  linear_combination x * g + x * e3
+
+#print axioms putnam_1972_b4
