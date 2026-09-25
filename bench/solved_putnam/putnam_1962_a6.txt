@@ -1,0 +1,57 @@
+import Mathlib
+
+/-!
+Putnam 1962 A6.  A set `S ⊆ ℚ` closed under `+` and `*`, with exactly one of `r ∈ S`,
+`-r ∈ S`, `r = 0` for every `r`, is the set of positive rationals.  `1 ∈ S` (else
+`(-1)(-1) = 1 ∈ S` too); so all positive integers are in `S`; `1/q ∈ S` (else
+`q · (-1/q) = -1 ∈ S`); so `p/q ∈ S`.  Conversely `r ∈ S` with `r < 0` would put both
+`r` and `-r` in `S`.
+-/
+theorem putnam_1962_a6
+(S : Set ℚ)
+(hSadd : ∀ a ∈ S, ∀ b ∈ S, a + b ∈ S)
+(hSprod : ∀ a ∈ S, ∀ b ∈ S, a * b ∈ S)
+(hScond : ∀ r : ℚ, (r ∈ S ∨ -r ∈ S ∨ r = 0) ∧ ¬(r ∈ S ∧ -r ∈ S) ∧ ¬(r ∈ S ∧ r = 0) ∧ ¬(-r ∈ S ∧ r = 0))
+: S = { r : ℚ | r > 0 } := by
+  have h1 : (1 : ℚ) ∈ S := by
+    rcases (hScond 1).1 with h | h | h
+    · exact h
+    · exact absurd ⟨by simpa using hSprod _ h _ h, h⟩ (hScond 1).2.1
+    · norm_num at h
+  have hnat : ∀ n : ℕ, ((n : ℚ) + 1) ∈ S := by
+    intro n
+    induction n with
+    | zero => simpa using h1
+    | succ n ih => push_cast; exact hSadd _ ih _ h1
+  have hinv : ∀ n : ℕ, (1 / ((n : ℚ) + 1)) ∈ S := by
+    intro n
+    have hn : ((n : ℚ) + 1) ≠ 0 := by positivity
+    rcases (hScond (1 / ((n : ℚ) + 1))).1 with h | h | h
+    · exact h
+    · have := hSprod _ (hnat n) _ h
+      rw [show ((n : ℚ) + 1) * -(1 / ((n : ℚ) + 1)) = -1 by field_simp] at this
+      exact absurd ⟨h1, this⟩ (hScond 1).2.1
+    · exfalso; simp at h; linarith [show (0 : ℚ) ≤ n from by positivity]
+  have hpos : ∀ r : ℚ, 0 < r → r ∈ S := by
+    intro r hr
+    have hnum : 0 < r.num := Rat.num_pos.mpr hr
+    obtain ⟨p, hp⟩ : ∃ p : ℕ, r.num = (p : ℤ) + 1 := ⟨(r.num - 1).toNat, by omega⟩
+    obtain ⟨q, hq⟩ : ∃ q : ℕ, (r.den : ℚ) = (q : ℚ) + 1 :=
+      ⟨r.den - 1, by have := r.den_pos; push_cast [Nat.cast_sub this]; ring⟩
+    have : r = ((p : ℚ) + 1) * (1 / ((q : ℚ) + 1)) := by
+      have e := (Rat.num_div_den r).symm
+      rw [hp, hq] at e
+      rw [e]; push_cast; ring
+    rw [this]
+    exact hSprod _ (hnat p) _ (hinv q)
+  ext r
+  simp only [Set.mem_setOf_eq]
+  constructor
+  · intro hr
+    rcases lt_trichotomy r 0 with h | h | h
+    · exact absurd ⟨hr, hpos (-r) (by linarith)⟩ (hScond r).2.1
+    · exact absurd ⟨hr, h⟩ (hScond r).2.2.1
+    · exact h
+  · exact hpos r
+
+#print axioms putnam_1962_a6
