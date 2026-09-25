@@ -65,6 +65,13 @@ FEATURES = {
 # know what the proof does (from the solve itself) — never invented to fill a
 # row. A missing story is reported as missing.
 STORIES = {
+    "putnam_1974_b3":
+        "THE DENOMINATOR THAT KEEPS GROWING. Doubling the angle squares the "
+        "cosine (2x^2-1): starting from 1/3 the denominators run 3, 9, 81, "
+        "3^(2^k) and never cancel (3 never divides the numerator), so the "
+        "values never repeat. A rational angle is a clock hand: doubling it "
+        "can only visit finitely many positions. Infinitely many distinct "
+        "values vs finitely many positions — alpha cannot be rational.",
     "putnam_1969_b1":
         "PAIR OFF THE DANCERS. Every divisor d has a partner n/d; the two "
         "cancel mod 24, and nobody is their own partner. Sum dies by pairing.",
