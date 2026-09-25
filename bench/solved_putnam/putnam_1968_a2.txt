@@ -1,0 +1,31 @@
+import Mathlib
+
+/-!
+Putnam 1968 A2.  With `ad ≠ bc`, pick rational `δ ∈ (0, ε)` and solve
+`ra + sb = e + δ`, `rc + sd = f + δ` by Cramer's rule over `ℚ`; both residuals are `δ`.
+-/
+theorem putnam_1968_a2
+(a b c d e f : ℤ)
+(ε : ℝ)
+(hne : a * d ≠ b * c)
+(hε : ε > 0)
+: ∃ r s : ℚ, (|r * a + s * b - e| : ℝ) ∈ Set.Ioo 0 ε ∧ (|r * c + s * d - f| : ℝ) ∈ Set.Ioo 0 ε := by
+  obtain ⟨δ, hδ0, hδε⟩ := exists_rat_btwn hε
+  have hD : ((a : ℚ) * d - b * c) ≠ 0 := by
+    have : (a * d - b * c : ℤ) ≠ 0 := sub_ne_zero.mpr hne
+    exact_mod_cast this
+  have hD' : ((d : ℚ) * a - b * c) ≠ 0 := by rwa [mul_comm (d : ℚ)]
+  set r : ℚ := ((e + δ) * d - b * (f + δ)) / (a * d - b * c)
+  set s : ℚ := (a * (f + δ) - c * (e + δ)) / (a * d - b * c)
+  have hr : r * a + s * b - e = δ := by
+    simp only [r, s]; field_simp [hD, hD']; ring
+  have hs : r * c + s * d - f = δ := by
+    simp only [r, s]; field_simp [hD, hD']; ring
+  have hδpos : (0 : ℝ) < δ := hδ0
+  refine ⟨r, s, ?_, ?_⟩
+  · have : ((r : ℝ) * a + s * b - e) = (δ : ℝ) := by exact_mod_cast congrArg (fun q : ℚ => (q : ℝ)) hr
+    rw [this, abs_of_pos hδpos]; exact ⟨hδpos, hδε⟩
+  · have : ((r : ℝ) * c + s * d - f) = (δ : ℝ) := by exact_mod_cast congrArg (fun q : ℚ => (q : ℝ)) hs
+    rw [this, abs_of_pos hδpos]; exact ⟨hδpos, hδε⟩
+
+#print axioms putnam_1968_a2

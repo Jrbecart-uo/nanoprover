@@ -1,0 +1,28 @@
+import Mathlib
+
+open Filter Topology
+
+/-!
+Putnam 1997 A4.  If `g₁g₂g₃ = 1 = h₁h₂h₃ ⇒ φg₁φg₂φg₃ = φh₁φh₂φh₃`, then `ψ g = a φ(g)` is a
+homomorphism for `a = φ(1)⁻¹`.  Triples `(x, y, (xy)⁻¹)`, `(xy, 1, (xy)⁻¹)` give
+`φx φy = φ(xy) φ1`; triples `(1, y, y⁻¹)`, `(y, 1, y⁻¹)` give `φ1 φy = φy φ1`.
+-/
+theorem putnam_1997_a4
+(G : Type*)
+[Group G]
+(φ : G → G)
+(hφ : ∀ g1 g2 g3 h1 h2 h3 : G, (g1 * g2 * g3 = 1 ∧ h1 * h2 * h3 = 1) → φ g1 * φ g2 * φ g3 = φ h1 * φ h2 * φ h3)
+: ∃ a : G, let ψ := fun g => a * φ g; ∀ x y : G, ψ (x * y) = ψ x * ψ y := by
+  refine ⟨(φ 1)⁻¹, ?_⟩
+  intro ψ x y
+  simp only [ψ]
+  have h1 : φ x * φ y = φ (x * y) * φ 1 :=
+    mul_right_cancel (hφ x y (x * y)⁻¹ (x * y) 1 (x * y)⁻¹ ⟨by group, by group⟩)
+  have h2 : φ 1 * φ y = φ y * φ 1 :=
+    mul_right_cancel (hφ 1 y y⁻¹ y 1 y⁻¹ ⟨by group, by group⟩)
+  have hxy : φ (x * y) = φ x * φ y * (φ 1)⁻¹ := eq_mul_inv_of_mul_eq h1.symm
+  have hc : (φ 1)⁻¹ * φ y = φ y * (φ 1)⁻¹ := ((Commute.inv_left h2)).eq
+  rw [hxy, mul_assoc (φ 1)⁻¹ (φ x) ((φ 1)⁻¹ * φ y), hc]
+  simp only [mul_assoc]
+
+#print axioms putnam_1997_a4
