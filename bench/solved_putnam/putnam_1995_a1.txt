@@ -1,0 +1,37 @@
+import Mathlib
+
+/-!
+Putnam 1995 A1.  If `S = T ⊔ U` is closed under products and `T`, `U` are each closed
+under triple products, one of them is closed under products.  Otherwise take `a, b ∈ T`
+with `ab ∈ U` and `c, d ∈ U` with `cd ∈ T`: then `a b (cd) ∈ T` and `(ab) c d ∈ U` are the
+same element of `T ∩ U = ∅`.
+-/
+theorem putnam_1995_a1
+(S : Set ℝ)
+(hS : ∀ a ∈ S, ∀ b ∈ S, a * b ∈ S)
+(T U : Set ℝ)
+(hsub : T ⊆ S ∧ U ⊆ S)
+(hunion : T ∪ U = S)
+(hdisj : T ∩ U = ∅)
+(hT3 : ∀ a ∈ T, ∀ b ∈ T, ∀ c ∈ T, a * b * c ∈ T)
+(hU3 : ∀ a ∈ U, ∀ b ∈ U, ∀ c ∈ U, a * b * c ∈ U)
+: (∀ a ∈ T, ∀ b ∈ T, a * b ∈ T) ∨ (∀ a ∈ U, ∀ b ∈ U, a * b ∈ U) := by
+  by_contra h
+  push_neg at h
+  obtain ⟨⟨a, ha, b, hb, hab⟩, ⟨c, hc, d, hd, hcd⟩⟩ := h
+  have hmem : ∀ x ∈ S, x ∉ T → x ∈ U := fun x hx hxT => by
+    rw [← hunion] at hx
+    exact hx.resolve_left hxT
+  have habU : a * b ∈ U := hmem _ (hS a (hsub.1 ha) b (hsub.1 hb)) hab
+  have hcdT : c * d ∈ T := by
+    by_contra hcdT
+    have := hmem _ (hS c (hsub.2 hc) d (hsub.2 hd)) hcdT
+    exact hcd this
+  have h1 : a * b * (c * d) ∈ T := hT3 a ha b hb (c * d) hcdT
+  have h2 : a * b * c * d ∈ U := hU3 (a * b) habU c hc d hd
+  rw [← mul_assoc] at h1
+  have : a * b * c * d ∈ T ∩ U := ⟨h1, h2⟩
+  rw [hdisj] at this
+  exact this
+
+#print axioms putnam_1995_a1

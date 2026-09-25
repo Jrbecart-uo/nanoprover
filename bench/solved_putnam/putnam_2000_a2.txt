@@ -1,0 +1,27 @@
+import Mathlib
+
+open Topology Filter
+
+/-!
+Putnam 2000 A2.  Infinitely many `N` with `N, N+1, N+2` all sums of two squares:
+with `k = n + 1`, `N = 4k⁴ + 4k² = (2k²)² + (2k)²`, `N + 1 = (2k²+1)² + 0²`,
+`N + 2 = (2k²+1)² + 1²`, and `N > n`.
+-/
+theorem putnam_2000_a2 :
+  ∀ n : ℕ,
+    ∃ N : ℤ,
+      ∃ i : Fin 6 → ℕ,
+        N > n ∧
+        N = (i 0)^2 + (i 1)^2 ∧
+        N + 1 = (i 2)^2 + (i 3)^2 ∧
+        N + 2 = (i 4)^2 + (i 5)^2 := by
+  intro n
+  set k : ℕ := n + 1
+  refine ⟨4 * (k : ℤ) ^ 4 + 4 * (k : ℤ) ^ 2,
+    ![2 * k ^ 2, 2 * k, 2 * k ^ 2 + 1, 0, 2 * k ^ 2 + 1, 1], ?_, ?_, ?_, ?_⟩
+  · have hk : (n : ℤ) < k := by simp [k]
+    have h1 : (1 : ℤ) ≤ k := by simp [k]
+    nlinarith [pow_le_pow_left₀ (by positivity : (0 : ℤ) ≤ 1) h1 4]
+  all_goals simp only [Matrix.cons_val]; push_cast; ring
+
+#print axioms putnam_2000_a2

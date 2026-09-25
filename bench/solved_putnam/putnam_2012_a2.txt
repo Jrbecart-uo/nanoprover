@@ -1,0 +1,27 @@
+import Mathlib
+
+open Matrix
+
+/-!
+Putnam 2012 A2.  In a commutative semigroup where every `x * z = y` is solvable,
+`a * c = b * c ⇒ a = b`.  Take `c * e = c`; every `y = c * z` then has `y * e = y`.
+Take `c * d = e`: `a = a e = a (c d) = (a c) d = (b c) d = b (c d) = b e = b`.
+-/
+theorem putnam_2012_a2
+(S : Type*) [CommSemigroup S]
+(a b c : S)
+(hS : ∀ x y : S, ∃ z : S, x * z = y)
+(habc : a * c = b * c)
+: a = b := by
+  obtain ⟨e, he⟩ := hS c c
+  have hid : ∀ y, y * e = y := fun y => by
+    obtain ⟨z, rfl⟩ := hS c y
+    rw [mul_assoc, mul_comm z e, ← mul_assoc, he]
+  obtain ⟨d, hd⟩ := hS c e
+  calc a = a * e := (hid a).symm
+    _ = a * c * d := by rw [← hd, mul_assoc]
+    _ = b * c * d := by rw [habc]
+    _ = b * e := by rw [mul_assoc, hd]
+    _ = b := hid b
+
+#print axioms putnam_2012_a2
