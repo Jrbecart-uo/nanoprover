@@ -1,0 +1,34 @@
+import Mathlib
+
+open EuclideanGeometry Topology Filter Complex
+
+/-!
+Putnam 1965 B3.  Integer right triangles (legs `a ≤ b`, hypotenuse `c`) with area equal to
+twice the perimeter: `ab = 4(a+b+c)` and `a² + b² = c²` give
+`ab · ((a-8)(b-8) - 32) = (ab-4a-4b)² - 16c² + 16(c² - a² - b²) = 0`, so `(a-8)(b-8) = 32`,
+`a ≤ 13`, and case analysis leaves `(9,40,41), (10,24,26), (12,16,20)`.
+-/
+theorem putnam_1965_b3
+: {(a, b, c) : ℤ × ℤ × ℤ | a > 0 ∧ a ≤ b ∧ c > 0 ∧ a^2 + b^2 = c^2 ∧ a*b/(2 : ℚ) = 2*(a + b + c)}.ncard = 3 := by
+  have key : {(a, b, c) : ℤ × ℤ × ℤ | a > 0 ∧ a ≤ b ∧ c > 0 ∧ a^2 + b^2 = c^2 ∧ a*b/(2 : ℚ) = 2*(a + b + c)}
+      = {(9, 40, 41), (10, 24, 26), (12, 16, 20)} := by
+    ext ⟨a, b, c⟩
+    simp only [Set.mem_setOf_eq, Set.mem_insert_iff, Set.mem_singleton_iff, Prod.mk.injEq]
+    constructor
+    · rintro ⟨ha, hab, hc, hsq, hq⟩
+      have hq' : a * b = 4 * (a + b + c) := by
+        have : ((a * b : ℤ) : ℚ) = ((4 * (a + b + c) : ℤ) : ℚ) := by push_cast; linarith
+        exact_mod_cast this
+      have h0 : (a * b) * ((a - 8) * (b - 8) - 32) = 0 := by
+        linear_combination (a * b - 4 * a - 4 * b + 4 * c) * hq' - 16 * hsq
+      have hb : 0 < b := by omega
+      have h32 : (a - 8) * (b - 8) = 32 := by
+        have := (mul_eq_zero.mp h0).resolve_left (by positivity)
+        linarith
+      have ha13 : a ≤ 13 := by nlinarith
+      interval_cases a <;> omega
+    · rintro (⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩) <;> norm_num
+  rw [key]
+  exact Set.ncard_eq_three.mpr ⟨(9, 40, 41), (10, 24, 26), (12, 16, 20), by decide, by decide, by decide, rfl⟩
+
+#print axioms putnam_1965_b3
