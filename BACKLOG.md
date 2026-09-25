@@ -15,7 +15,7 @@ and propose next tasks. Ranked by leverage within each track. Last updated
 ---
 
 ## Track A — Putnam scalps (theorem-mode; where we are strongest)
-Current: **41 scalps** (2026-09-25: +18 — scoped-out list emptied, then a triage-driven sweep of the unsolved pure-proof set). Reachable wins live here.
+Current: **53 scalps** (2026-09-25: +30 — scoped-out list emptied, then a triage-driven sweep of the unsolved pure-proof set). Reachable wins live here.
 - ✅ **Scoped-out list cleared** (4/4 fell when re-examined: 1996_a5, 2001_a5, 1974_b3,
       2007_a5). 1974_b3 needed no algebraic integers (denominators 3^(2^k) grow under
       angle doubling); 2007_a5 passed first try via `card_fixedPoints_modEq` on the
@@ -24,10 +24,12 @@ Current: **41 scalps** (2026-09-25: +18 — scoped-out list emptied, then a tria
       analysis keywords triaged by 3 agents → 16 solved in a row, most first-try:
       1971_b1 1972_a2 1978_a4 2012_a2 2000_a2 1995_a1 1997_a4 1968_a2 1967_b2 1965_a4
       1992_a1 1987_a1 1966_a1 1962_a6 1965_b3 1978_a1 2007_b1 1963_a2).
-      NEXT from the ranked lists (triage score ≥7): 2012_a1 (sort d, Fibonacci growth),
-      1964_b2 (exactly one of T,Tᶜ in P), 1971_a1 (parity pigeonhole in (ZMod 2)³),
-      1965_b2 (2Σw = n(n-1)), 1964_a4, 1983_b4, 1982_a5, 2002_a5, 2000_b5, 1992_b2,
-      1995_a3, 1986_b3 (Hensel), 2008_b4, 2018_b2, 2017_a2, 2003_b4, 2009_b1.
+      Then (same day): 1995_a3 1965_b2 1964_b2 1971_a1 1992_b2 2002_a5 1986_b3 2018_b2
+      1964_a4 1972_b4 1962_b1 2009_b1.
+      NEXT from the ranked lists: 2012_a1 (sort d, Fibonacci growth), 1983_b4, 1982_a5,
+      2000_b5, 2008_b4, 2017_a2, 2003_b4, 2005_a1, 2004_b1, 2025_a1, 1978_b4, 1978_b6,
+      1973_b2, 1965_a6, 1968_b6, 1970_b3; plus the 143 unsolved problems never triaged
+      (the ones with analysis keywords — re-triage with a finer filter).
       Findings: 2017_b3 is FALSE as formalized (`Irrational (f 1/2)` parses as (f 1)/2);
       1991_a6 is VACUOUS (`→` binds looser than `∧` in `hA`) — if proved, label as such.
       ALWAYS finish with `python3 tools/verify_scalps.py --kernel NAME`.
