@@ -1,0 +1,80 @@
+import Mathlib
+
+open Nat Topology Filter
+
+/-!
+Putnam 2004 B1.  Write r = a/b in lowest terms and S = Σ_{j≤i} c_{n−j} r^{i+1−j}.
+(1) b^{i+1}·S = Σ c_{n−j} a^{i+1−j} b^j ∈ ℤ.  (2) Splitting P(r) = Σ_{k≤n} c_k r^k = 0 at
+k = n−i (`Finset.sum_range_add_sum_Ico`, `Finset.sum_range_reflect`) gives
+r^{n−i−1}·S = −Σ_{k<n−i} c_k r^k, so a^{n−i−1}·S = −Σ c_k a^k b^{n−i−1−k} ∈ ℤ.
+(3) a^{n−i−1}, b^{i+1} are coprime (`Rat.reduced`, `IsCoprime.pow`): u·a^e + v·b^f = 1, so
+S = u·(a^e S) + v·(b^f S) ∈ ℤ.
+-/
+theorem putnam_2004_b1
+(n : ℕ)
+(P : Polynomial ℤ)
+(r : ℚ)
+(Pdeg : P.degree = n)
+(Preq0 : Polynomial.aeval r P = 0)
+: ∀ i ∈ Finset.range n, ∃ m : ℤ, m = ∑ j ∈ Finset.range (i + 1), (P.coeff (n - j) * r ^ (i + 1 - j)) := by
+  intro i hi
+  rw [Finset.mem_range] at hi
+  have hdeg : P.natDegree = n := Polynomial.natDegree_eq_of_degree_eq_some Pdeg
+  set c : ℕ → ℚ := fun k => (P.coeff k : ℚ) with hc
+  set S := ∑ j ∈ Finset.range (i + 1), (P.coeff (n - j) * r ^ (i + 1 - j) : ℚ) with hS
+  set a : ℤ := r.num
+  set b : ℤ := (r.den : ℤ)
+  have hb0 : (b : ℚ) ≠ 0 := by simp [b]
+  have hr : r = (a : ℚ) / b := by simp [a, b, Rat.num_div_den]
+  set f := i + 1 with hf
+  set e := n - i - 1 with he
+  have hef : e + f = n := by omega
+  -- (1) b^f S is an integer
+  have T1 : (b : ℚ) ^ f * S = ((∑ j ∈ Finset.range f, P.coeff (n - j) * a ^ (f - j) * b ^ j : ℤ) : ℚ) := by
+    rw [hS, Finset.mul_sum]; push_cast
+    refine Finset.sum_congr rfl fun j hj => ?_
+    have hj' : j < f := Finset.mem_range.mp hj
+    rw [hr, div_pow, show f = j + (f - j) by omega, pow_add]
+    field_simp
+    rw [show j + (f - j) - j = f - j by omega]; ring
+  -- P(r) = 0 as a sum, split at e + 1
+  have hsum : ∑ k ∈ Finset.range (n + 1), c k * r ^ k = 0 := by
+    rw [Polynomial.aeval_eq_sum_range, hdeg] at Preq0
+    simpa [c, zsmul_eq_mul] using Preq0
+  rw [← Finset.sum_range_add_sum_Ico _ (show e + 1 ≤ n + 1 by omega),
+    Finset.sum_Ico_eq_sum_range, show n + 1 - (e + 1) = f by omega,
+    ← Finset.sum_range_reflect (fun k => c (e + 1 + k) * r ^ (e + 1 + k)) f] at hsum
+  have htop : ∑ j ∈ Finset.range f, c (e + 1 + (f - 1 - j)) * r ^ (e + 1 + (f - 1 - j))
+      = r ^ e * S := by
+    rw [hS, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun j hj => ?_
+    have hj' : j < f := Finset.mem_range.mp hj
+    rw [show e + 1 + (f - 1 - j) = n - j by omega, ← mul_assoc, mul_comm (r ^ e), mul_assoc,
+      ← pow_add, show e + (i + 1 - j) = n - j by omega]
+  rw [htop] at hsum
+  -- (2) a^e S is an integer
+  have T2 : (a : ℚ) ^ e * S = ((-∑ k ∈ Finset.range (e + 1), P.coeff k * a ^ k * b ^ (e - k) : ℤ) : ℚ) := by
+    have h1 : (a : ℚ) ^ e = (b : ℚ) ^ e * r ^ e := by rw [hr, div_pow]; field_simp
+    rw [h1, mul_assoc, show r ^ e * S = -∑ k ∈ Finset.range (e + 1), c k * r ^ k by linarith,
+      mul_neg, Finset.mul_sum]
+    push_cast
+    congr 1
+    refine Finset.sum_congr rfl fun k hk => ?_
+    have hk' : k < e + 1 := Finset.mem_range.mp hk
+    rw [hr, div_pow, show e = k + (e - k) by omega, pow_add]
+    field_simp
+    rw [show k + (e - k) - k = e - k by omega, hc]; ring
+  -- (3) Bezout
+  have hcop : IsCoprime a b := by
+    rw [Int.isCoprime_iff_gcd_eq_one]
+    have := r.reduced
+    simpa [a, b, Int.gcd] using this
+  obtain ⟨u, v, huv⟩ := hcop.pow (m := e) (n := f)
+  refine ⟨u * (-∑ k ∈ Finset.range (e + 1), P.coeff k * a ^ k * b ^ (e - k))
+    + v * (∑ j ∈ Finset.range f, P.coeff (n - j) * a ^ (f - j) * b ^ j), ?_⟩
+  have huvQ : (u : ℚ) * (a : ℚ) ^ e + (v : ℚ) * (b : ℚ) ^ f = 1 := by exact_mod_cast huv
+  push_cast
+  have T1' := T1; have T2' := T2
+  push_cast at T1' T2'
+  rw [← T1', ← T2']
+  linear_combination S * huvQ
