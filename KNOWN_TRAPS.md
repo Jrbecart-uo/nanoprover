@@ -134,3 +134,9 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
 - **`linarith` failed on `hm : 1 < m`, `hmn : m = 1 ⊢ False`** (ℝ; context also held rpow
   hypotheses like `u ^ 0 + v ^ 0 = 1` and a `∀` lemma) — cause not isolated. Escape for such
   one-step contradictions: `exact (ne_of_gt hm) hmn` (or `absurd`), don't debug linarith.
+- **`decide` refuses goals once a local instance like `haveI : Fact (Nat.Prime 101)` is in
+  context** ("Expected type must not contain free variables").  Escape: prove all `decide`
+  facts (e.g. `(2 : ZMod 101) ^ 50 ≠ 1`) BEFORE the `haveI`; add the `Fact` only where field
+  lemmas (`mul_eq_zero`) need it.  Powers in ZMod p need `by set_option maxRecDepth 20000 in
+  decide` — put the option INSIDE the tactic block: a top-level `set_option … in theorem` is
+  dropped when `verify_scalps --kernel` splices the proof into PutnamBench's file.
