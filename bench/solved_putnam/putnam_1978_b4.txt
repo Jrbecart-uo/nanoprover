@@ -1,0 +1,67 @@
+import Mathlib
+
+open Set Real Filter Topology Polynomial
+
+/-- Vieta-jumping sequence: each window of four consecutive terms solves the equation. -/
+def putnam_1978_b4_x : ℕ → ℤ
+  | 0 => 1
+  | 1 => 1
+  | 2 => 1
+  | 3 => 2
+  | n + 4 => putnam_1978_b4_x (n + 1) * putnam_1978_b4_x (n + 2)
+      + putnam_1978_b4_x (n + 1) * putnam_1978_b4_x (n + 3)
+      + putnam_1978_b4_x (n + 2) * putnam_1978_b4_x (n + 3) - putnam_1978_b4_x n
+
+/-!
+Putnam 1978 B4.  Vieta jumping.  For fixed b, c, d the equation is a quadratic in a with
+root sum bc + bd + cd, so replacing a by bc + bd + cd − a preserves solutions.  Starting
+from (1,1,1,2) this gives `putnam_1978_b4_x` = 1,1,1,2,4,13,85,…; every window of four
+consecutive terms is a solution (`linear_combination` of the previous window), and the
+sequence is ≥ 1, nondecreasing and strictly growing (x(n+3) ≥ n+2), so the window starting
+at n+3 with n = ⌈N⌉ has all entries > N.
+-/
+theorem putnam_1978_b4 :
+  ∀ N : ℝ,
+    ∃ a b c d : ℤ,
+      a > N ∧ b > N ∧ c > N ∧ d > N ∧
+      a ^ 2 + b ^ 2 + c ^ 2 + d ^ 2 = a * b * c + a * b * d + a * c * d + b * c * d := by
+  set x := putnam_1978_b4_x with hx
+  have hrec : ∀ n, x (n + 4) = x (n + 1) * x (n + 2) + x (n + 1) * x (n + 3)
+      + x (n + 2) * x (n + 3) - x n := fun n => by rw [hx, putnam_1978_b4_x]
+  have E : ∀ n, x n ^ 2 + x (n + 1) ^ 2 + x (n + 2) ^ 2 + x (n + 3) ^ 2 =
+      x n * x (n + 1) * x (n + 2) + x n * x (n + 1) * x (n + 3)
+      + x n * x (n + 2) * x (n + 3) + x (n + 1) * x (n + 2) * x (n + 3) := by
+    intro n
+    induction n with
+    | zero => simp [hx, putnam_1978_b4_x]
+    | succ n ih =>
+      rw [show n + 1 + 1 = n + 2 by ring, show n + 1 + 2 = n + 3 by ring,
+        show n + 1 + 3 = n + 4 by ring, hrec n]
+      linear_combination ih
+  have M : ∀ n, 1 ≤ x n ∧ x n ≤ x (n + 1) ∧ x (n + 1) ≤ x (n + 2) ∧
+      x (n + 2) + 1 ≤ x (n + 3) ∧ (n : ℤ) + 2 ≤ x (n + 3) := by
+    intro n
+    induction n with
+    | zero => simp [hx, putnam_1978_b4_x]
+    | succ n ih =>
+      obtain ⟨a0, a1, a2, a3, a4⟩ := ih
+      have r := hrec n
+      have h4 : x (n + 3) + 1 ≤ x (n + 4) := by
+        rw [r]; nlinarith [mul_le_mul a1 a3 (by linarith) (by linarith),
+          mul_le_mul a2 (le_refl (x (n + 3))) (by linarith) (by linarith)]
+      refine ⟨by linarith, by linarith, by linarith, ?_, ?_⟩
+      · rw [show n + 1 + 2 = n + 3 by ring, show n + 1 + 3 = n + 4 by ring]; exact h4
+      · rw [show n + 1 + 3 = n + 4 by ring]; push_cast; linarith
+  intro N
+  set n := ⌈N⌉₊
+  have hN : N ≤ (n : ℝ) := Nat.le_ceil N
+  obtain ⟨-, -, -, -, g⟩ := M n
+  obtain ⟨-, b1, b2, b3, -⟩ := M (n + 3)
+  have g' : (n : ℝ) + 2 ≤ (x (n + 3) : ℝ) := by exact_mod_cast g
+  have c1 : (x (n + 3) : ℝ) ≤ x (n + 4) := by exact_mod_cast b1
+  have c2 : (x (n + 4) : ℝ) ≤ x (n + 5) := by exact_mod_cast b2
+  have c3 : (x (n + 5) : ℝ) + 1 ≤ x (n + 6) := by exact_mod_cast b3
+  refine ⟨x (n + 3), x (n + 4), x (n + 5), x (n + 6), by linarith, by linarith, by linarith,
+    by linarith, ?_⟩
+  have := E (n + 3)
+  simpa [add_assoc] using this
