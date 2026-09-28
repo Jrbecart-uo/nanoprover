@@ -1,0 +1,78 @@
+import Mathlib
+
+open Topology Filter Set Matrix
+
+/-!
+Putnam 2019 B3.  Qᵀ Q = 1 from the orthonormal columns.  With Q − 1 invertible put
+w = (Q − 1)⁻¹u, so Qw = u + w.  Writing a = wᵀw, b = wᵀQw (1×1 matrices, equal to their
+transposes): uᵀQw = a − b and uᵀu = 2(a − b), so 2·uᵀQw = 1.  Hence
+(PQ − 1)w = Qw − 2u(uᵀQw) − w = u − u = 0 with w ≠ 0 (else u = 0, contradicting uᵀu = 1),
+so det(PQ − 1) = 0.
+-/
+theorem putnam_2019_b3
+(n : ℕ)
+(hn : n > 0)
+(Q : Matrix (Fin n) (Fin n) ℝ)
+(hQ0 : ∀ i j : Fin n, i ≠ j → dotProduct (Q i) (Q j) = 0 ∧ dotProduct (Qᵀ i) (Qᵀ j) = 0)
+(hQ1 : ∀ i : Fin n, dotProduct (Q i) (Q i) = 1 ∧ dotProduct (Qᵀ i) (Qᵀ i) = 1)
+(u : Matrix (Fin n) (Fin 1) ℝ)
+(hu : uᵀ*u = 1)
+(P : Matrix (Fin n) (Fin n) ℝ)
+(hP : P = 1 - 2 * (u * uᵀ))
+: (Q - 1).det ≠ 0 → (P * Q - 1).det = 0 := by
+  intro hdet
+  have hQQ : Qᵀ * Q = 1 := by
+    ext i j
+    rw [Matrix.mul_apply, Matrix.one_apply]
+    have e : ∑ k, Qᵀ i k * Q k j = dotProduct (Qᵀ i) (Qᵀ j) := by
+      simp [dotProduct, Matrix.transpose_apply]
+    rw [e]
+    split_ifs with h
+    · subst h; exact (hQ1 i).2
+    · exact (hQ0 i j h).2
+  have h11 : ∀ M : Matrix (Fin 1) (Fin 1) ℝ, Mᵀ = M := by
+    intro M; ext i j; fin_cases i; fin_cases j; rfl
+  have hU : IsUnit (Q - 1).det := isUnit_iff_ne_zero.mpr hdet
+  set w := (Q - 1)⁻¹ * u with hw
+  have hQw : Q * w = u + w := by
+    have : (Q - 1) * w = u := by
+      rw [hw, ← Matrix.mul_assoc, Matrix.mul_nonsing_inv _ hU, Matrix.one_mul]
+    rw [Matrix.sub_mul, Matrix.one_mul] at this
+    rw [← this]; abel
+  set a := wᵀ * w
+  set b := wᵀ * (Q * w)
+  have hut : uᵀ = wᵀ * Qᵀ - wᵀ := by
+    have : u = Q * w - w := by rw [hQw]; abel
+    rw [this, Matrix.transpose_sub, Matrix.transpose_mul]
+  have e1 : uᵀ * (Q * w) = a - b := by
+    rw [hut, Matrix.sub_mul, Matrix.mul_assoc, ← Matrix.mul_assoc Qᵀ, hQQ, Matrix.one_mul]
+  have e2 : uᵀ * u = a - b + (a - b) := by
+    have hu' : u = Q * w - w := by rw [hQw]; abel
+    have hbT : wᵀ * Qᵀ * w = b := by
+      rw [← h11 b]; simp only [b, Matrix.transpose_mul, Matrix.transpose_transpose,
+        Matrix.mul_assoc]
+    conv_lhs => rw [hut]
+    rw [hu', Matrix.sub_mul, Matrix.mul_sub, Matrix.mul_sub, Matrix.mul_assoc (wᵀ) Qᵀ (Q * w),
+      ← Matrix.mul_assoc Qᵀ Q w, hQQ, Matrix.one_mul, hbT]
+    abel
+  have hab : (2 : ℝ) • uᵀ * (Q * w) = 1 := by
+    rw [Matrix.smul_mul, e1, two_smul, ← e2, hu]
+  have hker : (P * Q - 1) * w = 0 := by
+    rw [Matrix.sub_mul, Matrix.one_mul, Matrix.mul_assoc, hP, Matrix.sub_mul, Matrix.one_mul,
+      two_mul, Matrix.add_mul, Matrix.mul_assoc]
+    have : u * (uᵀ * (Q * w)) + u * (uᵀ * (Q * w)) = u := by
+      rw [← Matrix.mul_add, ← two_smul ℝ (uᵀ * (Q * w)), ← Matrix.smul_mul, hab, Matrix.mul_one]
+    rw [this, hQw]; abel
+  by_contra hne
+  have hU2 : IsUnit (P * Q - 1).det := isUnit_iff_ne_zero.mpr hne
+  have hw0 : w = 0 := by
+    have := congrArg (fun M => (P * Q - 1)⁻¹ * M) hker
+    simp only [Matrix.mul_zero] at this
+    rwa [← Matrix.mul_assoc, Matrix.nonsing_inv_mul _ hU2, Matrix.one_mul] at this
+  have hu0 : u = 0 := by
+    have : Q * w = u + w := hQw
+    rw [hw0, Matrix.mul_zero, add_zero] at this
+    exact this.symm
+  rw [hu0, Matrix.mul_zero] at hu
+  have := congrFun (congrFun hu 0) 0
+  simp at this
