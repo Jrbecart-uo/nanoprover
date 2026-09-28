@@ -196,7 +196,7 @@ problems most cited as unsolved-by-machines:
 |---|---|---|
 | **imo_1981_p6** (Ackermann: `f 4 1981 = g 1983 − 3`) | ✅ **solved, 2 rounds** | four stacked inductions deriving closed forms `f 1..f 4`, linked to the tower `g` (~50 lines) |
 | **imo_1977_p6** (`f(f(n)) < f(n+1) ⟹ f(n) = n`) | ✅ **solved, 1 round** | invariant `n+1 ≤ m → n+1 ≤ f m` by induction, monotonicity bootstrap, squeeze |
-| **imo_1985_p6** (unique `a` with `fₙ(a)` increasing in `(0,1)`) | ❌ honest fail | needs a nested-interval/completeness construction (~100+ lines) — the wall is real |
+| **imo_1985_p6** (unique `a` with `fₙ(a)` increasing in `(0,1)`) | ✅ **solved, 3 rounds** (2026-09-28) | sup of the "too small" set + continuity for existence; amplification `Dₙ₊₁ ≥ (3/2)Dₙ` for uniqueness (~190 lines) |
 | **imo_1983_p6** (triangle inequality `a²b(a−b)+b²c(b−c)+c²a(c−a) ≥ 0`) | ✅ **solved, 1 round** | `nlinarith` with a hand-picked certificate hint set (triangle-positivity products × difference squares) |
 | **imo_1964_p2** (Schur-type: `a²(b+c−a)+… ≤ 3abc` for triangle sides) | ✅ **solved, 1 round** | same certificate strategy, first hint set |
 

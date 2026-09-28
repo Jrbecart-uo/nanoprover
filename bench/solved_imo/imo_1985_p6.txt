@@ -1,0 +1,199 @@
+import Mathlib
+
+set_option maxHeartbeats 0
+
+open BigOperators Real Nat Topology Rat
+
+/-!
+IMO 1985 P6 (miniF2F `imo_1985_p6`).  Unique a with 0 < fₙ(a) < fₙ₊₁(a) < 1 for all n ≥ 1.
+The condition is equivalent to G(a): 1 − 1/n < fₙ(a) < 1 for all n ≥ 1
+(fₙ < fₙ(fₙ + 1/n) ⇔ fₙ > 1 − 1/n).  For n ≥ 1, fₙ is ≥ 0, strictly increasing, continuous.
+Existence, without inverse functions: "too small" L = {x | ∃n, fₙ(x) ≤ 1 − 1/n} and
+"too big" U = {x | ∃n, fₙ(x) ≥ 1} both persist in n, so L < U pointwise; a = sup L is in
+neither — if fₙ(a) ≤ 1 − 1/n then fₙ₊₁(a) < 1 − 1/(n+1) strictly and continuity pushes a
+point of L above a; symmetrically for U (a ≥ 1/3 > 0 gives room below).
+Uniqueness by amplification: Dₙ = fₙ(a′) − fₙ(a) > 0 satisfies
+Dₙ₊₁ = Dₙ(fₙ(a′) + fₙ(a) + 1/n) ≥ (3/2)·Dₙ for n ≥ 2, yet Dₙ < 1.
+Statement quirk: h₁ at n = 0 reads f 1 x = (f 0 x)² (Lean's 1/0 = 0); harmless.
+Standard textbook proof (contamination caveat applies); kernel-checked, clean axioms.
+-/
+theorem imo_1985_p6
+  (f : ℕ → NNReal → ℝ)
+  (h₀ : ∀ x, f 1 x = x)
+  (h₁ : ∀ x n, f (n + 1) x = f n x * (f n x + 1 / n)) :
+  ∃! a, ∀ n, 0 < n → 0 < f n a ∧ f n a < f (n + 1) a ∧ f (n + 1) a < 1 := by
+  -- basic shape: for n ≥ 1, f n is nonnegative, strictly increasing and continuous
+  have hpos : ∀ n : ℕ, 1 ≤ n → (0 : ℝ) < 1 / (n : ℝ) := fun n hn => by
+    have : (1 : ℝ) ≤ n := by exact_mod_cast hn
+    positivity
+  have shape : ∀ n : ℕ, 1 ≤ n → (∀ x, 0 ≤ f n x) ∧ StrictMono (f n) ∧ Continuous (f n) := by
+    intro n hn
+    induction n, hn using Nat.le_induction with
+    | base =>
+      refine ⟨fun x => by rw [h₀]; exact x.2, fun x y hxy => by rw [h₀, h₀]; exact_mod_cast hxy, ?_⟩
+      have : f 1 = fun x : NNReal => (x : ℝ) := funext h₀
+      rw [this]; exact NNReal.continuous_coe
+    | succ n hn ih =>
+      obtain ⟨h0, hm, hc⟩ := ih
+      have hr := hpos n hn
+      have e : f (n + 1) = fun x => f n x * (f n x + 1 / n) := funext fun x => h₁ x n
+      refine ⟨fun x => by rw [e]; have := h0 x; positivity, fun x y hxy => ?_, ?_⟩
+      · rw [e]
+        have a1 := hm hxy
+        have a2 := h0 x
+        simp only
+        nlinarith
+      · rw [e]; exact hc.mul (hc.add continuous_const)
+  -- the good set
+  let G : NNReal → Prop := fun x => ∀ n : ℕ, 1 ≤ n → 1 - 1 / (n : ℝ) < f n x ∧ f n x < 1
+  -- conditions ⇔ G
+  have toG : ∀ x, (∀ n, 0 < n → 0 < f n x ∧ f n x < f (n + 1) x ∧ f (n + 1) x < 1) → G x := by
+    intro x hx n hn
+    obtain ⟨p, q, r⟩ := hx n hn
+    rw [h₁] at q
+    constructor
+    · have : 1 < f n x + 1 / n := by
+        by_contra hle; push Not at hle
+        nlinarith
+      linarith
+    · rcases Nat.eq_or_lt_of_le hn with h | h
+      · subst h
+        have r' := r; rw [h₁] at r'
+        norm_num at q r'
+        nlinarith
+      · obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := ⟨n - 1, by omega⟩
+        exact (hx m (by omega)).2.2
+  have fromG : ∀ x, G x → ∀ n, 0 < n → 0 < f n x ∧ f n x < f (n + 1) x ∧ f (n + 1) x < 1 := by
+    intro x hx n hn
+    obtain ⟨p, q⟩ := hx n hn
+    have hr := hpos n hn
+    have h0 : 0 < f n x := by
+      have : 1 / (n : ℝ) ≤ 1 := by
+        rw [div_le_one (by exact_mod_cast hn)]; exact_mod_cast hn
+      linarith
+    refine ⟨h0, ?_, (hx (n + 1) (by omega)).2⟩
+    rw [h₁]; nlinarith
+  -- monotone persistence of "too small" and "too big"
+  have small : ∀ n : ℕ, 1 ≤ n → ∀ x, f n x ≤ 1 - 1 / (n : ℝ) → ∀ m, n ≤ m → f m x ≤ 1 - 1 / (m : ℝ) := by
+    intro n hn x hx m hm
+    induction m, hm using Nat.le_induction with
+    | base => exact hx
+    | succ m hm ih =>
+      rw [h₁]
+      have h0 := (shape m (by omega)).1 x
+      have hm1 : (1 : ℝ) ≤ m := by exact_mod_cast (show 1 ≤ m by omega)
+      have e : 1 - 1 / (m : ℝ) ≤ 1 - 1 / ((m + 1 : ℕ) : ℝ) := by
+        push_cast
+        have : 1 / ((m : ℝ) + 1) ≤ 1 / m := one_div_le_one_div_of_le (by linarith) (by linarith)
+        linarith
+      have : f m x * (f m x + 1 / m) ≤ f m x := by
+        have : f m x + 1 / m ≤ 1 := by linarith
+        nlinarith
+      linarith
+  have big : ∀ n : ℕ, 1 ≤ n → ∀ x, 1 ≤ f n x → ∀ m, n ≤ m → 1 ≤ f m x := by
+    intro n hn x hx m hm
+    induction m, hm using Nat.le_induction with
+    | base => exact hx
+    | succ m hm ih =>
+      rw [h₁]
+      have := hpos m (by omega)
+      nlinarith
+  let L : Set NNReal := {x | ∃ n : ℕ, 1 ≤ n ∧ f n x ≤ 1 - 1 / (n : ℝ)}
+  let U : Set NNReal := {x | ∃ n : ℕ, 1 ≤ n ∧ 1 ≤ f n x}
+  have sep : ∀ x ∈ L, ∀ y ∈ U, x < y := by
+    rintro x ⟨n, hn, hx⟩ y ⟨m, hm, hy⟩
+    by_contra hle; push Not at hle
+    set k := max n m
+    have a1 := small n hn x hx k (le_max_left _ _)
+    have a2 := big m hm y hy k (le_max_right _ _)
+    have a3 := (shape k (by omega)).2.2 |>.comp continuous_id |> fun _ => (shape k (by omega)).2.1.monotone hle
+    have := hpos k (by omega)
+    linarith
+  have hL0 : (0 : NNReal) ∈ L := ⟨1, le_rfl, by rw [h₀]; norm_num⟩
+  have hU1 : (1 : NNReal) ∈ U := ⟨1, le_rfl, by rw [h₀]; norm_num⟩
+  have hbdd : BddAbove L := ⟨1, fun x hx => (sep x hx 1 hU1).le⟩
+  have hthird : (1 / 3 : NNReal) ∈ L := by
+    refine ⟨2, by norm_num, ?_⟩
+    have e : f 2 (1 / 3) = f 1 (1 / 3) * (f 1 (1 / 3) + 1 / ((1 : ℕ) : ℝ)) := h₁ (1 / 3) 1
+    rw [e, h₀]; push_cast; norm_num
+  set a := sSup L with ha
+  have ha3 : (1 / 3 : NNReal) ≤ a := le_csSup hbdd hthird
+  -- a is not too small
+  have notL : ∀ n : ℕ, 1 ≤ n → ¬ f n a ≤ 1 - 1 / (n : ℝ) := by
+    intro n hn hle
+    have hlt : f (n + 1) a < 1 - 1 / ((n + 1 : ℕ) : ℝ) := by
+      rw [h₁]
+      have h0 := (shape n hn).1 a
+      have hn1 : (1 : ℝ) ≤ n := by exact_mod_cast hn
+      have : f n a * (f n a + 1 / n) ≤ f n a := by
+        have : f n a + 1 / n ≤ 1 := by linarith
+        nlinarith
+      have : 1 / ((n + 1 : ℕ) : ℝ) < 1 / n := by
+        push_cast; exact one_div_lt_one_div_of_lt (by linarith) (by linarith)
+      linarith
+    have hnhds : {x | f (n + 1) x < 1 - 1 / ((n + 1 : ℕ) : ℝ)} ∈ 𝓝 a :=
+      ((shape (n + 1) (by omega)).2.2.continuousAt).preimage_mem_nhds (Iio_mem_nhds hlt)
+    obtain ⟨u, hau, hsub⟩ := exists_Ico_subset_of_mem_nhds hnhds ⟨a + 1, by simp⟩
+    obtain ⟨x, hax, hxu⟩ := exists_between hau
+    have hxL : x ∈ L := ⟨n + 1, by omega, (hsub ⟨hax.le, hxu⟩).le⟩
+    exact absurd (le_csSup hbdd hxL) (not_le.mpr hax)
+  -- a is not too big
+  have notU : ∀ n : ℕ, 1 ≤ n → ¬ 1 ≤ f n a := by
+    intro n hn hge
+    have hgt : 1 < f (n + 1) a := by
+      rw [h₁]; have := hpos n hn; nlinarith
+    have hnhds : {x | 1 < f (n + 1) x} ∈ 𝓝 a :=
+      ((shape (n + 1) (by omega)).2.2.continuousAt).preimage_mem_nhds (Ioi_mem_nhds hgt)
+    obtain ⟨l, hla, hsub⟩ := exists_Ioc_subset_of_mem_nhds hnhds
+      ⟨0, lt_of_lt_of_le (by norm_num) ha3⟩
+    obtain ⟨x, hlx, hxa⟩ := exists_between hla
+    have hxU : x ∈ U := ⟨n + 1, by omega, (hsub ⟨hlx, hxa.le⟩).le⟩
+    obtain ⟨y, hyL, hxy⟩ := exists_lt_of_lt_csSup ⟨0, hL0⟩ hxa
+    exact absurd (sep y hyL x hxU) (not_lt.mpr hxy.le)
+  have Ga : G a := fun n hn => ⟨not_le.mp (notL n hn), not_le.mp (notU n hn)⟩
+  -- uniqueness by amplification
+  have amp : ∀ x y, G x → G y → x < y → False := by
+    intro x y hx hy hxy
+    let D : ℕ → ℝ := fun n => f n y - f n x
+    have hD : ∀ n : ℕ, 1 ≤ n → 0 < D n := fun n hn =>
+      sub_pos.mpr ((shape n hn).2.1 hxy)
+    have hstep : ∀ n : ℕ, 2 ≤ n → 3 / 2 * D n ≤ D (n + 1) := by
+      intro n hn
+      have e : D (n + 1) = D n * (f n y + f n x + 1 / n) := by
+        simp only [D, h₁]; ring
+      rw [e]
+      have a1 := (hx n (by omega)).1
+      have a2 := (hy n (by omega)).1
+      have hn2 : (2 : ℝ) ≤ n := by exact_mod_cast hn
+      have : 1 / (n : ℝ) ≤ 1 / 2 := one_div_le_one_div_of_le (by norm_num) hn2
+      have hDn := hD n (by omega)
+      nlinarith
+    have hgrow : ∀ k : ℕ, (3 / 2 : ℝ) ^ k * D 2 ≤ D (k + 2) := by
+      intro k
+      induction k with
+      | zero => simp
+      | succ k ih =>
+        rw [pow_succ, show k + 1 + 2 = (k + 2) + 1 by ring]
+        have := hstep (k + 2) (by omega)
+        nlinarith [hD (k + 2) (by omega)]
+    have hD1 : ∀ n : ℕ, 1 ≤ n → D n < 1 := by
+      intro n hn
+      have := (hy n hn).2
+      have : 0 < f n x := by
+        have h1 := (hx n hn).1
+        have : 1 / (n : ℝ) ≤ 1 := by
+          rw [div_le_one (by exact_mod_cast hn)]; exact_mod_cast hn
+        linarith
+      simp only [D]; linarith
+    obtain ⟨k, hk⟩ := pow_unbounded_of_one_lt (1 / D 2) (by norm_num : (1 : ℝ) < 3 / 2)
+    have h2 := hD 2 (by norm_num)
+    have := hgrow k
+    have : 1 < (3 / 2 : ℝ) ^ k * D 2 := by
+      rw [div_lt_iff₀ h2] at hk; linarith
+    linarith [hD1 (k + 2) (by omega)]
+  refine ⟨a, fromG a Ga, fun y hy => ?_⟩
+  have Gy := toG y hy
+  rcases lt_trichotomy y a with h | h | h
+  · exact (amp y a Gy Ga h).elim
+  · exact h
+  · exact (amp a y Ga Gy h).elim

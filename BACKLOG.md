@@ -58,14 +58,11 @@ Current: **100 scalps + 1 vacuous** (2026-09-28: +47 real — 22 cost-1–2 then
       but only REPL+`premise_index` were used end-to-end (on 2001_a5). Confirm
       the supposition-triage / reframing tools actually help on a stuck goal.
 
-## Track B — IMO 1985 P6 (the honest wall, now more tractable)
-- [ ] `∃! a, ∀ n>0, 0 < f n a < f (n+1) a < 1` for the given recurrence. Needs a
-      ~100-line real-analysis construction (build `a` as a sup / nested-interval
-      limit; monotonicity + continuity in `x`; uniqueness by amplification).
-      The REPL's proofState stepping is the tool that makes a long construction
-      feasible. Higher risk than a Putnam scalp; a never-solved-tier scalp if it
-      lands. File: `miniF2F-lean4/MiniF2F/Test/imo_1985_p6.lean` (statement uses
-      `f : ℕ → NNReal → ℝ` — expect cast friction).
+## Track B — IMO 1985 P6 — ✅ SOLVED 2026-09-28
+- `bench/solved_imo/imo_1985_p6.txt` (~190 lines, 3 kernel rounds): existence via a = sSup of
+  the "too small" set + continuity (no inverse functions / IVT needed), uniqueness via the
+  amplification Dₙ₊₁ ≥ (3/2)Dₙ. Checked by the REPL and independently by `lake env lean`
+  spliced into miniF2F's own file; axioms clean. Standard textbook proof (contamination caveat).
 
 ## Track C — CDC formalization (DEPRIORITISED 2026-09-24)
 NOTE: the full CDC proof (incl. classical parts) has reportedly been formalized in Lean 4
