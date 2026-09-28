@@ -140,3 +140,7 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
   lemmas (`mul_eq_zero`) need it.  Powers in ZMod p need `by set_option maxRecDepth 20000 in
   decide` — put the option INSIDE the tactic block: a top-level `set_option … in theorem` is
   dropped when `verify_scalps --kernel` splices the proof into PutnamBench's file.
+- **`congr 1` on `x ^ (∑ …) = x ^ 3860` hits max recursion** (it tries to unfold the literal).
+  Escape: prove `∑ … = 3860` separately and `rw` it.  `norm_num` does not reduce
+  `Int.toNat 2`; `have : Int.toNat 2 = 2 := rfl` and `rw`.  No `zpow_sum` for fields: weight
+  with `(1/2) ^ v.toNat` (ℕ exponent) and `Finset.prod_pow_eq_pow_sum` instead.
