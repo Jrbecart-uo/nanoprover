@@ -34,11 +34,15 @@ int main(int argc,char**argv){
   // sanity: each kept chain value really ≡ c mod 2^s (by construction of bucketing) — recheck
   for(u64 c=0;c<S;c++) for(u64 j=ps[c];j<ps[c+1];j++) if((pk[j].v&MS)!=c){fprintf(stderr,"bucket error\n");return 1;}
   float *V=malloc(4*S*S); FILE*f=fopen(vf,"rb"); if(!f||fread(V,4,S*S,f)!=S*S){fprintf(stderr,"read V fail\n");return 1;} fclose(f);
-  i64 *Vi=malloc(8*S*S); for(u64 x=0;x<S*S;x++) Vi[x]=(i64)llround((double)V[x]*SC);
+  i64 *Vi=malloc(8*S*S);
+  for(u64 x=0;x<S*S;x++){ if(!isfinite(V[x]) || fabs(V[x])>1e6){fprintf(stderr,"bad V entry %llu\n",(unsigned long long)x);return 1;}
+    Vi[x]=(i64)llround((double)V[x]*SC); }
   u64 p7[64]; p7[0]=1; for(int i=1;i<=H;i++) p7[i]=p7[i-1]*7;
-  i64 G=INT64_MIN;
+  i64 G=INT64_MIN; u64 Gx=0;
+  // optional: per-state values for states listed in argv[7] (one index per line)
+  u64 *probe=NULL; int np=0; if(argc>7){ FILE*pf=fopen(argv[7],"r"); probe=malloc(8*100000); unsigned long long q; while(np<100000 && fscanf(pf,"%llu",&q)==1) probe[np++]=q; fclose(pf); }
   #pragma omp parallel
-  { i64 lg=INT64_MIN;
+  { i64 lg=INT64_MIN; u64 lx=0;
     #pragma omp for schedule(dynamic,64)
     for(u64 x=0;x<S*S;x++){
       u64 c=x>>s, b1=x&MS; i64 tot=0;
@@ -48,23 +52,26 @@ int main(int argc,char**argv){
         for(u64 j=ps[c];j<ps[c+1];j++){
           u64 wv=((z - pk[j].v)&(M3-1))>>s;
           u64 zn=(p7[pk[j].h]*wv)&((1ULL<<(2*s))-1);
-          i64 val=(i64)pk[j].h*SC + Vi[zn];   // zn = c' + 2^s b2'  -> index c'*S + b2' ; reorder below
-          (void)val;
           u64 idx=((zn&MS)<<s) | (zn>>s);
           i64 v2=(i64)pk[j].h*SC + Vi[idx];
           if(v2<best) best=v2;
         }
         tot+=best;
       }
-      i64 d=tot-(i64)S*Vi[x]; if(d>lg) lg=d;
+      i64 d=tot-(i64)S*Vi[x]; if(d>lg){ lg=d; lx=x; }
+      for(int q=0;q<np;q++) if(probe[q]==x){
+        #pragma omp critical
+        printf("probe state %llu d=%lld\n",(unsigned long long)x,(long long)d);
+      }
     }
     #pragma omp critical
-    { if(lg>G) G=lg; }
+    { if(lg>G){ G=lg; Gx=lx; } }
   }
   // rational lower bound for log_7 2: a/b with 7^a <= 2^b  (checked in python separately)
   long a=atol(argv[5]), b=atol(argv[6]);
   // ghat = G/(S*SC) < s*a/b  <=>  G*b < s*a*S*SC   (use 128-bit)
   __int128 lhs=(__int128)G*b, rhs=(__int128)s*a*(__int128)S*SC;
+  printf("argmax state %llu (c=%llu,b1=%llu)\n",(unsigned long long)Gx,(unsigned long long)(Gx>>s),(unsigned long long)(Gx&MS));
   printf("s=%d H=%d slack=%d chains=%llu  GNUM=%lld  ghat=%.6f per-bit=%.6f  rational bound s*a/b=%.6f  PASS=%d\n",
     s,H,SLACK,(unsigned long long)w,(long long)G,(double)G/((double)S*SC),(double)G/((double)S*SC)/s,(double)s*a/b, lhs<rhs);
   return 0;

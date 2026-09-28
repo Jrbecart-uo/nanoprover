@@ -30,20 +30,26 @@ K = 2^s 7^{c+1} / (1 − 7^λ 2^{−s}). Representability needs all exponents A�
 i.e. excess E_N := G_N − L_N ≤ c.
 
 ## 4. Probability (y uniform)
-Given the past, u_t is uniform on ℤ/2^s (it is a bijective image of y's block t+2). Transitions of
-X_t without padding: next = (zn mod 2^s, ⌊zn/2^s⌋) with zn = 7^{h}((z − v(C)) mod 2^{3s})/2^s mod 2^{2s}.
-**Certificate inequality:** a table V on (ℤ/2^s)² and ĝ with, for every state x,
-  avg_u min_{C∈𝒞(c)} [ h(C) + V(next(x,u,C)) ] ≤ V(x) + ĝ,   and ĝ < λ := s·26/73 < sμ.
-π := the minimiser (ties arbitrary). Then Y_t := h_t − ĝ + V(X_{t+1}) − V(X_t) has E[Y_t | F_t] ≤ 0 and
-|Y_t| ≤ B := H + ĝ + osc(V) on unpadded steps.
-Let τ = last t ≤ N with E_t = 0. Steps after τ are unpadded, so
-E_N ≤ Σ_{t=τ}^{N−1} (h_t − λ) + 1 ≤ Σ Y_t + osc(V) + 1 − (N−τ)δ, δ := λ − ĝ > 0.
-For each fixed τ₀, the unpadded process from X_{τ₀} (policy π, fresh uniform u's) is a supermartingale
-setting; Azuma gives P(Σ_{t=τ₀}^{N−1} Y_t ≥ mδ + c′) ≤ exp(−δc′/B²)·exp(−mδ²/(2B²)), m = N−τ₀,
-c′ = c − osc(V) − 1. Union over τ₀: P(E_N > c) ≤ e^{−δc′/B²}/(1 − e^{−δ²/(2B²)}) ≤ 1/2 for c large.
+Filtration F_t := σ(y mod 2^{s(t+2)}). By induction C_0…C_{t−1}, G_0…G_t and X_t = (c_t, b1_t) are
+F_t-measurable (C_j depends only on z_j mod 2^{3s}, i.e. on y mod 2^{s(j+3)}). Given F_t, the look-ahead
+u_t = ⌊z_t/2^{2s}⌋ mod 2^s = (F_t-known) + 7^{G_t}·(block t+2 of y) mod 2^s is uniform (bijective image of a
+fresh block; padding only changes the odd multiplier). The policy reads z_t mod 2^{3s} = (c_t, b1_t, u_t)
+and, on an unpadded step, X_{t+1} = (zn mod 2^s, ⌊zn/2^s⌋) with zn = 7^{h}((z − v(C)) mod 2^{3s})/2^s mod 2^{2s}.
+**Certificate inequality:** an integer table V̂ (= V·2^20 rounded) and ĝ with, for every state x,
+  avg_u min_{C∈𝒞(c)} [ h(C) + V̂(next(x,u,C))/2^20 ] ≤ V̂(x)/2^20 + ĝ,   ĝ < λ := s·26/73 < sμ (7^26 < 2^73).
+π := the minimiser w.r.t. V̂ over the (pruned) lists 𝒞(c) (ties arbitrary), used for t ≤ N−3; the last two
+blocks use any chain (min height), adding ≤ 2H to the excess.
+Let τ = last t ≤ N−2 with E_t = 0. For each fixed τ₀ define the auxiliary process that agrees with the
+real one up to time τ₀ and then runs *unpadded* with policy π. On {τ = τ₀} the two coincide on
+[τ₀, N−2] (a padded step after τ would force a later zero of E). For the auxiliary process
+Y_t := h_t − ĝ + V̂(X_{t+1})/2^20 − V̂(X_t)/2^20 satisfies E[Y_t | F_t] ≤ 0 and |Y_t| ≤ B := H + ĝ + osc(V̂)/2^20.
+Since Σ_{t=τ₀}^{N−3} Δ_t = L_{N−2} − L_{τ₀} ≥ (N−2−τ₀)λ − 1,
+E_N ≤ Σ_{t=τ₀}^{N−3} Y_t + osc + 1 − mδ + 2H,  m = N−2−τ₀, δ := λ − ĝ > 0.
+Azuma: P(Σ Y_t ≥ mδ + c′) ≤ exp(−δc′/B²)·exp(−mδ²/(2B²)), c′ := c − osc − 1 − 2H. Union over the
+deterministic τ₀: P(E_N > c) ≤ e^{−δc′/B²}/(1 − e^{−δ²/(2B²)}) ≤ 1/2 for c large (independent of N).
 
 ## 5. Conclusion
-At least 2^{sN}/2 distinct representables lie in [1, K·2^{sN}], for every N. For x ≥ K·2^s choose N with
+At least 2^{sN}/2 − 1 distinct representables lie in [1, K·2^{sN}] (y = 0 gives n = 0), for every N. For x ≥ K·2^s choose N with
 K2^{sN} ≤ x < K2^{s(N+1)}: #{n ≤ x representable} ≥ 2^{sN}/2 ≥ x/(2K2^s). Positive lower density.
 
 ## Certificate
@@ -63,6 +69,17 @@ f7f832116362b96db8ba42884e61803aa5e7cd02071a45f3353072ee4bdd9258), produced by `
 n ≡ 7^A y (mod 2^{sN}), and the excess E stays bounded (final ≤ 34, typically < 10) — consistent with
 negative drift. `simcheck.py` validates the transition formula against direct 2-adic arithmetic
 (14 812 cases, 0 mismatches).
+
+**Independent review (2026-09-28, adversarial referee agent):** no fatal issue; two fixable gaps
+(last two blocks; coupling exposition) — both patched above. The referee re-implemented the check
+(`review_indep.py`: itertools chains, big-int 2-adic transitions with random high bits) and matched
+`verify.c`'s GNUM exactly at s = 5, 6 (incl. random asymmetric tables); exhaustively tested s = 3, N = 4
+(`review_fresh_s3.py`): u_t exactly uniform in all 37 440 conditioning classes, transitions match on
+854 744 unpadded steps, all 4096 constructed n distinct antichain representations with n ≡ 7^A y.
+At s = 11 the rerun reproduces GNUM = 8385274094 (argmax state (c,b1) = (1835, 623)), and the
+independent checker (`indep_probe.py`) reproduces the per-state values exactly on the argmax state and
+12 random states (`indep_s11.txt` vs `verify_s11_run2.txt`). `check_rational.py`: 7^26 < 2^73.
+Referee confidence (pre-patch): ~85–90%.
 
 Caveats: computer-assisted (C programs, not Lean); the density constant implied by Azuma is
 astronomically small (positive, but useless numerically); independent review pending.
