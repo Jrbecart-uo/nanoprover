@@ -1,0 +1,38 @@
+import Mathlib
+
+open EuclideanGeometry Filter Topology Set
+
+/-!
+Putnam 1972 A1.  No four consecutive binomial coefficients C(n,r..r+3) are in arithmetic
+progression.  With `Nat.choose_succ_right_eq` (C(n,k+1)(k+1) = C(n,k)(n−k)), the AP
+condition on C(n,r), C(n,r+1), C(n,r+2) becomes, after cancelling C(n,r+1) > 0, the
+polynomial relation 2(n−r)(r+2) = (r+1)(r+2) + (n−r−1)(n−r), i.e. (n−2r−2)² = n+2; the
+next triple gives (n−2r−4)² = n+2.  Both cannot hold (`nlinarith`).
+-/
+theorem putnam_1972_a1
+    (n : ℕ) (hn : n > 0)
+    (fourAP : ℤ → ℤ → ℤ → ℤ → Prop)
+    (hfourAP : ∀ n1 n2 n3 n4, fourAP n1 n2 n3 n4 ↔ n4-n3 = n3-n2 ∧ n3-n2 = n2-n1) :
+    ¬ ∃ r : ℕ, r > 0 ∧ r + 3 ≤ n ∧ fourAP (n.choose r) (n.choose (r+1)) (n.choose (r+2)) (n.choose (r+3)) := by
+  rintro ⟨r, hr, hrn, hap⟩
+  rw [hfourAP] at hap
+  obtain ⟨h1, h2⟩ := hap
+  have e1 := Nat.choose_succ_right_eq n r
+  have e2 := Nat.choose_succ_right_eq n (r + 1)
+  have e3 := Nat.choose_succ_right_eq n (r + 2)
+  have p1 : 0 < n.choose (r + 1) := Nat.choose_pos (by omega)
+  have p2 : 0 < n.choose (r + 2) := Nat.choose_pos (by omega)
+  zify [show r ≤ n by omega, show r + 1 ≤ n by omega, show r + 2 ≤ n by omega] at e1 e2 e3 p1 p2
+  set N : ℤ := (n : ℤ)
+  set R : ℤ := (r : ℤ)
+  set c0 : ℤ := (n.choose r : ℤ)
+  set c1 : ℤ := (n.choose (r + 1) : ℤ)
+  set c2 : ℤ := (n.choose (r + 2) : ℤ)
+  set c3 : ℤ := (n.choose (r + 3) : ℤ)
+  have T1 : c1 * (2 * (N - R) * (R + 2) - (R + 1) * (R + 2) - (N - R - 1) * (N - R)) = 0 := by
+    linear_combination (N - R) * e2 - (R + 2) * e1 - (N - R) * (R + 2) * h2
+  have T2 : c2 * (2 * (N - R - 1) * (R + 3) - (R + 2) * (R + 3) - (N - R - 2) * (N - R - 1)) = 0 := by
+    linear_combination (N - R - 1) * e3 - (R + 3) * e2 - (N - R - 1) * (R + 3) * h1
+  have P1 := (mul_eq_zero.mp T1).resolve_left p1.ne'
+  have P2 := (mul_eq_zero.mp T2).resolve_left p2.ne'
+  nlinarith
