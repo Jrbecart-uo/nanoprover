@@ -1,0 +1,41 @@
+import Mathlib
+
+open Matrix
+
+/-!
+Putnam 2012 A1.  Twelve reals in (1,12) always contain an acute triangle.
+Sort them (`Tuple.sort`, `Tuple.monotone_sort`) into e₀ ≤ … ≤ e₁₁.  If no triple
+is acute, then eₙ² + eₙ₊₁² ≤ eₙ₊₂² for consecutive sorted entries, so the squares
+dominate the Fibonacci numbers: e₁₁² > 144, contradicting e₁₁ < 12.
+-/
+theorem putnam_2012_a1
+(d : Fin 12 → ℝ)
+(hd : ∀ i, d i ∈ Set.Ioo 1 12)
+: ∃ i j k, i ≠ j ∧ i ≠ k ∧ j ≠ k ∧ d k ≥ d i ∧ d k ≥ d j ∧ (d i) ^ 2 + (d j) ^ 2 > (d k) ^ 2 := by
+  by_contra hne
+  push Not at hne
+  set σ := Tuple.sort d
+  have hmono : Monotone (d ∘ σ) := Tuple.monotone_sort d
+  have step : ∀ n : Fin 12, ∀ m : Fin 12, ∀ p : Fin 12, n < m → m < p →
+      d (σ n) ^ 2 + d (σ m) ^ 2 ≤ d (σ p) ^ 2 := by
+    intro n m p hnm hmp
+    have h1 : σ n ≠ σ m := fun h => (ne_of_lt hnm) (σ.injective h)
+    have h2 : σ n ≠ σ p := fun h => (ne_of_lt (hnm.trans hmp)) (σ.injective h)
+    have h3 : σ m ≠ σ p := fun h => (ne_of_lt hmp) (σ.injective h)
+    exact hne _ _ _ h1 h2 h3 (hmono (hnm.trans hmp).le) (hmono hmp.le)
+  have b : ∀ i, 1 < d (σ i) ∧ d (σ i) < 12 := fun i => hd (σ i)
+  have e0 := b 0; have e1 := b 1; have e11 := b 11
+  have s2 := step 0 1 2 (by decide) (by decide)
+  have s3 := step 1 2 3 (by decide) (by decide)
+  have s4 := step 2 3 4 (by decide) (by decide)
+  have s5 := step 3 4 5 (by decide) (by decide)
+  have s6 := step 4 5 6 (by decide) (by decide)
+  have s7 := step 5 6 7 (by decide) (by decide)
+  have s8 := step 6 7 8 (by decide) (by decide)
+  have s9 := step 7 8 9 (by decide) (by decide)
+  have s10 := step 8 9 10 (by decide) (by decide)
+  have s11 := step 9 10 11 (by decide) (by decide)
+  have q0 : 1 < d (σ 0) ^ 2 := by nlinarith
+  have q1 : 1 < d (σ 1) ^ 2 := by nlinarith
+  have q11 : d (σ 11) ^ 2 < 144 := by nlinarith
+  linarith
