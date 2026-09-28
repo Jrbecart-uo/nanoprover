@@ -1,0 +1,53 @@
+import Mathlib
+
+open Topology Filter Polynomial Set
+
+/-!
+Putnam 2001 B1.  Give each cell the sign ε = +1 (colour 0) / −1 (colour 1).  The goal is
+Σ ε·(k·n + l + 1) = 0.  Each row and each column has n/2 cells of each colour, so all row
+and column sums of ε vanish; splitting k·n + l + 1 = (k·n + 1) + l, the first part sums to 0
+row by row and the second column by column (`Finset.sum_comm`).
+-/
+theorem putnam_2001_b1
+  (n : ℕ)
+  (hn : n > 0) (hn' : Even n)
+  (nums : Fin n → Fin n → ℤ)
+  (colors : Fin n → Fin n → Fin 2)
+  (hnums : ∀ k l, nums k l = k * n + l + 1)
+  (hcolorsrows : ∀ k, (∑ l, (if (colors k l = 0) then 1 else 0)) = n / 2)
+  (hcolorscols : ∀ l, (∑ k, (if (colors k l = 0) then 1 else 0)) = n / 2) :
+  (∑ k, ∑ l, (if (colors k l = 0) then (nums k l) else 0)) = (∑ k, ∑ l, (if (colors k l = 1) then (nums k l) else 0)) := by
+  obtain ⟨h, hh⟩ := hn'
+  let ε : Fin n → Fin n → ℤ := fun k l => if colors k l = 0 then 1 else -1
+  have hsum : ∀ (s : Finset (Fin n)) (P : Fin n → Prop) [DecidablePred P],
+      (∑ x ∈ s, (if P x then (1 : ℤ) else -1)) = 2 * (↑(∑ x ∈ s, (if P x then 1 else 0 : ℕ)) : ℤ) - s.card := by
+    intro s P _
+    push_cast
+    rw [Finset.mul_sum, Finset.card_eq_sum_ones, Nat.cast_sum, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun x _ => ?_
+    split_ifs <;> norm_num
+  have hrow : ∀ k, ∑ l, ε k l = 0 := by
+    intro k
+    rw [hsum, hcolorsrows k, Finset.card_univ, Fintype.card_fin, hh]; omega
+  have hcol : ∀ l, ∑ k, ε k l = 0 := by
+    intro l
+    rw [hsum, hcolorscols l, Finset.card_univ, Fintype.card_fin, hh]; omega
+  have cell : ∀ k l, (if colors k l = 0 then nums k l else 0) - (if colors k l = 1 then nums k l else 0)
+      = ε k l * ((k : ℤ) * n + 1) + ε k l * (l : ℤ) := by
+    intro k l
+    rw [hnums]
+    have : colors k l = 0 ∨ colors k l = 1 := by
+      rcases colors k l with ⟨v, hv⟩; interval_cases v <;> simp
+    rcases this with h0 | h1
+    · simp [ε, h0]; ring
+    · simp [ε, h1]; ring
+  rw [← sub_eq_zero, ← Finset.sum_sub_distrib]
+  simp_rw [← Finset.sum_sub_distrib, cell, Finset.sum_add_distrib]
+  have e1 : ∑ k, ∑ l, ε k l * ((k : ℤ) * n + 1) = 0 := by
+    refine Finset.sum_eq_zero fun k _ => ?_
+    rw [← Finset.sum_mul, hrow k, zero_mul]
+  have e2 : ∑ k, ∑ l, ε k l * (l : ℤ) = 0 := by
+    rw [Finset.sum_comm]
+    refine Finset.sum_eq_zero fun l _ => ?_
+    rw [← Finset.sum_mul, hcol l, zero_mul]
+  rw [e1, e2, add_zero]
