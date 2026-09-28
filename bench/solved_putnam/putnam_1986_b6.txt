@@ -1,0 +1,36 @@
+import Mathlib
+
+open  Real Equiv Polynomial Filter Topology MvPolynomial Matrix
+
+/-!
+Putnam 1986 B6.  Block matrices: M = [[A,B],[C,D]], N = [[Dᵀ,−Bᵀ],[−Cᵀ,Aᵀ]].  The
+hypotheses (A Bᵀ, C Dᵀ symmetric; A Dᵀ − B Cᵀ = 1 and its transpose) give M N = 1, hence
+N M = 1 (square matrices over a field: `mul_eq_one_comm`), whose (2,2) block is
+Aᵀ D − Cᵀ B = 1.
+-/
+theorem putnam_1986_b6
+(n : ℕ)
+(npos : n > 0)
+(F : Type*) [Field F]
+(A B C D : Matrix (Fin n) (Fin n) F)
+(hsymm : IsSymm (A * Bᵀ) ∧ IsSymm (C * Dᵀ))
+(hid : A * Dᵀ - B * Cᵀ = 1)
+: (Aᵀ * D - Cᵀ * B = 1) := by
+  have h1 : B * Aᵀ = A * Bᵀ := by
+    have := hsymm.1.eq; rwa [transpose_mul, transpose_transpose] at this
+  have h2 : D * Cᵀ = C * Dᵀ := by
+    have := hsymm.2.eq; rwa [transpose_mul, transpose_transpose] at this
+  have h3 : D * Aᵀ - C * Bᵀ = 1 := by
+    have := congrArg transpose hid
+    rwa [transpose_sub, transpose_mul, transpose_mul, transpose_transpose,
+      transpose_transpose, transpose_one] at this
+  have hMN : fromBlocks A B C D * fromBlocks Dᵀ (-Bᵀ) (-Cᵀ) Aᵀ = 1 := by
+    rw [fromBlocks_multiply, ← fromBlocks_one]
+    congr 1
+    · rw [← hid, Matrix.mul_neg, ← sub_eq_add_neg]
+    · rw [Matrix.mul_neg, h1]; abel
+    · rw [Matrix.mul_neg, h2]; abel
+    · rw [← h3, Matrix.mul_neg]; abel
+  have hNM := mul_eq_one_comm.mp hMN
+  rw [fromBlocks_multiply, ← fromBlocks_one, fromBlocks_inj] at hNM
+  rw [← hNM.2.2.2, Matrix.neg_mul]; abel
