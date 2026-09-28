@@ -1,0 +1,40 @@
+import Mathlib
+
+open MvPolynomial Real Nat
+
+/-!
+Putnam 1987 B3.  Rational parametrization of x² + y² = 1 over a field with 2 ≠ 0.
+⊆: if x = 1 then y = 0; otherwise r = y/(1−x) has r² + 1 = 2/(1−x) ≠ 0 (so r² ≠ −1) and
+recovers (x, y) by `field_simp` + `linear_combination` of the circle equation.
+⊇: ((r²−1)² + (2r)²) = (r²+1)², valid since r² + 1 ≠ 0.
+-/
+theorem putnam_1987_b3
+(F : Type*) [Field F]
+(hF : (1 : F) + 1 ≠ 0)
+: {(x, y) : F × F | x ^ 2 + y ^ 2 = 1} = {(1, 0)} ∪ {((r ^ 2 - 1) / (r ^ 2 + 1), (2 * r) / (r ^ 2 + 1)) | r ∈ {r' : F | r' ^ 2 ≠ -1}} := by
+  have h2 : (2 : F) ≠ 0 := by rwa [one_add_one_eq_two] at hF
+  ext ⟨x, y⟩
+  simp only [Set.mem_setOf_eq, Set.mem_union, Set.mem_singleton_iff, Prod.mk.injEq]
+  constructor
+  · intro h
+    by_cases hx : x = 1
+    · left
+      refine ⟨hx, ?_⟩
+      subst hx
+      have : y ^ 2 = 0 := by linear_combination h
+      exact pow_eq_zero_iff (n := 2) (by norm_num) |>.mp this
+    · right
+      have hx' : 1 - x ≠ 0 := sub_ne_zero.mpr (Ne.symm hx)
+      set r := y / (1 - x) with hr
+      have hr1 : r ^ 2 + 1 = 2 / (1 - x) := by
+        rw [hr]; field_simp; linear_combination h
+      have hr1' : r ^ 2 + 1 ≠ 0 := by rw [hr1]; exact div_ne_zero h2 hx'
+      refine ⟨r, ?_, ?_, ?_⟩
+      · intro hc; apply hr1'; rw [hc]; ring
+      · rw [div_eq_iff hr1', hr1]; field_simp; rw [hr]; field_simp; linear_combination h
+      · rw [div_eq_iff hr1', hr1, hr]; field_simp
+  · rintro (⟨rfl, rfl⟩ | ⟨r, hr, rfl, rfl⟩)
+    · ring
+    · have hr' : r ^ 2 + 1 ≠ 0 := fun hc => hr (by linear_combination hc)
+      field_simp
+      ring
