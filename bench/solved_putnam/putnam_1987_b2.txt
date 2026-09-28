@@ -1,0 +1,84 @@
+import Mathlib
+
+open MvPolynomial Real Nat
+
+/-!
+Putnam 1987 B2.  Induction on s (generalizing r).  Pascal on C(s+1, i) splits the sum:
+F(r, s+1) = F(r, s) + F(r+1, s).  The closed form G(r, s) = (t+1)/((t+1−s)·C(t−s, r)) obeys
+the same recurrence because, with N = t − s = M + 1,
+1/C(M+1, r) + 1/C(M+1, r+1) = (M+2)/((M+1)·C(M, r))
+(`Nat.choose_mul_succ_eq`, `Nat.add_one_mul_choose_eq`).
+-/
+theorem putnam_1987_b2
+(r s t : ℕ)
+(hsum : r + s ≤ t)
+: (∑ i : Finset.range (s + 1), (choose s i : ℚ) / (choose t (r + i)) = ((t + 1) : ℚ) / ((t + 1 - s) * choose (t - s) r)) := by
+  rw [Finset.sum_coe_sort (Finset.range (s + 1)) (fun i => (choose s i : ℚ) / (choose t (r + i)))]
+  -- 1/C(M+1,r) + 1/C(M+1,r+1) = (M+2)/((M+1)·C(M,r))
+  have recip : ∀ M r : ℕ, r ≤ M →
+      1 / (choose (M + 1) r : ℚ) + 1 / (choose (M + 1) (r + 1) : ℚ)
+        = (M + 2) / ((M + 1) * (choose M r : ℚ)) := by
+    intro M r hr
+    have hx : (0 : ℚ) < choose M r := by exact_mod_cast Nat.choose_pos hr
+    have e1 : (choose M r : ℚ) * (M + 1) = (choose (M + 1) r : ℚ) * (M + 1 - r) := by
+      have h := congrArg (Nat.cast : ℕ → ℚ) (Nat.choose_mul_succ_eq M r)
+      have hc : ((M + 1 - r : ℕ) : ℚ) = (M : ℚ) + 1 - r := by
+        rw [Nat.cast_sub (by omega)]; push_cast; ring
+      simp only [Nat.cast_mul, Nat.cast_add, Nat.cast_one] at h
+      rw [hc] at h; exact h
+    have e2 : ((M + 1 : ℕ) : ℚ) * choose M r = (choose (M + 1) (r + 1) : ℚ) * (r + 1) := by
+      exact_mod_cast Nat.add_one_mul_choose_eq M r
+    have hA : (0 : ℚ) < choose (M + 1) r := by exact_mod_cast Nat.choose_pos (by omega)
+    have hB : (0 : ℚ) < choose (M + 1) (r + 1) := by exact_mod_cast Nat.choose_pos (by omega)
+    have hMr : (0 : ℚ) < M + 1 - r := by
+      have : (r : ℚ) ≤ M := by exact_mod_cast hr
+      linarith
+    push_cast at e2
+    field_simp
+    nlinarith [e1, e2]
+  induction s generalizing r with
+  | zero =>
+    have : (0 : ℚ) < choose t r := by exact_mod_cast Nat.choose_pos (by omega)
+    simp; field_simp
+  | succ s ih =>
+    have ih0 := ih r (by omega)
+    have ih1 := ih (r + 1) (by omega)
+    -- Pascal split
+    have hsplit : ∑ i ∈ Finset.range (s + 1 + 1), (choose (s + 1) i : ℚ) / choose t (r + i)
+        = ∑ i ∈ Finset.range (s + 1), (choose s i : ℚ) / choose t (r + i)
+          + ∑ i ∈ Finset.range (s + 1), (choose s i : ℚ) / choose t (r + 1 + i) := by
+      rw [Finset.sum_range_succ']
+      simp only [Nat.choose_succ_succ, Nat.cast_add, add_div, Finset.sum_add_distrib,
+        Nat.choose_zero_right]
+      have h1 : ∑ i ∈ Finset.range (s + 1), (choose s (i + 1) : ℚ) / choose t (r + (i + 1))
+          + (1 : ℕ) / (choose t (r + 0) : ℚ)
+          = ∑ i ∈ Finset.range (s + 1), (choose s i : ℚ) / choose t (r + i) := by
+        have := Finset.sum_range_succ' (fun i => (choose s i : ℚ) / choose t (r + i)) (s + 1)
+        rw [Finset.sum_range_succ, Nat.choose_succ_self, Nat.cast_zero, zero_div, add_zero] at this
+        simp only [Nat.choose_zero_right] at this
+        rw [this]
+      rw [← h1]
+      have h2 : ∑ i ∈ Finset.range (s + 1), (choose s i : ℚ) / choose t (r + (i + 1))
+          = ∑ i ∈ Finset.range (s + 1), (choose s i : ℚ) / choose t (r + 1 + i) := by
+        refine Finset.sum_congr rfl fun i _ => ?_; rw [show r + (i + 1) = r + 1 + i by ring]
+      rw [h2]; ring
+    rw [hsplit, ih0, ih1]
+    -- closed forms: N = t - s = M + 1
+    obtain ⟨M, hM⟩ : ∃ M, t - s = M + 1 := ⟨t - s - 1, by omega⟩
+    have hts : t - (s + 1) = M := by omega
+    rw [hM, hts]
+    have hR := recip M r (by omega)
+    have htR : (t : ℚ) + 1 - s = M + 2 := by
+      have : ((t - s : ℕ) : ℚ) = M + 1 := by exact_mod_cast hM
+      push_cast [show s ≤ t by omega] at this; linarith
+    have htR' : (t : ℚ) + 1 - ((s + 1 : ℕ) : ℚ) = M + 1 := by push_cast; linarith
+    rw [htR', htR]
+    have hx : (0 : ℚ) < choose M r := by exact_mod_cast Nat.choose_pos (by omega)
+    have hA : (0 : ℚ) < choose (M + 1) r := by exact_mod_cast Nat.choose_pos (by omega)
+    have hB : (0 : ℚ) < choose (M + 1) (r + 1) := by exact_mod_cast Nat.choose_pos (by omega)
+    rw [show ((t : ℚ) + 1) / ((M + 2) * (choose (M + 1) r : ℚ))
+        + ((t : ℚ) + 1) / ((M + 2) * (choose (M + 1) (r + 1) : ℚ))
+        = ((t : ℚ) + 1) / (M + 2) * (1 / (choose (M + 1) r : ℚ) + 1 / (choose (M + 1) (r + 1) : ℚ))
+        by rw [div_mul_eq_div_div, div_mul_eq_div_div]; ring, hR]
+    have : (0 : ℚ) < M + 2 := by positivity
+    field_simp
