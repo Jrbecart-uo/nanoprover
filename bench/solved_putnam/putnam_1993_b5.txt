@@ -1,0 +1,65 @@
+import Mathlib
+
+/-!
+Putnam 1993 B5.  Put uᵢ = pᵢ − p₀ (i = 1,2,3) in ℝ².  The Gram matrix (2⟨uᵢ,uⱼ⟩), whose
+entries are D₀ᵢ + D₀ⱼ − Dᵢⱼ (squared distances), has determinant 0 — three vectors in a
+plane; a `ring` identity in the coordinates.  Odd squares are 8k + 1, so all D ≡ 1 (mod 8);
+pushed to `ZMod 8` the determinant becomes det[[2,1,1],[1,2,1],[1,1,2]] = 4 ≠ 0.
+-/
+theorem putnam_1993_b5:
+  ¬∃ p : Fin 4 → (EuclideanSpace ℝ (Fin 2)),
+    ∀ i j, i ≠ j →
+      (∃ n : ℤ, dist (p i) (p j) = n ∧ Odd n) := by
+  rintro ⟨p, hp⟩
+  have hd : ∀ i j, i ≠ j → ∃ k : ℤ,
+      (p i 0 - p j 0) ^ 2 + (p i 1 - p j 1) ^ 2 = 8 * (k : ℝ) + 1 := by
+    intro i j hij
+    obtain ⟨m, hm, t, rfl⟩ := hp i j hij
+    obtain ⟨r, hr⟩ := Int.even_mul_succ_self t
+    refine ⟨r, ?_⟩
+    have h2 : dist (p i) (p j) ^ 2 = (p i 0 - p j 0) ^ 2 + (p i 1 - p j 1) ^ 2 := by
+      rw [EuclideanSpace.dist_eq, Real.sq_sqrt (Finset.sum_nonneg fun _ _ => sq_nonneg _),
+        Fin.sum_univ_two]
+      simp [Real.dist_eq, sq_abs]
+    rw [← h2, hm]
+    have hr' : (t : ℝ) * (t + 1) = r + r := by exact_mod_cast hr
+    push_cast
+    linear_combination 4 * hr'
+  obtain ⟨k1, h1⟩ := hd 1 0 (by decide)
+  obtain ⟨k2, h2⟩ := hd 2 0 (by decide)
+  obtain ⟨k3, h3⟩ := hd 3 0 (by decide)
+  obtain ⟨k12, h12⟩ := hd 1 2 (by decide)
+  obtain ⟨k13, h13⟩ := hd 1 3 (by decide)
+  obtain ⟨k23, h23⟩ := hd 2 3 (by decide)
+  -- Gram determinant of p1-p0, p2-p0, p3-p0 (three vectors in ℝ²) vanishes;
+  -- 2⟨uᵢ,uⱼ⟩ = D₀ᵢ + D₀ⱼ − Dᵢⱼ
+  have E : ∀ D1 D2 D3 D12 D13 D23 : ℝ,
+      D1 = (p 1 0 - p 0 0) ^ 2 + (p 1 1 - p 0 1) ^ 2 →
+      D2 = (p 2 0 - p 0 0) ^ 2 + (p 2 1 - p 0 1) ^ 2 →
+      D3 = (p 3 0 - p 0 0) ^ 2 + (p 3 1 - p 0 1) ^ 2 →
+      D12 = (p 1 0 - p 2 0) ^ 2 + (p 1 1 - p 2 1) ^ 2 →
+      D13 = (p 1 0 - p 3 0) ^ 2 + (p 1 1 - p 3 1) ^ 2 →
+      D23 = (p 2 0 - p 3 0) ^ 2 + (p 2 1 - p 3 1) ^ 2 →
+      (2 * D1) * ((2 * D2) * (2 * D3) - (D2 + D3 - D23) ^ 2)
+        - (D1 + D2 - D12) * ((D1 + D2 - D12) * (2 * D3) - (D2 + D3 - D23) * (D1 + D3 - D13))
+        + (D1 + D3 - D13) * ((D1 + D2 - D12) * (D2 + D3 - D23) - (2 * D2) * (D1 + D3 - D13)) = 0 := by
+    intro D1 D2 D3 D12 D13 D23 e1 e2 e3 e12 e13 e23
+    subst e1 e2 e3 e12 e13 e23
+    ring
+  have ER := E _ _ _ _ _ _ h1.symm h2.symm h3.symm h12.symm h13.symm h23.symm
+  have EZ : (2 * (8 * k1 + 1)) * ((2 * (8 * k2 + 1)) * (2 * (8 * k3 + 1))
+        - ((8 * k2 + 1) + (8 * k3 + 1) - (8 * k23 + 1)) ^ 2)
+      - ((8 * k1 + 1) + (8 * k2 + 1) - (8 * k12 + 1)) * (((8 * k1 + 1) + (8 * k2 + 1)
+        - (8 * k12 + 1)) * (2 * (8 * k3 + 1)) - ((8 * k2 + 1) + (8 * k3 + 1) - (8 * k23 + 1))
+        * ((8 * k1 + 1) + (8 * k3 + 1) - (8 * k13 + 1)))
+      + ((8 * k1 + 1) + (8 * k3 + 1) - (8 * k13 + 1)) * (((8 * k1 + 1) + (8 * k2 + 1)
+        - (8 * k12 + 1)) * ((8 * k2 + 1) + (8 * k3 + 1) - (8 * k23 + 1))
+        - (2 * (8 * k2 + 1)) * ((8 * k1 + 1) + (8 * k3 + 1) - (8 * k13 + 1))) = (0 : ℤ) := by
+    apply @Int.cast_injective ℝ
+    push_cast
+    linear_combination ER
+  have h8 := congrArg (Int.cast : ℤ → ZMod 8) EZ
+  push_cast at h8
+  rw [show (8 : ZMod 8) = 0 from rfl] at h8
+  ring_nf at h8
+  exact absurd h8 (by decide)
