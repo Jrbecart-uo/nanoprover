@@ -125,3 +125,5 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
   that `classical` does not supply inside `decide_eq_decide`.** Escape: case-split
   `by_cases h1 : P <;> by_cases h2 : Q <;> simp_all [Xor']`.
 - `push_neg` is deprecated → `push Not` (works the same).
+- **`rec` is not a usable `have` name** (`have rec : … := …` → "unexpected token ':='" far
+  from the cause, and the theorem is reported as having unsolved goals). Use `hrec`.
