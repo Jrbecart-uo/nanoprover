@@ -1,0 +1,69 @@
+import Mathlib
+
+open Nat Topology Filter
+
+/-!
+Putnam 1967 B5.  With S(m) = Σ_{k≤m} C(m+k,k)/2^k the claim is S(m) = 2^m (then the sum is
+S(n−1)/2^n = 1/2).  Split S(m+1) at k = 0 and use Pascal C(m+1+k+1, k+1) =
+C(m+1+k, k) + C(m+k+1, k+1): S(m+1) = 1 + ½(S(m+1) − C(2m+2,m+1)/2^{m+1})
++ (S(m) + C(2m+1,m+1)/2^{m+1} − 1), and C(2m+2,m+1) = 2·C(2m+1,m+1), so S(m+1) = 2·S(m).
+-/
+theorem putnam_1967_b5
+(n : ℕ)
+(hn : n > 0)
+: (1 : ℚ)/2 = ∑ i ∈ Finset.range n, (Nat.choose (n + i - 1) i) * (2 : ℚ)^(-(n : ℤ) - i) := by
+  let S : ℕ → ℚ := fun m => ∑ k ∈ Finset.range (m + 1), ((m + k).choose k : ℚ) / 2 ^ k
+  have hC : ∀ m : ℕ, ((2 * m + 2).choose (m + 1) : ℚ) = 2 * ((2 * m + 1).choose (m + 1) : ℚ) := by
+    intro m
+    have h1 : (2 * m + 2).choose (m + 1) = (2 * m + 1).choose m + (2 * m + 1).choose (m + 1) := by
+      rw [show 2 * m + 2 = (2 * m + 1) + 1 by ring, Nat.choose_succ_succ]
+    have h2 : (2 * m + 1).choose m = (2 * m + 1).choose (m + 1) := by
+      rw [show 2 * m + 1 = m + (m + 1) by ring, Nat.choose_symm_add]
+    rw [h1, h2]; push_cast; ring
+  have step : ∀ m, S (m + 1) = 2 * S m := by
+    intro m
+    -- A: S(m+1) without its top term;  B: S(m) plus the next term, minus the k = 0 term
+    have hA : ∑ j ∈ Finset.range (m + 1), ((m + 1 + j).choose j : ℚ) / 2 ^ j
+        = S (m + 1) - ((2 * m + 2).choose (m + 1) : ℚ) / 2 ^ (m + 1) := by
+      simp only [S]; rw [Finset.sum_range_succ _ (m + 1)]
+      rw [show m + 1 + (m + 1) = 2 * m + 2 by ring]; ring
+    have hB : ∑ j ∈ Finset.range (m + 1), ((m + (j + 1)).choose (j + 1) : ℚ) / 2 ^ (j + 1)
+        = S m + ((2 * m + 1).choose (m + 1) : ℚ) / 2 ^ (m + 1) - 1 := by
+      have := Finset.sum_range_succ' (fun k => ((m + k).choose k : ℚ) / 2 ^ k) (m + 1)
+      simp only [S, add_zero, Nat.choose_zero_right, pow_zero, Nat.cast_one, div_one] at this ⊢
+      rw [Finset.sum_range_succ, show m + (m + 1) = 2 * m + 1 by ring] at this
+      linarith
+    have hsplit : S (m + 1) = 1 + ∑ j ∈ Finset.range (m + 1),
+        (((m + 1 + j).choose j : ℚ) / 2 ^ j / 2 + ((m + (j + 1)).choose (j + 1) : ℚ) / 2 ^ (j + 1)) := by
+      simp only [S]
+      rw [Finset.sum_range_succ']
+      simp only [add_zero, Nat.choose_zero_right, Nat.cast_one, pow_zero, div_one]
+      rw [add_comm]
+      congr 1
+      refine Finset.sum_congr rfl fun j _ => ?_
+      rw [show m + 1 + (j + 1) = (m + 1 + j) + 1 by ring, Nat.choose_succ_succ,
+        show m + 1 + j = m + (j + 1) by ring]
+      push_cast; rw [pow_succ]; ring
+    rw [Finset.sum_add_distrib, ← Finset.sum_div, hA, hB] at hsplit
+    have hc : ((2 * m + 2).choose (m + 1) : ℚ) / 2 ^ (m + 1)
+        = 2 * (((2 * m + 1).choose (m + 1) : ℚ) / 2 ^ (m + 1)) := by rw [hC m]; ring
+    rw [hc] at hsplit
+    linarith
+  have hS : ∀ m, S m = 2 ^ m := by
+    intro m
+    induction m with
+    | zero => simp [S]
+    | succ m ih => rw [step, ih]; ring
+  obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := ⟨n - 1, by omega⟩
+  have e : ∀ i ∈ Finset.range (m + 1), ((m + 1 + i - 1).choose i : ℚ) * (2 : ℚ) ^ (-((m + 1 : ℕ) : ℤ) - i)
+      = ((m + i).choose i : ℚ) / 2 ^ i / 2 ^ (m + 1) := by
+    intro i _
+    rw [show m + 1 + i - 1 = m + i by omega]
+    rw [show -((m + 1 : ℕ) : ℤ) - (i : ℤ) = -(((m + 1 + i : ℕ)) : ℤ) by push_cast; ring,
+      zpow_neg, zpow_natCast, pow_add]
+    field_simp
+  rw [Finset.sum_congr rfl e, ← Finset.sum_div]
+  have := hS m
+  simp only [S] at this
+  rw [this, pow_succ]
+  field_simp
