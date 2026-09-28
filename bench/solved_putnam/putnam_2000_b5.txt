@@ -1,0 +1,60 @@
+import Mathlib
+
+/-!
+Putnam 2000 B5.  Encode Sₙ by its Bool indicator; one step is T g a = g(a−1) xor g(a).
+By induction on m (T^[2^(m+1)] = T^[2^m] ∘ T^[2^m], `Function.iterate_mul`), for EVERY g:
+T^[2^m] g a = g a xor g(a − 2^m) — the Bool analogue of (1+x)^(2^m) = 1 + x^(2^m) over 𝔽₂.
+Take N = 2^m ≥ n with 2^m above every element of S₀ (finite ⇒ bounded); the two terms
+cannot both hold (a − N ∈ S₀ ⇒ a > N ⇒ a ∉ S₀), so xor becomes union.
+-/
+theorem putnam_2000_b5
+(S : ℕ → Set ℤ)
+(hSfin : ∀ n, Set.Finite (S n))
+(hSpos : ∀ n, ∀ s ∈ S n, s > 0)
+(hSdef : ∀ n, ∀ a, a ∈ S (n + 1) ↔ Xor' (a - 1 ∈ S n) (a ∈ S n))
+: (∀ n, ∃ N ≥ n, S N = S 0 ∪ {M : ℤ | M - N ∈ S 0}) := by
+  classical
+  let T : (ℤ → Bool) → (ℤ → Bool) := fun g a => xor (g (a - 1)) (g a)
+  have hT : ∀ m g a, (T^[2 ^ m] g) a = xor (g a) (g (a - 2 ^ m)) := by
+    intro m
+    induction m with
+    | zero => intro g a; simp [T, Bool.xor_comm]
+    | succ m ih =>
+      intro g a
+      rw [pow_succ, Function.iterate_mul, Function.iterate_succ, Function.iterate_one,
+        Function.comp_apply, ih, ih, ih]
+      have e : a - 2 ^ m - 2 ^ m = a - 2 ^ (m + 1) := by ring
+      rw [e]
+      cases g a <;> cases g (a - 2 ^ m) <;> cases g (a - 2 ^ (m + 1)) <;> rfl
+  let f : ℕ → ℤ → Bool := fun n a => decide (a ∈ S n)
+  have hf : ∀ n, f n = T^[n] (f 0) := by
+    intro n
+    induction n with
+    | zero => rfl
+    | succ n ih =>
+      rw [Function.iterate_succ_apply', ← ih]
+      funext a
+      show decide (a ∈ S (n + 1)) = xor (decide (a - 1 ∈ S n)) (decide (a ∈ S n))
+      have hd := hSdef n a
+      by_cases h1 : a - 1 ∈ S n <;> by_cases h2 : a ∈ S n <;>
+        simp_all [Xor']
+  intro n
+  obtain ⟨B, hB⟩ := (hSfin 0).bddAbove
+  set m := n + B.toNat
+  refine ⟨2 ^ m, (Nat.le_add_right n B.toNat).trans Nat.lt_two_pow_self.le, ?_⟩
+  have hBm : B < (2 : ℤ) ^ m := by
+    have h1 : (B.toNat : ℤ) < ((2 ^ m : ℕ) : ℤ) := by
+      exact_mod_cast (Nat.le_add_left B.toNat n).trans_lt Nat.lt_two_pow_self
+    push_cast at h1
+    linarith [Int.self_le_toNat B]
+  ext a
+  have key := congrFun (hf (2 ^ m)) a
+  rw [hT] at key
+  simp only [f] at key
+  simp only [Set.mem_union, Set.mem_setOf_eq]
+  push_cast
+  by_cases h1 : a ∈ S 0 <;> by_cases h2 : a - 2 ^ m ∈ S 0
+  · have := hSpos 0 _ h2; have := hB h1; linarith
+  · simp_all
+  · simp_all
+  · simp_all
