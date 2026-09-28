@@ -1,0 +1,58 @@
+import Mathlib
+
+open Nat Set MeasureTheory Topology Filter
+
+/-!
+Putnam 1973 B3.  Existence: (1, −1, p).  Uniqueness: b is odd, so |b| = 2X − 1 with X ≥ 1,
+and ac = X² − X + p.  If a = 1 then b = −1, c = p.  If a ≥ 2: (2X−1)² ≤ a² ≤ ac gives
+3X² − 3X + 1 ≤ p, so X < p and X² − X + p is prime by hypothesis — but it equals a·c
+with a, c ≥ 2 (`Nat.not_prime_mul`).
+-/
+theorem putnam_1973_b3
+(p : ℕ)
+(pgt1 : p > 1)
+(hprime : ∀ x ∈ Set.Ico 0 p, Nat.Prime (x^2 - x + p))
+: ∃! triple : ℤ × ℤ × ℤ, let (a,b,c) := triple; b^2 - 4*a*c = 1 - 4*p ∧ 0 < a ∧ a ≤ c ∧ -a ≤ b ∧ b < a := by
+  refine ⟨(1, -1, p), ?_, ?_⟩
+  · simp only
+    refine ⟨by ring, by norm_num, by exact_mod_cast pgt1.le, by norm_num, by norm_num⟩
+  rintro ⟨a, b, c⟩ hy
+  simp only at hy
+  obtain ⟨hdisc, ha0, hac, hba, hab⟩ := hy
+  -- b is odd
+  obtain ⟨k, hk⟩ : Odd b := by
+    by_contra hev
+    rw [Int.not_odd_iff_even] at hev
+    obtain ⟨m, hm⟩ := hev
+    have : 4 * (m * m) - 4 * (a * c) = 1 - 4 * (p : ℤ) + 0 := by rw [← hdisc, hm]; ring
+    omega
+  -- |b| = 2X − 1 with X ≥ 1
+  obtain ⟨X, hX1, hXb, hXa⟩ : ∃ X : ℤ, 1 ≤ X ∧ (2 * X - 1) ^ 2 = b ^ 2 ∧ 2 * X - 1 ≤ a := by
+    rcases le_or_gt 0 b with h | h
+    · exact ⟨k + 1, by omega, by rw [hk]; ring, by omega⟩
+    · exact ⟨-k, by omega, by rw [hk]; ring, by omega⟩
+  have hacX : a * c = X ^ 2 - X + p := by nlinarith
+  by_cases ha1 : a = 1
+  · subst ha1
+    have hb : b = -1 := by omega
+    subst hb
+    have hc : c = p := by nlinarith
+    rw [hc]
+  exfalso
+  have ha2 : 2 ≤ a := by omega
+  -- X < p
+  have hXp : X < p := by
+    have h1 : (2 * X - 1) ^ 2 ≤ a * c := by nlinarith
+    have hp1 : (1 : ℤ) < p := by exact_mod_cast pgt1
+    nlinarith
+  have hXn : ((X.toNat : ℕ) : ℤ) = X := Int.toNat_of_nonneg (by omega)
+  have hpr := hprime X.toNat ⟨Nat.zero_le _, by omega⟩
+  have hcast : ((X.toNat ^ 2 - X.toNat + p : ℕ) : ℤ) = a * c := by
+    have hle : X.toNat ≤ X.toNat ^ 2 := Nat.le_self_pow two_ne_zero _
+    push_cast [hle]; rw [hXn, hacX]
+  have hanat : ((a.toNat * c.toNat : ℕ) : ℤ) = a * c := by
+    push_cast; rw [Int.toNat_of_nonneg (by omega), Int.toNat_of_nonneg (by omega)]
+  have heq : X.toNat ^ 2 - X.toNat + p = a.toNat * c.toNat := by
+    exact_mod_cast hcast.trans hanat.symm
+  rw [heq] at hpr
+  exact Nat.not_prime_mul (by omega) (by omega) hpr
