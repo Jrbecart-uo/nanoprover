@@ -22,6 +22,26 @@ and propose next tasks. Ranked by leverage within each track. Last updated
 - Earlier (2026-09-24/25): NS Lean audit, Millennium statement audits, Erdős triage, claimcheck;
   2026-09-28 cleanup deleted ~58 GB of clones in `external/` (NS evidence kept in `verification/ns/`).
 
+## Later on 2026-09-28 (#1110 follow-up), resume here
+- (7,2) RECHECKED: `verify.c` re-run gives GNUM 8385274094, PASS. The new independent full-state checker `verify2.c` gives the same
+  GNUM and argmax over all 2^22 states. V SHA matches. Literature re-checked: only the (5,2) density claim exists.
+- (9,2)/(5,3): out of reach for this method (`gvi.c`; VI lower bracket/threshold 1.13–1.15 at feasible s vs 0.9965 for (7,2)).
+- Write-up: `erdos/1110/NOTE.md`. It uses a simpler Section 4 with an exponential potential Ψ=exp(θ(G_t−tλ+V(X_t))),
+  e^w≤1+w+w², and Markov. No Azuma and no coupling.
+- NEXT: Lean formalization of Theorem A (certificate ⇒ positive lower density), with the certificate trusted to C. Nothing written yet.
+  Design decided:
+  * `Representable` copied from formal-conjectures `Erdos1110` (Finset ⊆ Erdos246.Gamma, IsAntichain (·∣·), sum id).
+  * The certificate is a hypothesis structure. It holds a policy `ch/hgt : ZMod (2^(3s)) → chain/ℕ`, `V : ZMod (2^(2s)) → ℝ` and `g`.
+    Required: Σ_u (hgt + V(next)) ≤ 2^s (V x + g), with next z := 7^hgt * ((z − v3).val / 2^s) in ZMod(2^(2s)). Also g < λ and 7^λ < 2^s.
+    This is exactly what verify.c checks.
+  * The process lives in the single ring ZMod(2^(sN)): ρ_{t+1}=ρ_t−2^{st}7^{−G_t}v(C_t), w_t=7^{G_t}ρ_t, z3=win(st,3s)(w_t)
+    where win k j w := ((w.val/2^k : ℕ) : ZMod (2^j)). The core lemma is win k j (x+2^k e)=win k j x+e.cast for k+j≤m.
+    Locality, the transition and the residue step all reduce to it. No special rule is needed for the last two blocks.
+  * Expectation step: average over the translations y ↦ y+2^{s(t+2)}δ. Then u_t shifts by 7^{G_t}δ, a bijection on ZMod P.
+    This gives finite sums only, with no conditional expectations.
+  * Sections: defs, win lemmas, process, congruence (n ≡ 7^A y), antichain and representability, size bound,
+    locality and transition, potential bound, Markov and counting, density.
+
 ## Session-start ritual
 1. `export PATH="$HOME/.elan/bin:$PATH"`
 2. `cd ~/tmp/mathTest/nanoprover && python3 tools/repl.py start` (warm ~6s; cold
