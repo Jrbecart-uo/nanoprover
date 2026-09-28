@@ -1,0 +1,55 @@
+import Mathlib
+
+/-!
+Putnam 1982 A5.  With M = bd − ad − bc ≥ 1 (integer, from a/b + c/d < 1) the claim is
+bd < 1983³·M.  M is symmetric under (a,b) ↔ (c,d), so assume b ≤ d.  If b ≥ 1983 then
+M ≥ d(b − 1982) and 1983·d(b − 1982) ≥ bd.  Otherwise b ≤ 1982, c ≤ 1981 and
+d ≤ (b − a)d = M + bc give bd ≤ M(b + b²c) < 1983³·M.
+-/
+theorem putnam_1982_a5
+(a b c d : ℤ)
+(hpos : a > 0 ∧ b > 0 ∧ c > 0 ∧ d > 0)
+(hac : a + c ≤ 1982)
+(hfrac : (a : ℝ) / b + (c : ℝ) / d < 1)
+: (1 - (a : ℝ) / b - (c : ℝ) / d > 1 / 1983 ^ 3) := by
+  obtain ⟨ha, hb, hc, hd⟩ := hpos
+  -- integer core, in the case b ≤ d
+  have key : ∀ a b c d : ℤ, 0 < a → 0 < b → 0 < c → 0 < d → a + c ≤ 1982 → b ≤ d →
+      1 ≤ b * d - a * d - b * c → b * d < 1983 ^ 3 * (b * d - a * d - b * c) := by
+    intro a b c d ha hb hc hd hac hbd hM
+    by_cases hb3 : 1983 ≤ b
+    · have h1 : b * c ≤ d * c := mul_le_mul_of_nonneg_right hbd hc.le
+      have h2 : d * (b - 1982) ≤ b * d - a * d - b * c := by nlinarith
+      have h3 : b * d ≤ 1983 * (d * (b - 1982)) := by nlinarith
+      nlinarith
+    · have hab : a < b := by
+        by_contra h; push Not at h
+        nlinarith [mul_le_mul_of_nonneg_right h hd.le]
+      have h1 : d ≤ (b - a) * d := by nlinarith
+      have h2 : b * d ≤ b * (b * d - a * d - b * c) + b * b * c := by nlinarith
+      have h3 : b * b * c ≤ (b * d - a * d - b * c) * (b * b * c) := by
+        nlinarith [mul_pos (mul_pos hb hb) hc]
+      have h4 : b + b * b * c < 1983 ^ 3 := by
+        have : c ≤ 1981 := by omega
+        have : b ≤ 1982 := by omega
+        have : b * b ≤ 1982 * 1982 := by nlinarith
+        nlinarith
+      nlinarith
+  have hbR : (0 : ℝ) < b := by exact_mod_cast hb
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd
+  have hM : 1 ≤ b * d - a * d - b * c := by
+    have : (a : ℝ) * d + c * b < b * d := by
+      rw [div_add_div _ _ hbR.ne' hdR.ne', div_lt_one (by positivity)] at hfrac
+      linarith
+    have : a * d + c * b < b * d := by exact_mod_cast this
+    linarith
+  have hZ : b * d < 1983 ^ 3 * (b * d - a * d - b * c) := by
+    rcases le_total b d with h | h
+    · exact key a b c d ha hb hc hd hac h hM
+    · have := key c d a b hc hd ha hb (by linarith) h (by linarith)
+      linarith
+  have hR : (b : ℝ) * d < 1983 ^ 3 * (b * d - a * d - b * c) := by exact_mod_cast hZ
+  have e : 1 - (a : ℝ) / b - c / d = (b * d - a * d - b * c) / (b * d) := by
+    field_simp
+  rw [e, gt_iff_lt, div_lt_div_iff₀ (by norm_num) (by positivity)]
+  linarith
