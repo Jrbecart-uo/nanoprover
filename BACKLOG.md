@@ -5,27 +5,22 @@ Durable handoff. A new session can read this + the auto-memory (`nanoprover-proj
 and propose next tasks. Ranked by leverage within each track. Last updated
 2026-09-28.
 
-## Where the last session (2026-09-24/25) left off
-- Branch `session-2026-09-24` was **merged (fast-forward) into `main`** on 2026-09-28; work on `main`.
-- Done that session: Putnam 23 → **53** scalps; Navier–Stokes Lean audit (two kernels,
-  hardened sandbox) `verification/NS_AUDIT.md`; pre-emptive Millennium statement audits
-  `verification/MILLENNIUM_STATEMENTS.md` + Hodge `verification/HODGE_AUDIT.md`; Erdős
-  triage `erdos/TRIAGE.md`; tools `tools/claimcheck.py`, `tools/verify_scalps.py`.
-- 2026-09-28: IMO 1985 P6 solved; Erdős #1110 (7,2) density — candidate proof (see Track F).
-- 2026-09-28 session: +47 Putnam scalps (53 → **100**) + 1991_a6 proved VACUOUS; re-triage done
-  (`bench/putnam_retriage_notes.md`), cost-1–2 tier cleared, 25 of the cost-3 wave done; all 101
-  files re-verified with `verify_scalps.py --kernel`. NEXT: remaining cost-3 list in that file
-  (geometry/ε-δ-heavy), then triage the non-`real-algebraic` tiers of `bench/putnam_retriage.tsv`.
-- (older) Suggested next: re-triage the unsolved PutnamBench problems that mention ℝ/ℂ/analysis —
-  input list `bench/putnam_retriage.tsv` (244 rows, tiered by what they need: 117
-  `real-algebraic` = ℝ but no limits/calculus/integrals/transcendentals → cheap wins
-  first), then the harder ranked list in Track A. 29 unsolved problems with no analysis
-  at all remain (already triaged; the Track A NEXT list is drawn from them).
-- 2026-09-28 cleanup: the ~58 GB of clones in `external/` (NS ×3, Hodge, formal-conjectures)
-  were deleted — re-fetch with `claimcheck.py fetch` at the commits pinned in the audit docs.
-  Kept: `external/tools/` (claimcheck binaries), `claims/`, `erdosproblems/`, `erdos-wiki/`.
-  NS audit evidence (comparator logs + scripts + follow-ups report) now lives in
-  `verification/ns/`.
+## Where the last session (2026-09-28) left off
+- Work is on `main` (branch `session-2026-09-24` merged). REPL daemon stopped. Repo still private.
+- **Erdős #1110, (7,2) density: candidate computer-assisted proof** of positive lower density —
+  `erdos/1110/PROOF_SKETCH.md` (certificate s=11, ĝ = 3.904698 < 11·26/73; independent verifier PASS;
+  independent big-int cross-check exact; adversarial referee agent: no fatal issue). NOT expert-reviewed.
+  **Pending USER decision:** whether/where to report it — never post without explicit go-ahead.
+  Optional next: same method for (9,2)/(5,3) (thinner margins); short write-up; Lean statement.
+- IMO 1985 P6 solved (`bench/solved_imo/imo_1985_p6.txt`).
+- Putnam 53 → **100** (+ 1991_a6 proved VACUOUS, counted separately); all 101 files re-verified with
+  `verify_scalps.py --kernel`. Re-triage: `bench/putnam_retriage_notes.md` (cost-1–2 tier cleared,
+  25 cost-3 done; ~15 cost-3 left, geometry/ε-δ heavy); analysis tiers of `bench/putnam_retriage.tsv`
+  (limits/integrals/calculus) not yet triaged.
+- Tooling notes: sympy certificates for `linear_combination` (install to scratch with `pip --target`),
+  save/verify helper pattern, many new entries in `KNOWN_TRAPS.md`.
+- Earlier (2026-09-24/25): NS Lean audit, Millennium statement audits, Erdős triage, claimcheck;
+  2026-09-28 cleanup deleted ~58 GB of clones in `external/` (NS evidence kept in `verification/ns/`).
 
 ## Session-start ritual
 1. `export PATH="$HOME/.elan/bin:$PATH"`
