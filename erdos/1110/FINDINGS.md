@@ -44,3 +44,12 @@ work in principle; the obstacle is certificate size (boundary losses), not the m
 Lookahead/Markov certificates that choose among chains of a block by their carry into the next block
 (reduces the boundary loss that dominates the finite-size penalty); certificates as explicit leaf lists
 checked by an independent verifier.
+
+## 2026-09-28 (later): recheck + other pairs
+- Recheck of (7,2): `verify.c` re-run → GNUM = 8385274094 (PASS); new independent full-state checker `verify2.c`
+  (different chain enumeration, inverse, arithmetic) → identical GNUM and argmax over all 2^22 states. Write-up with a
+  simplified probabilistic step (exponential potential instead of Azuma/coupling): `NOTE.md`.
+- (9,2), (5,3) with the same two-block look-ahead (`gvi.c`, general base; exact VI lower bracket / threshold):
+  (7,2) calib 1.017 (s=8), 1.010 (s=9), 0.9965 (s=11); (9,2) 1.145 (s=8), 1.131 (s=9);
+  (5,3) base 3: 1.155 (s=5), 1.136 (s=6); base 5: 1.212 (s=3). Beam on 300-bit targets: (9,2) ≈ 0.319 vs μ = 0.3155.
+  Extrapolated need: blocks ~2^19 / 3^13 — out of reach for this state space. NOT pursued further.

@@ -1,5 +1,10 @@
 # Positive lower density of representables for (p,q) = (7,2) — proof sketch (DRAFT, conditional)
 
+> **Superseded by `NOTE.md` (2026-09-28)**, which replaces the Azuma + last-zero coupling of §4 below by a simpler
+> exponential-potential argument (no auxiliary process). Recheck 2026-09-28: `verify.c` re-run reproduces
+> GNUM = 8385274094; the independently written full-state checker `verify2.c` reproduces the same GNUM and argmax
+> over all 2^22 states; V-table SHA-256 matches.
+
 Status (2026-09-28): **certificate found and independently verified by computer**; argument not yet
 reviewed by anyone else — treat as a claim-in-progress, not a result. Method = the finite-certificate
 approach of Ding–Li–Liu–Zhang for (5,2) (reconstructed from their abstract), strengthened with a
