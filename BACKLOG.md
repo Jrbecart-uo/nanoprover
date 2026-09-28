@@ -11,9 +11,10 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   hardened sandbox) `verification/NS_AUDIT.md`; pre-emptive Millennium statement audits
   `verification/MILLENNIUM_STATEMENTS.md` + Hodge `verification/HODGE_AUDIT.md`; Erdős
   triage `erdos/TRIAGE.md`; tools `tools/claimcheck.py`, `tools/verify_scalps.py`.
-- 2026-09-28 session: +35 Putnam scalps (53 → 88) + 1991_a6 proved VACUOUS; the re-triage is
-  done (`bench/putnam_retriage_notes.md`), cost-1–2 tier cleared, 13 of the cost-3 wave done.
-  NEXT: the remaining cost-3 list in that file.
+- 2026-09-28 session: +47 Putnam scalps (53 → **100**) + 1991_a6 proved VACUOUS; re-triage done
+  (`bench/putnam_retriage_notes.md`), cost-1–2 tier cleared, 25 of the cost-3 wave done; all 101
+  files re-verified with `verify_scalps.py --kernel`. NEXT: remaining cost-3 list in that file
+  (geometry/ε-δ-heavy), then triage the non-`real-algebraic` tiers of `bench/putnam_retriage.tsv`.
 - (older) Suggested next: re-triage the unsolved PutnamBench problems that mention ℝ/ℂ/analysis —
   input list `bench/putnam_retriage.tsv` (244 rows, tiered by what they need: 117
   `real-algebraic` = ℝ but no limits/calculus/integrals/transcendentals → cheap wins
@@ -35,7 +36,7 @@ and propose next tasks. Ranked by leverage within each track. Last updated
 ---
 
 ## Track A — Putnam scalps (theorem-mode; where we are strongest)
-Current: **88 scalps + 1 vacuous** (2026-09-28: +35 real — 22 cost-1–2 then 13 of the cost-3 wave; 1991_a6 vacuous — the whole cost-1–2 tier of `bench/putnam_retriage_notes.md`, plus 2012_a1/1982_a5/1983_b4/2008_b4/1970_b3/1968_b6 from the NEXT list). 2026-09-25: +30. Reachable wins live here.
+Current: **100 scalps + 1 vacuous** (2026-09-28: +47 real — 22 cost-1–2 then 25 of the cost-3 wave; 1991_a6 vacuous — the whole cost-1–2 tier of `bench/putnam_retriage_notes.md`, plus 2012_a1/1982_a5/1983_b4/2008_b4/1970_b3/1968_b6 from the NEXT list). 2026-09-25: +30. Reachable wins live here.
 - ✅ **Scoped-out list cleared** (4/4 fell when re-examined: 1996_a5, 2001_a5, 1974_b3,
       2007_a5). 1974_b3 needed no algebraic integers (denominators 3^(2^k) grow under
       angle doubling); 2007_a5 passed first try via `card_fixedPoints_modEq` on the
