@@ -1,0 +1,55 @@
+import Mathlib
+
+/-!
+Putnam 2015 A6.  For t not a root of χ_A = χ_B, T_A = tI − A and T_B = tI − B are invertible
+with det T_A = det T_B, and AM = MB gives T_A⁻¹M = M T_B⁻¹.  Then
+det(tI − (A − MX)) = det T_A · det(1 + T_A⁻¹MX) = det T_B · det(1 + M T_B⁻¹X)
+= det T_B · det(1 + T_B⁻¹XM) = det(tI − (B − XM))  (Sylvester, `Matrix.det_one_add_mul_comm`).
+The two characteristic polynomials agree off a finite set, hence are equal
+(`Polynomial.eq_of_infinite_eval_eq`); evaluate at 0 and cancel (−1)ⁿ.
+-/
+theorem putnam_2015_a6
+(n : ℕ)
+(A B M : Matrix (Fin n) (Fin n) ℝ)
+(npos : n > 0)
+(hmul : A * M = M * B)
+(hpoly : Matrix.charpoly A = Matrix.charpoly B)
+: ∀ X : Matrix (Fin n) (Fin n) ℝ, (A - M * X).det = (B - X * M).det := by
+  intro X
+  have key : ∀ t : ℝ, (Matrix.charpoly A).eval t ≠ 0 →
+      (Matrix.charpoly (A - M * X)).eval t = (Matrix.charpoly (B - X * M)).eval t := by
+    intro t ht
+    rw [Matrix.eval_charpoly, Matrix.eval_charpoly]
+    set TA := Matrix.scalar (Fin n) t - A with hTA
+    set TB := Matrix.scalar (Fin n) t - B with hTB
+    have hA : IsUnit TA.det := by
+      rw [Matrix.eval_charpoly] at ht; exact Ne.isUnit ht
+    have hdetB : TB.det = TA.det := by rw [← Matrix.eval_charpoly, ← Matrix.eval_charpoly, hpoly]
+    have hB : IsUnit TB.det := by rw [hdetB]; exact hA
+    have hcomm : TA * M = M * TB := by
+      rw [hTA, hTB, Matrix.sub_mul, Matrix.mul_sub, hmul, (Matrix.scalar_commute t
+        (fun r' => Commute.all t r') M).eq]
+    have hkey : TA⁻¹ * M = M * TB⁻¹ := by
+      calc TA⁻¹ * M = TA⁻¹ * M * (TB * TB⁻¹) := by rw [Matrix.mul_nonsing_inv _ hB, Matrix.mul_one]
+        _ = TA⁻¹ * (TA * M) * TB⁻¹ := by rw [hcomm]; simp only [Matrix.mul_assoc]
+        _ = M * TB⁻¹ := by rw [← Matrix.mul_assoc, Matrix.nonsing_inv_mul _ hA, Matrix.one_mul]
+    have e1 : Matrix.scalar (Fin n) t - (A - M * X) = TA * (1 + TA⁻¹ * (M * X)) := by
+      rw [Matrix.mul_add, Matrix.mul_one, ← Matrix.mul_assoc, Matrix.mul_nonsing_inv _ hA,
+        Matrix.one_mul, hTA]; abel
+    have e2 : Matrix.scalar (Fin n) t - (B - X * M) = TB * (1 + TB⁻¹ * (X * M)) := by
+      rw [Matrix.mul_add, Matrix.mul_one, ← Matrix.mul_assoc, Matrix.mul_nonsing_inv _ hB,
+        Matrix.one_mul, hTB]; abel
+    rw [e1, e2, Matrix.det_mul, Matrix.det_mul, hdetB]
+    congr 1
+    rw [← Matrix.mul_assoc, hkey, Matrix.mul_assoc, Matrix.det_one_add_mul_comm, Matrix.mul_assoc]
+  have hPQ : Matrix.charpoly (A - M * X) = Matrix.charpoly (B - X * M) := by
+    apply Polynomial.eq_of_infinite_eval_eq
+    have hfin : {x | (Matrix.charpoly A).IsRoot x}.Finite :=
+      Polynomial.finite_setOf_isRoot (Matrix.charpoly_monic A).ne_zero
+    apply Set.Infinite.mono _ hfin.infinite_compl
+    intro t ht
+    exact key t ht
+  have h0 := congrArg (Polynomial.eval 0) hPQ
+  simp only [Matrix.eval_charpoly, map_zero, zero_sub, Matrix.det_neg] at h0
+  have hne : ((-1 : ℝ)) ^ Fintype.card (Fin n) ≠ 0 := pow_ne_zero _ (by norm_num)
+  exact mul_left_cancel₀ hne h0
