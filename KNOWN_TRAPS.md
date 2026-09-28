@@ -127,3 +127,7 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
 - `push_neg` is deprecated → `push Not` (works the same).
 - **`rec` is not a usable `have` name** (`have rec : … := …` → "unexpected token ':='" far
   from the cause, and the theorem is reported as having unsolved goals). Use `hrec`.
+- **Parity case splits: `split_ifs <;> omega` over 7 `Odd (r*a + s*b + t*c)` conditions
+  (128 branches) hits the heartbeat limit.** Escape: cast to `ZMod 2`
+  (`← ZMod.intCast_eq_one_iff_odd`, `push_cast`), state the finite fact for all
+  `A B C : ZMod 2`, and close it with `decide` (instant).
