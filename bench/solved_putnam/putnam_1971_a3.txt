@@ -1,0 +1,72 @@
+import Mathlib
+
+open Set
+
+/-!
+Putnam 1971 A3.  For a triangle inscribed in a circle of radius R (center C),
+AB²·AC²·BC² = 4R²·D², D the cross product (= twice the signed area): a polynomial identity
+modulo the three circle equations, closed by `linear_combination` with multipliers found
+by a sympy linear-ansatz solve (circle recentred at the origin).  Lattice vertices make D an
+integer; distinct vertices make the product > 0, so D ≠ 0 and |D| ≥ 1.  Hence
+AB·AC·BC = √(4R²D²) = 2R|D| ≥ 2R.
+-/
+theorem putnam_1971_a3
+    (a b c : ℝ × ℝ)
+    (R : ℝ)
+    (habclattice : a.1 = round a.1 ∧ a.2 = round a.2 ∧ b.1 = round b.1 ∧ b.2 = round b.2 ∧ c.1 = round c.1 ∧ c.2 = round c.2)
+    (habcneq : a ≠ b ∧ a ≠ c ∧ b ≠ c)
+    (hR : R > 0)
+    (hcircle : ∃ C : ℝ × ℝ,
+      √((a.1 - C.1)^2 + (a.2 - C.2)^2) = R ∧
+      √((b.1 - C.1)^2 + (b.2 - C.2)^2) = R ∧
+      √((c.1 - C.1)^2 + (c.2 - C.2)^2) = R) :
+    (√((a.1 - b.1)^2 + (a.2 - b.2)^2)) * (√((a.1 - c.1)^2 + (a.2 - c.2)^2)) * (√((b.1 - c.1)^2 + (b.2 - c.2)^2)) ≥ 2 * R := by
+  obtain ⟨ha1, ha2, hb1, hb2, hc1, hc2⟩ := habclattice
+  obtain ⟨hab, hac, hbc⟩ := habcneq
+  obtain ⟨C, hA, hB, hC⟩ := hcircle
+  -- product of squared sides = 4 R² D² for a triangle inscribed in a circle (certificate by sympy)
+  have key : ∀ x1 y1 x2 y2 x3 y3 p q s : ℝ, (x1 - p) ^ 2 + (y1 - q) ^ 2 - s = 0 →
+      (x2 - p) ^ 2 + (y2 - q) ^ 2 - s = 0 → (x3 - p) ^ 2 + (y3 - q) ^ 2 - s = 0 →
+      ((x1 - x2) ^ 2 + (y1 - y2) ^ 2) * ((x1 - x3) ^ 2 + (y1 - y3) ^ 2) * ((x2 - x3) ^ 2 + (y2 - y3) ^ 2)
+        = 4 * s * ((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1)) ^ 2 := by
+    intro x1 y1 x2 y2 x3 y3 p q s h1 h2 h3
+    linear_combination (3*(x1 - p)^2*(x2 - p)^2 - 2*(x1 - p)^2*(x2 - p)*(x3 - p) - (x1 - p)^2*(x3 - p)^2 + 3*(x1 - p)^2*(y2 - q)^2 - 2*(x1 - p)^2*(y2 - q)*(y3 - q) - (x1 - p)^2*(y3 - q)^2 - 2*(x1 - p)*(x2 - p)^2*(x3 - p) + 4*(x1 - p)*(x2 - p)*(y2 - q)*(y3 - q) - 4*(x1 - p)*(x2 - p)*(y3 - q)^2 + 2*(x1 - p)*(x3 - p)^3 - 6*(x1 - p)*(x3 - p)*(y2 - q)^2 + 4*(x1 - p)*(x3 - p)*(y2 - q)*(y3 - q) + 2*(x1 - p)*(x3 - p)*(y3 - q)^2 - (x2 - p)^2*(x3 - p)^2 - (x2 - p)^2*(y1 - q)^2 - 2*(x2 - p)^2*(y1 - q)*(y3 - q) + 3*(x2 - p)^2*(y3 - q)^2 + 2*(x2 - p)*(x3 - p)^3 - 2*(x2 - p)*(x3 - p)*(y1 - q)^2 + 4*(x2 - p)*(x3 - p)*(y1 - q)*(y2 - q) + 4*(x2 - p)*(x3 - p)*(y1 - q)*(y3 - q) - 8*(x2 - p)*(x3 - p)*(y2 - q)*(y3 - q) + 2*(x2 - p)*(x3 - p)*(y3 - q)^2 - (x3 - p)^4 + 3*(x3 - p)^2*(y1 - q)^2 - 4*(x3 - p)^2*(y1 - q)*(y2 - q) - 2*(x3 - p)^2*(y1 - q)*(y3 - q) + 3*(x3 - p)^2*(y2 - q)^2 + 2*(x3 - p)^2*(y2 - q)*(y3 - q) - 2*(x3 - p)^2*(y3 - q)^2 - (y1 - q)^2*(y2 - q)^2 - 2*(y1 - q)^2*(y2 - q)*(y3 - q) + 3*(y1 - q)^2*(y3 - q)^2 + 2*(y1 - q)*(y2 - q)^2*(y3 - q) - 2*(y1 - q)*(y3 - q)^3 - (y2 - q)^2*(y3 - q)^2 + 2*(y2 - q)*(y3 - q)^3 - (y3 - q)^4) * h1 + (-2*(x1 - p)^4 - 2*(x1 - p)^3*(x2 - p) + 4*(x1 - p)^3*(x3 - p) + (x1 - p)^2*(x2 - p)^2 + 2*(x1 - p)^2*(x2 - p)*(x3 - p) - (x1 - p)^2*(x3 - p)^2 - 2*(x1 - p)^2*(y1 - q)*(y2 - q) + (x1 - p)^2*(y2 - q)^2 - 2*(x1 - p)^2*(y2 - q)*(y3 - q) + 3*(x1 - p)^2*(y3 - q)^2 - 2*(x1 - p)*(x2 - p)^2*(x3 - p) + 2*(x1 - p)*(x2 - p)*(x3 - p)^2 - 2*(x1 - p)*(x2 - p)*(y1 - q)^2 + 4*(x1 - p)*(x2 - p)*(y1 - q)*(y3 - q) - 2*(x1 - p)*(x2 - p)*(y3 - q)^2 - 2*(x1 - p)*(x3 - p)^3 + 4*(x1 - p)*(x3 - p)*(y1 - q)^2 + 4*(x1 - p)*(x3 - p)*(y1 - q)*(y2 - q) - 8*(x1 - p)*(x3 - p)*(y1 - q)*(y3 - q) - 2*(x1 - p)*(x3 - p)*(y2 - q)^2 + 4*(x1 - p)*(x3 - p)*(y2 - q)*(y3 - q) - 2*(x1 - p)*(x3 - p)*(y3 - q)^2 + (x2 - p)^2*(x3 - p)^2 + (x2 - p)^2*(y1 - q)^2 - 2*(x2 - p)^2*(y1 - q)*(y3 - q) + (x2 - p)^2*(y3 - q)^2 - 2*(x2 - p)*(x3 - p)^3 - 2*(x2 - p)*(x3 - p)*(y1 - q)^2 + 4*(x2 - p)*(x3 - p)*(y1 - q)*(y3 - q) - 2*(x2 - p)*(x3 - p)*(y3 - q)^2 + (x3 - p)^4 - (x3 - p)^2*(y1 - q)^2 - 2*(x3 - p)^2*(y1 - q)*(y2 - q) + 2*(x3 - p)^2*(y1 - q)*(y3 - q) + (x3 - p)^2*(y2 - q)^2 - 2*(x3 - p)^2*(y2 - q)*(y3 - q) + 2*(x3 - p)^2*(y3 - q)^2 + 2*(y1 - q)^4 - 2*(y1 - q)^3*(y2 - q) + (y1 - q)^2*(y2 - q)^2 + 2*(y1 - q)^2*(y2 - q)*(y3 - q) - 5*(y1 - q)^2*(y3 - q)^2 - 2*(y1 - q)*(y2 - q)^2*(y3 - q) + 2*(y1 - q)*(y2 - q)*(y3 - q)^2 + 2*(y1 - q)*(y3 - q)^3 + (y2 - q)^2*(y3 - q)^2 - 2*(y2 - q)*(y3 - q)^3 + (y3 - q)^4) * h2 + (2*(x1 - p)^4 + 2*(x1 - p)^3*(x2 - p) - 4*(x1 - p)^3*(x3 - p) - 4*(x1 - p)^2*(x2 - p)^2 + 2*(x1 - p)^2*(x3 - p)^2 + 2*(x1 - p)^2*(y1 - q)*(y2 - q) - 4*(x1 - p)^2*(y2 - q)*(y3 - q) + 2*(x1 - p)^2*(y3 - q)^2 + 4*(x1 - p)*(x2 - p)^2*(x3 - p) - 2*(x1 - p)*(x2 - p)*(x3 - p)^2 + 2*(x1 - p)*(x2 - p)*(y1 - q)^2 - 8*(x1 - p)*(x2 - p)*(y1 - q)*(y2 - q) + 4*(x1 - p)*(x2 - p)*(y1 - q)*(y3 - q) + 4*(x1 - p)*(x2 - p)*(y2 - q)*(y3 - q) - 2*(x1 - p)*(x2 - p)*(y3 - q)^2 - 4*(x1 - p)*(x3 - p)*(y1 - q)^2 + 4*(x1 - p)*(x3 - p)*(y1 - q)*(y2 - q) + 4*(x2 - p)^2*(y1 - q)^2 - 4*(x2 - p)^2*(y1 - q)*(y3 - q) - 4*(x2 - p)*(x3 - p)*(y1 - q)^2 + 4*(x2 - p)*(x3 - p)*(y1 - q)*(y2 - q) + 2*(x3 - p)^2*(y1 - q)^2 - 2*(x3 - p)^2*(y1 - q)*(y2 - q) - 2*(y1 - q)^4 + 2*(y1 - q)^3*(y2 - q) + 2*(y1 - q)^2*(y3 - q)^2 - 2*(y1 - q)*(y2 - q)*(y3 - q)^2) * h3
+  have sq : ∀ z : ℝ, 0 ≤ z → √z = R → z - R ^ 2 = 0 := by
+    intro z hz h; rw [← h, Real.sq_sqrt hz]; ring
+  have hprod := key a.1 a.2 b.1 b.2 c.1 c.2 C.1 C.2 (R ^ 2)
+    (sq _ (by positivity) hA) (sq _ (by positivity) hB) (sq _ (by positivity) hC)
+  clear key
+  set AB := (a.1 - b.1) ^ 2 + (a.2 - b.2) ^ 2 with hAB
+  set AC := (a.1 - c.1) ^ 2 + (a.2 - c.2) ^ 2 with hAC
+  set BC := (b.1 - c.1) ^ 2 + (b.2 - c.2) ^ 2 with hBC
+  set D := (b.1 - a.1) * (c.2 - a.2) - (c.1 - a.1) * (b.2 - a.2) with hD
+  -- D is an integer
+  set Dz : ℤ := (round b.1 - round a.1) * (round c.2 - round a.2) - (round c.1 - round a.1) * (round b.2 - round a.2)
+  have hDz : D = (Dz : ℝ) := by
+    rw [hD, ha1, ha2, hb1, hb2, hc1, hc2]; simp only [Dz]; push_cast; ring
+  have side0 : ∀ u v : ℝ × ℝ, u ≠ v → 0 < (u.1 - v.1) ^ 2 + (u.2 - v.2) ^ 2 := by
+    intro u v huv
+    by_contra hle
+    push Not at hle
+    apply huv
+    have h1 : (u.1 - v.1) ^ 2 = 0 := le_antisymm (by linarith [sq_nonneg (u.2 - v.2)]) (sq_nonneg _)
+    have h2 : (u.2 - v.2) ^ 2 = 0 := le_antisymm (by linarith [sq_nonneg (u.1 - v.1)]) (sq_nonneg _)
+    exact Prod.ext (sub_eq_zero.mp (pow_eq_zero_iff two_ne_zero |>.mp h1))
+      (sub_eq_zero.mp (pow_eq_zero_iff two_ne_zero |>.mp h2))
+  have pAB := side0 a b hab
+  have pAC := side0 a c hac
+  have pBC := side0 b c hbc
+  have hDne : Dz ≠ 0 := by
+    intro h0
+    rw [h0, Int.cast_zero] at hDz
+    rw [hDz] at hprod
+    have h0' : AB * AC * BC = 0 := by rw [hprod]; ring
+    have : AB * AC * BC > 0 := by positivity
+    linarith
+  have hD1 : (1 : ℝ) ≤ |D| := by
+    rw [hDz, ← Int.cast_abs]; exact_mod_cast Int.one_le_abs hDne
+  rw [← Real.sqrt_mul pAB.le, ← Real.sqrt_mul (by positivity), hprod,
+    show 4 * R ^ 2 * D ^ 2 = (2 * R * |D|) ^ 2 by rw [mul_pow, mul_pow, sq_abs]; ring,
+    Real.sqrt_sq (by positivity)]
+  have := mul_le_mul_of_nonneg_left hD1 (by positivity : (0 : ℝ) ≤ 2 * R)
+  linarith
