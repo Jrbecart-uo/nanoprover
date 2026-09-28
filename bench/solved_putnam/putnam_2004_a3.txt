@@ -1,0 +1,46 @@
+import Mathlib
+
+open Nat Topology Filter
+
+/-!
+Putnam 2004 A3.  The determinant condition reads u(n)u(n+3) − u(n+1)u(n+2) = n!.  By
+induction: u(n), u(n+1) > 0, u(n)u(n+1) = n!, and u(n+2) = (n+1)·u(n) — the step cancels
+u(n) > 0 in u(n)u(n+3) = n! + (n+1)u(n)u(n+1) = (n+2)u(n)u(n+1).  Then u(n+2) = (n+1)u(n)
+with u(0) = u(1) = 1 gives integrality by strong induction.
+-/
+theorem putnam_2004_a3
+(u : ℕ → ℝ)
+(hubase : u 0 = 1 ∧ u 1 = 1 ∧ u 2 = 1)
+(hudet : ∀ n : ℕ, Matrix.det (fun i j : Fin 2 => u (n + i * 2 + j)) = (n)!)
+: ∀ n : ℕ, ∃ m : ℤ, u n = m := by
+  obtain ⟨h0, h1, h2⟩ := hubase
+  have hd : ∀ n, u n * u (n + 3) - u (n + 1) * u (n + 2) = (n ! : ℝ) := by
+    intro n
+    have := hudet n
+    simp [Matrix.det_fin_two] at this
+    convert this using 3
+  have P : ∀ n, 0 < u n ∧ 0 < u (n + 1) ∧ u n * u (n + 1) = (n ! : ℝ) ∧
+      u (n + 2) = (n + 1) * u n := by
+    intro n
+    induction n with
+    | zero => simp [h0, h1, h2]
+    | succ n ih =>
+      obtain ⟨a0, a1, a2, a3⟩ := ih
+      have hn := hd n
+      have e3 : u (n + 3) = (n + 2) * u (n + 1) := by
+        apply mul_left_cancel₀ a0.ne'
+        rw [a3] at hn
+        linear_combination hn - a2
+      refine ⟨a1, ?_, ?_, ?_⟩
+      · rw [a3]; positivity
+      · rw [a3, Nat.factorial_succ]; push_cast; linear_combination (n + 1 : ℝ) * a2
+      · rw [show n + 1 + 2 = n + 3 by ring, e3]; push_cast; ring
+  intro n
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    match n, ih with
+    | 0, _ => exact ⟨1, by simp [h0]⟩
+    | 1, _ => exact ⟨1, by simp [h1]⟩
+    | k + 2, ih =>
+      obtain ⟨m, hm⟩ := ih k (by omega)
+      exact ⟨(k + 1) * m, by rw [(P k).2.2.2, hm]; push_cast; ring⟩
