@@ -1,0 +1,42 @@
+import Mathlib
+
+open Finset
+
+/-!
+Putnam 1968 A4.  For unit vectors, ‖Sᵢ − Sⱼ‖² = 2 − 2⟨Sᵢ,Sⱼ⟩ (`norm_sub_sq_real`), so the full
+double sum is 2n² − 2‖Σ Sᵢ‖² (`sum_inner`, `inner_sum`).  The diagonal vanishes and the
+summand is symmetric, so the i < j part is exactly half: n² − ‖Σ Sᵢ‖² ≤ n².
+-/
+theorem putnam_1968_a4
+(n : ℕ)
+(S : Fin n → (EuclideanSpace ℝ (Fin 3)))
+(hS : ∀ i : Fin n, dist 0 (S i) = 1)
+: ∑ i : Fin n, ∑ j : Fin n, (if i < j then (dist (S i) (S j))^2 else (0 : ℝ)) ≤ n^2 := by
+  have hn1 : ∀ i, ‖S i‖ = 1 := fun i => by rw [← dist_zero_left]; exact hS i
+  have hD : ∀ i j, dist (S i) (S j) ^ 2 = 2 - 2 * inner ℝ (S i) (S j) := by
+    intro i j
+    rw [dist_eq_norm, norm_sub_sq_real, hn1, hn1]; ring
+  have hfull : ∑ i : Fin n, ∑ j : Fin n, dist (S i) (S j) ^ 2
+      = 2 * n ^ 2 - 2 * ‖∑ i : Fin n, S i‖ ^ 2 := by
+    simp_rw [hD, Finset.sum_sub_distrib, ← Finset.mul_sum]
+    rw [← real_inner_self_eq_norm_sq, sum_inner]
+    simp_rw [inner_sum]
+    simp; ring
+  have hsplit : ∀ i j, dist (S i) (S j) ^ 2 =
+      (if i < j then dist (S i) (S j) ^ 2 else 0) + (if j < i then dist (S i) (S j) ^ 2 else 0) := by
+    intro i j
+    rcases lt_trichotomy i j with h | h | h
+    · simp [h, not_lt_of_gt h]
+    · subst h; simp
+    · simp [h, not_lt_of_gt h]
+  have hsym : ∑ i : Fin n, ∑ j : Fin n, (if j < i then dist (S i) (S j) ^ 2 else (0 : ℝ))
+      = ∑ i : Fin n, ∑ j : Fin n, (if i < j then dist (S i) (S j) ^ 2 else 0) := by
+    rw [Finset.sum_comm]
+    simp_rw [dist_comm]
+  have h2 : 2 * ∑ i : Fin n, ∑ j : Fin n, (if i < j then dist (S i) (S j) ^ 2 else (0 : ℝ))
+      = 2 * n ^ 2 - 2 * ‖∑ i : Fin n, S i‖ ^ 2 := by
+    rw [← hfull]
+    conv_rhs => arg 2; ext i; arg 2; ext j; rw [hsplit i j]
+    simp_rw [Finset.sum_add_distrib]
+    rw [hsym]; ring
+  nlinarith [sq_nonneg ‖∑ i : Fin n, S i‖]
