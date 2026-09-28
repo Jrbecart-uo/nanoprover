@@ -144,3 +144,8 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
   Escape: prove `∑ … = 3860` separately and `rw` it.  `norm_num` does not reduce
   `Int.toNat 2`; `have : Int.toNat 2 = 2 := rfl` and `rw`.  No `zpow_sum` for fields: weight
   with `(1/2) ^ v.toNat` (ℕ exponent) and `Finset.prod_pow_eq_pow_sum` instead.
+- **Polynomial identities modulo hypotheses (e.g. circumradius): let sympy find the
+  `linear_combination` multipliers.**  `reduced` by the raw hypotheses leaves a remainder;
+  a linear ansatz (unknown multipliers of the right weighted degree, `linsolve`) works —
+  recentre first to cut variables.  sympy is not in the venv: `pip install --target
+  <scratch>/pylib sympy` and run with `PYTHONPATH`.  See 1971_a3 / 2000_a5.
