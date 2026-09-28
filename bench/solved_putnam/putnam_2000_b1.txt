@@ -1,0 +1,52 @@
+import Mathlib
+
+open Topology Filter
+
+/-!
+Putnam 2000 B1.  Averaging over the 7 nonzero (r,s,t) ∈ {0,1}³.  For each j, (a,b,c) mod 2
+is nonzero, and exactly 4 of the 7 choices make ra + sb + tc odd — pushed to `ZMod 2`
+(`ZMod.intCast_eq_one_iff_odd`) and checked by `decide`.  So the 7 counts sum to 4N, and
+one of them is ≥ 4N/7.
+-/
+theorem putnam_2000_b1
+(N : ℕ)
+(a b c : Fin N → ℤ)
+(Nge1 : N ≥ 1)
+(hodd : ∀ j : Fin N, Odd (a j) ∨ Odd (b j) ∨ Odd (c j))
+: (∃ r s t : ℤ, {j : Fin N | Odd (r * a j + s * b j + t * c j)}.ncard ≥ (4 * N : ℝ) / 7) := by
+  classical
+  let f : ℤ → ℤ → ℤ → Fin N → ℕ := fun r s t j => if Odd (r * a j + s * b j + t * c j) then 1 else 0
+  have key : ∀ j, f 1 0 0 j + f 0 1 0 j + f 0 0 1 j + f 1 1 0 j + f 1 0 1 j + f 0 1 1 j
+      + f 1 1 1 j = 4 := by
+    intro j
+    have gen : ∀ A B C : ZMod 2, (A = 1 ∨ B = 1 ∨ C = 1) →
+        (if 1 * A + 0 * B + 0 * C = 1 then 1 else 0) + (if 0 * A + 1 * B + 0 * C = 1 then 1 else 0)
+        + (if 0 * A + 0 * B + 1 * C = 1 then 1 else 0) + (if 1 * A + 1 * B + 0 * C = 1 then 1 else 0)
+        + (if 1 * A + 0 * B + 1 * C = 1 then 1 else 0) + (if 0 * A + 1 * B + 1 * C = 1 then 1 else 0)
+        + (if 1 * A + 1 * B + 1 * C = 1 then 1 else 0) = (4 : ℕ) := by decide
+    have h := hodd j
+    simp only [← ZMod.intCast_eq_one_iff_odd] at h
+    simp only [f, ← ZMod.intCast_eq_one_iff_odd]
+    push_cast
+    exact gen _ _ _ h
+  let cnt : ℤ → ℤ → ℤ → ℕ := fun r s t => ∑ j, f r s t j
+  have hsum : cnt 1 0 0 + cnt 0 1 0 + cnt 0 0 1 + cnt 1 1 0 + cnt 1 0 1 + cnt 0 1 1
+      + cnt 1 1 1 = 4 * N := by
+    simp only [cnt, ← Finset.sum_add_distrib]
+    rw [Finset.sum_congr rfl (fun j _ => key j)]
+    simp [mul_comm]
+  have hconv : ∀ r s t, {j : Fin N | Odd (r * a j + s * b j + t * c j)}.ncard = cnt r s t := by
+    intro r s t
+    have : {j : Fin N | Odd (r * a j + s * b j + t * c j)} =
+        ↑(Finset.univ.filter fun j => Odd (r * a j + s * b j + t * c j)) := by
+      ext j; simp
+    rw [this, Set.ncard_coe_finset, Finset.card_filter]
+  by_contra hcon
+  push Not at hcon
+  have l1 := hcon 1 0 0; have l2 := hcon 0 1 0; have l3 := hcon 0 0 1; have l4 := hcon 1 1 0
+  have l5 := hcon 1 0 1; have l6 := hcon 0 1 1; have l7 := hcon 1 1 1
+  rw [hconv] at l1 l2 l3 l4 l5 l6 l7
+  have hR : ((cnt 1 0 0 + cnt 0 1 0 + cnt 0 0 1 + cnt 1 1 0 + cnt 1 0 1 + cnt 0 1 1
+      + cnt 1 1 1 : ℕ) : ℝ) = 4 * N := by rw [hsum]; push_cast; ring
+  push_cast at hR
+  linarith
