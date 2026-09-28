@@ -1,0 +1,89 @@
+import Mathlib
+
+open Filter Topology
+
+/-!
+Putnam 1994 B5.  α = 1 − ε with ε = 1/n².  For 1 ≤ x ≤ n², ⌊αx⌋ = x − 1 (0 < xε ≤ 1), so
+the iterates step n², n²−1, …, n²−k.  For α^k: Bernoulli (`one_add_mul_le_pow`) gives
+α^k n² ≥ n² − k, and the induction (1−ε)^m ≤ 1 − mε + C(m,2)ε² gives
+α^k n² ≤ n² − k + C(k,2)/n² < n² − k + 1 because k(k−1) < 2n².
+-/
+theorem putnam_1994_b5
+  (n : ℕ) (hn : n > 0)
+  (f : ℝ → ℤ → ℤ)
+  (hf : ∀ (α : ℝ) (x : ℤ), f α x = Int.floor (α * x)) :
+  ∃ α : ℝ,
+    ∀ k ∈ Set.Icc 1 n,
+      ((f α)^[k] (n ^ 2) = n ^ 2 - k) ∧
+      (f (α ^ k) (n ^ 2) = n ^ 2 - k) := by
+  have hN : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  set N : ℝ := (n : ℝ) ^ 2 with hNdef
+  have hN1 : 1 ≤ N := by nlinarith
+  have hnN : (n : ℝ) ≤ N := by nlinarith
+  set ε : ℝ := 1 / N with hε
+  have hε0 : 0 < ε := by positivity
+  have hε1 : ε ≤ 1 := by rw [hε, div_le_one (by linarith)]; exact hN1
+  have hNε : N * ε = 1 := by rw [hε]; field_simp
+  refine ⟨1 - ε, fun k hk => ⟨?_, ?_⟩⟩
+  · obtain ⟨hk1, hkn⟩ := hk
+    -- one step: ⌊(1-ε) x⌋ = x - 1 for 1 ≤ x ≤ N
+    have step : ∀ x : ℤ, 1 ≤ (x : ℝ) → (x : ℝ) ≤ N → f (1 - ε) x = x - 1 := by
+      intro x hx1 hxN
+      rw [hf, Int.floor_eq_iff]
+      push_cast
+      have h1 : (x : ℝ) * ε ≤ 1 := by nlinarith
+      have h2 : 0 < (x : ℝ) * ε := by positivity
+      constructor <;> nlinarith
+    have iter : ∀ j, j ≤ n → (f (1 - ε))^[j] ((n : ℤ) ^ 2) = (n : ℤ) ^ 2 - j := by
+      intro j hj
+      induction j with
+      | zero => simp
+      | succ j ih =>
+        rw [Function.iterate_succ_apply', ih (by omega), step]
+        · push_cast; ring
+        · push_cast
+          have : (j : ℝ) + 1 ≤ n := by exact_mod_cast hj
+          nlinarith
+        · push_cast; have : (0 : ℝ) ≤ j := by positivity
+          linarith
+    exact iter k hkn
+  · obtain ⟨hk1, hkn⟩ := hk
+    have hkR : (k : ℝ) ≤ n := by exact_mod_cast hkn
+    have hk1R : (1 : ℝ) ≤ k := by exact_mod_cast hk1
+    -- Bernoulli, and the second-order upper bound
+    have lower : 1 - k * ε ≤ (1 - ε) ^ k := by
+      have := one_add_mul_le_pow (a := -ε) (by linarith) k
+      simpa [sub_eq_add_neg] using this
+    have upper : ∀ m : ℕ, (1 - ε) ^ m ≤ 1 - m * ε + (m * (m - 1) / 2) * ε ^ 2 := by
+      intro m
+      induction m with
+      | zero => simp
+      | succ m ih =>
+        rw [pow_succ]
+        have h0 : 0 ≤ 1 - ε := by linarith
+        have := mul_le_mul_of_nonneg_right ih h0
+        push_cast
+        have hm : (0 : ℝ) ≤ m := by positivity
+        have hm2 : 0 ≤ (m : ℝ) * (m - 1) / 2 * ε ^ 3 := by
+          rcases Nat.eq_zero_or_pos m with h | h
+          · subst h; simp
+          · have : (1 : ℝ) ≤ m := by exact_mod_cast h
+            have : 0 ≤ (m : ℝ) - 1 := by linarith
+            positivity
+        nlinarith
+    have hup := upper k
+    rw [hf, Int.floor_eq_iff]
+    push_cast
+    constructor
+    · -- N - k ≤ (1-ε)^k N
+      have := mul_le_mul_of_nonneg_left lower (by linarith : (0 : ℝ) ≤ N)
+      nlinarith
+    · -- (1-ε)^k N < N - k + 1, since k(k-1) < 2N
+      have hkk : (k : ℝ) * (k - 1) < 2 * N := by nlinarith
+      have := mul_le_mul_of_nonneg_left hup (by linarith : (0 : ℝ) ≤ N)
+      have e : N * (1 - k * ε + k * (k - 1) / 2 * ε ^ 2) = N - k + k * (k - 1) / 2 * ε := by
+        have : N * ε ^ 2 = ε := by rw [sq, ← mul_assoc, hNε, one_mul]
+        linear_combination (-(k : ℝ)) * hNε + (k * (k - 1) / 2) * this
+      have hlt : (k : ℝ) * (k - 1) / 2 * ε < 1 := by
+        rw [hε]; rw [div_mul_div_comm, mul_one, div_lt_one (by positivity)]; linarith
+      nlinarith
