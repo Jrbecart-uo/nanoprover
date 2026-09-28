@@ -5,7 +5,8 @@ rated each by statement only (no Lean): cost 1 (<30 lines) … 5 (major missing 
 Estimates, not results — the kernel decides. Solved this session are struck out.
 
 ## Cheapest (cost 1–2), with the plan that looked right — ALL DONE 2026-09-28
-21/21 fell (1991_a6 as VACUOUS, counted separately); most passed in 1–3 kernel rounds.
+22/22 fell (21 real + 1991_a6 VACUOUS, counted separately); most passed in 1–3 kernel rounds.
+Also solved the same day, from the older NEXT list: 2000_b5.
 - ~~2012_a1~~ ~~1982_a5~~ ~~1983_b4~~ ~~2008_b4~~ ~~1970_b3~~ ~~1968_b6~~ (all solved 2026-09-28)
 - ~~1991_a6~~ ✅ — **VACUOUS** (`→` looser than `∧` in `hA`; the set is infinite, `encard = ⊤`
   contradicts `A n : ℕ`). Label as vacuous if counted.
