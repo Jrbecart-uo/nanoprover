@@ -115,3 +115,13 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
   own `open …` line before counting the scalp (2007_a5 passed without it, failed with it).
 - Name renames seen: `Finset.card_insert_of_not_mem` → `card_insert_of_notMem`;
   `Finset.filter_sdiff` does not exist (prove by `ext; tauto`).
+
+## Added 2026-09-28 (putnam_2008_b4, 2000_b5)
+- **`ring`/`abel` can fail on linear identities whose atoms are `x % q ^ 2` (ℤ)** — e.g.
+  `y - x = y % q^2 - x - (y % q^2 - y)` after `convert … using 1` ("made no progress").
+  Escape: don't do arithmetic on `%` terms; chain `Int.ModEq` instead
+  (`Int.modEq_iff_dvd.mpr`, `.symm`, `.trans`, then `Int.modEq_iff_dvd.mp`).
+- **`Xor'` is deprecated (use `Xor`), and `decide (Xor' P Q)` needs a Decidable instance
+  that `classical` does not supply inside `decide_eq_decide`.** Escape: case-split
+  `by_cases h1 : P <;> by_cases h2 : Q <;> simp_all [Xor']`.
+- `push_neg` is deprecated → `push Not` (works the same).

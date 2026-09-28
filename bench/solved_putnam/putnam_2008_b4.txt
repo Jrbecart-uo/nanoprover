@@ -1,0 +1,117 @@
+import Mathlib
+
+/-!
+Putnam 2008 B4.  Taylor to first order (`Polynomial.binomExpansion`:
+h(x+y) = h(x) + h'(x)·y + c·y²) plus `Polynomial.sub_dvd_eval_sub` (h(x) mod m depends
+only on x mod m).  Step A: p ∤ h'(x) for every x — otherwise, with x₀ = x mod p²,
+h(x₀+p) ≡ h(x₀) mod p², and x₀, (x₀+p) mod p² are distinct residues, contradicting
+injectivity mod p².  Step B: h(i) ≡ h(j) mod p³ ⇒ i ≡ j mod p² (injectivity mod p²),
+so j = i + kp² and p³ ∣ p²(h'(i)k + p²ck²) ⇒ p ∣ h'(i)k ⇒ p ∣ k ⇒ i = j.
+-/
+theorem putnam_2008_b4
+(p : ℕ)
+(hp : Nat.Prime p)
+(h : Polynomial ℤ)
+(hh : ∀ i j : Finset.range (p ^ 2), h.eval i ≡ h.eval j [ZMOD p ^ 2] → i = j)
+: (∀ i j : Finset.range (p ^ 3), h.eval i ≡ h.eval j [ZMOD p ^ 3] → i = j) := by
+  set q : ℤ := (p : ℤ) with hq
+  have hq2 : 2 ≤ q := by rw [hq]; exact_mod_cast hp.two_le
+  have hq2pos : 0 < q ^ 2 := by positivity
+  have hqprime : Prime q := Nat.prime_iff_prime_int.mp hp
+  -- injectivity on integer representatives in [0, q²)
+  have hh' : ∀ x y : ℤ, 0 ≤ x → x < q ^ 2 → 0 ≤ y → y < q ^ 2 →
+      q ^ 2 ∣ h.eval y - h.eval x → x = y := by
+    intro x y hx0 hx hy0 hy hxy
+    have hxn : x.toNat < p ^ 2 := by
+      have : ((x.toNat : ℕ) : ℤ) < ((p ^ 2 : ℕ) : ℤ) := by
+        rw [Int.toNat_of_nonneg hx0]; push_cast; exact hx
+      exact_mod_cast this
+    have hyn : y.toNat < p ^ 2 := by
+      have : ((y.toNat : ℕ) : ℤ) < ((p ^ 2 : ℕ) : ℤ) := by
+        rw [Int.toNat_of_nonneg hy0]; push_cast; exact hy
+      exact_mod_cast this
+    have := hh ⟨x.toNat, Finset.mem_range.mpr hxn⟩ ⟨y.toNat, Finset.mem_range.mpr hyn⟩
+      (by
+        apply Int.modEq_iff_dvd.mpr
+        simp only [Int.toNat_of_nonneg hx0, Int.toNat_of_nonneg hy0]
+        exact_mod_cast hxy)
+    have := congrArg Subtype.val this
+    simp only at this
+    omega
+  -- reduction mod q²
+  have hred : ∀ x : ℤ, q ^ 2 ∣ x % q ^ 2 - x := by
+    intro x
+    have := Int.emod_add_ediv_mul x (q ^ 2)
+    exact ⟨-(x / q ^ 2), by linarith⟩
+  have hevred : ∀ x : ℤ, q ^ 2 ∣ h.eval (x % q ^ 2) - h.eval x :=
+    fun x => (hred x).trans (Polynomial.sub_dvd_eval_sub _ _ _)
+  -- Step A: the derivative never vanishes mod q
+  have hA : ∀ x : ℤ, ¬ (q ∣ h.derivative.eval x) := by
+    intro x hx
+    set x0 := x % q ^ 2
+    have hx00 : 0 ≤ x0 := Int.emod_nonneg _ hq2pos.ne'
+    have hx0lt : x0 < q ^ 2 := Int.emod_lt_of_pos _ hq2pos
+    set y0 := (x0 + q) % q ^ 2
+    have hy00 : 0 ≤ y0 := Int.emod_nonneg _ hq2pos.ne'
+    have hy0lt : y0 < q ^ 2 := Int.emod_lt_of_pos _ hq2pos
+    have hdx : q ∣ h.derivative.eval x0 := by
+      have h1 := Polynomial.sub_dvd_eval_sub x0 x h.derivative
+      have h2 : q ∣ x0 - x := (Dvd.intro_left _ (by ring) : q ∣ q ^ 2).trans (hred x)
+      have h3 := dvd_add (h2.trans h1) hx
+      simpa using h3
+    obtain ⟨c, hc⟩ := Polynomial.binomExpansion h x0 q
+    obtain ⟨t, ht⟩ := hdx
+    have e1 : q ^ 2 ∣ h.eval (x0 + q) - h.eval x0 := ⟨t + c, by rw [hc, ht]; ring⟩
+    have e2 : q ^ 2 ∣ h.eval y0 - h.eval (x0 + q) := hevred (x0 + q)
+    have heq := hh' x0 y0 hx00 hx0lt hy00 hy0lt (by
+      have := dvd_add e2 e1; simpa using this)
+    have e3 : q ^ 2 ∣ y0 - (x0 + q) := hred (x0 + q)
+    rw [← heq] at e3
+    have e4 : q ^ 2 ∣ q := by
+      have := dvd_neg.mpr e3; simpa using this
+    have := Int.le_of_dvd (by omega) e4
+    nlinarith
+  -- Step B
+  intro i j hij
+  have hi : (i : ℕ) < p ^ 3 := Finset.mem_range.mp i.2
+  have hj : (j : ℕ) < p ^ 3 := Finset.mem_range.mp j.2
+  set x : ℤ := ((i : ℕ) : ℤ) with hx
+  set y : ℤ := ((j : ℕ) : ℤ) with hy
+  have hxy3 : q ^ 3 ∣ h.eval y - h.eval x := Int.modEq_iff_dvd.mp hij
+  have hxy2 : q ^ 2 ∣ h.eval y - h.eval x :=
+    (Dvd.intro_left _ (by ring) : q ^ 2 ∣ q ^ 3).trans hxy3
+  have h0 : x % q ^ 2 = y % q ^ 2 := by
+    apply hh' _ _ (Int.emod_nonneg _ hq2pos.ne') (Int.emod_lt_of_pos _ hq2pos)
+      (Int.emod_nonneg _ hq2pos.ne') (Int.emod_lt_of_pos _ hq2pos)
+    have m1 := (Int.modEq_iff_dvd.mpr (hevred x)).symm
+    have m2 : h.eval x ≡ h.eval y [ZMOD q ^ 2] := Int.modEq_iff_dvd.mpr hxy2
+    have m3 := Int.modEq_iff_dvd.mpr (hevred y)
+    exact Int.modEq_iff_dvd.mp (m1.trans (m2.trans m3))
+  obtain ⟨k, hk⟩ : q ^ 2 ∣ y - x := by
+    have m1 : x ≡ x % q ^ 2 [ZMOD q ^ 2] := Int.modEq_iff_dvd.mpr (hred x)
+    have m3 : y % q ^ 2 ≡ y [ZMOD q ^ 2] := (Int.modEq_iff_dvd.mpr (hred y)).symm
+    rw [h0] at m1
+    exact Int.modEq_iff_dvd.mp (m1.trans m3)
+  obtain ⟨c, hc⟩ := Polynomial.binomExpansion h x (q ^ 2 * k)
+  have hyx : y = x + q ^ 2 * k := by linarith
+  rw [hyx, hc] at hxy3
+  have hdiv : q ∣ h.derivative.eval x * k := by
+    have e : Polynomial.eval x h + Polynomial.eval x (Polynomial.derivative h) * (q ^ 2 * k)
+        + c * (q ^ 2 * k) ^ 2 - Polynomial.eval x h
+        = q ^ 2 * (h.derivative.eval x * k + q * (q * c * k ^ 2)) := by ring
+    rw [e, show q ^ 3 = q ^ 2 * q by ring,
+      Int.mul_dvd_mul_iff_left (by positivity)] at hxy3
+    have := dvd_sub hxy3 (Dvd.intro _ rfl : q ∣ q * (q * c * k ^ 2))
+    simpa using this
+  rcases hqprime.dvd_or_dvd hdiv with hd | ⟨m, hm⟩
+  · exact absurd hd (hA x)
+  · have hz : y - x = 0 := by
+      apply Int.eq_zero_of_abs_lt_dvd (m := q ^ 3) ⟨m, by rw [hk, hm]; ring⟩
+      have hx3 : x < q ^ 3 := by rw [hx, hq]; exact_mod_cast hi
+      have hy3 : y < q ^ 3 := by rw [hy, hq]; exact_mod_cast hj
+      have : 0 ≤ x := by positivity
+      have : 0 ≤ y := by positivity
+      rw [abs_lt]; constructor <;> linarith
+    have hxy : x = y := by linarith
+    rw [hx, hy] at hxy
+    exact Subtype.ext (by exact_mod_cast hxy)
