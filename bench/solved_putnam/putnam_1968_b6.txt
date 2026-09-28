@@ -1,0 +1,31 @@
+import Mathlib
+
+open Finset Polynomial Topology Filter Metric
+
+/-!
+Putnam 1968 B6.  ℚ is not σ-compact in the "exhausting" sense.  A compact subset of ℚ has
+empty interior (`Rat.interior_compact_eq_empty`), so the open interval (0, 1/(n+1)) is not
+inside Kₙ: choose xₙ there with xₙ ∉ Kₙ.  xₙ → 0 by squeeze, so {0} ∪ range x is compact
+(`Filter.Tendsto.isCompact_insert_range`); if it sat inside K_N then x_N ∈ K_N.
+-/
+theorem putnam_1968_b6
+: ¬∃ K : ℕ → Set ℚ, (∀ n : ℕ, IsCompact (K n)) ∧ (∀ S : Set ℚ, IsCompact S → ∃ n : ℕ, S ⊆ K n) := by
+  rintro ⟨K, hK, hS⟩
+  have hx : ∀ n : ℕ, ∃ x : ℚ, x ∈ Set.Ioo 0 (1 / ((n : ℚ) + 1)) ∧ x ∉ K n := by
+    intro n
+    by_contra h
+    push Not at h
+    have hsub : Set.Ioo (0 : ℚ) (1 / ((n : ℚ) + 1)) ⊆ interior (K n) :=
+      isOpen_Ioo.subset_interior_iff.mpr h
+    rw [Rat.interior_compact_eq_empty (hK n)] at hsub
+    have hpos : (0 : ℚ) < 1 / ((n : ℚ) + 1) := by positivity
+    obtain ⟨y, hy⟩ := Set.nonempty_Ioo.mpr hpos
+    exact hsub hy
+  choose x hxI hxK using hx
+  have ht : Tendsto x atTop (𝓝 0) := by
+    apply tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds
+      tendsto_one_div_add_atTop_nhds_zero_nat
+    · intro n; exact (hxI n).1.le
+    · intro n; exact (hxI n).2.le
+  obtain ⟨N, hN⟩ := hS _ ht.isCompact_insert_range
+  exact hxK N (hN (Set.mem_insert_of_mem _ ⟨N, rfl⟩))
