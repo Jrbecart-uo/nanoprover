@@ -1,0 +1,101 @@
+import Mathlib
+
+open RingHom Set Nat Filter Topology
+
+/-!
+Putnam 1977 B6.  From (ya)³ = 1: a·y·a = y⁻¹a⁻¹y⁻¹ and a⁻¹·y·a⁻¹ = y⁻¹a y⁻¹ for y ∈ H.  So
+Q = HaH ∪ Ha⁻¹H ∪ Ha⁻¹Ha is closed under right multiplication by ya:
+HaH·ya ⊆ Ha⁻¹H, Ha⁻¹H·ya ⊆ Ha⁻¹Ha, Ha⁻¹Ha·ya ⊆ HaH.  Every product in P starts with
+xa ∈ HaH, so P ⊆ Q (list induction), and each piece is an image of H × H: |P| ≤ 3h².
+-/
+theorem putnam_1977_b6
+{G : Type*}
+[Group G]
+(H : Subgroup G)
+[Finite H]
+(h : ℕ)
+(h_def : h = Nat.card H)
+(a : G)
+(ha : ∀ x : H, (x*a)^3 = 1)
+(P : Set G)
+(hP : P = {g : G | ∃ xs : List H, (xs.length ≥ 1) ∧ g = (List.map (fun h : H => h*a) xs).prod})
+: (Finite P) ∧ (P.ncard ≤ 3*h^2) := by
+  -- a y a = y⁻¹ a⁻¹ y⁻¹ and a⁻¹ y a⁻¹ = y⁻¹ a y⁻¹ for y ∈ H
+  have r1 : ∀ y : H, a * (y : G) * a = (y : G)⁻¹ * a⁻¹ * (y : G)⁻¹ := by
+    intro y
+    have h3 : (y : G) * a * ((y : G) * a) * ((y : G) * a) = 1 := by
+      have := ha y; rwa [pow_three, ← mul_assoc] at this
+    calc a * (y : G) * a
+        = (y : G)⁻¹ * ((y : G) * a * ((y : G) * a) * ((y : G) * a)) * a⁻¹ * (y : G)⁻¹ := by group
+      _ = (y : G)⁻¹ * a⁻¹ * (y : G)⁻¹ := by rw [h3]; group
+  have r2 : ∀ y : H, a⁻¹ * (y : G) * a⁻¹ = (y : G)⁻¹ * a * (y : G)⁻¹ := by
+    intro y
+    have e1 := r1 y⁻¹
+    simp only [Subgroup.coe_inv, inv_inv] at e1
+    calc a⁻¹ * (y : G) * a⁻¹ = (a * (y : G)⁻¹ * a)⁻¹ := by group
+      _ = ((y : G) * a⁻¹ * (y : G))⁻¹ := by rw [e1]
+      _ = (y : G)⁻¹ * a * (y : G)⁻¹ := by group
+  let f1 : H × H → G := fun p => (p.1 : G) * a * p.2
+  let f2 : H × H → G := fun p => (p.1 : G) * a⁻¹ * p.2
+  let f3 : H × H → G := fun p => (p.1 : G) * a⁻¹ * p.2 * a
+  let Q : Set G := Set.range f1 ∪ Set.range f2 ∪ Set.range f3
+  -- Q is closed under right multiplication by y a
+  have closed : ∀ g ∈ Q, ∀ y : H, g * ((y : G) * a) ∈ Q := by
+    rintro g ((⟨⟨u, v⟩, rfl⟩ | ⟨⟨u, v⟩, rfl⟩) | ⟨⟨u, v⟩, rfl⟩) y
+    · -- u a v y a = u (vy)⁻¹ a⁻¹ (vy)⁻¹
+      left; right
+      refine ⟨⟨u * (v * y)⁻¹, (v * y)⁻¹⟩, ?_⟩
+      simp only [f2]; push_cast
+      have := r1 (v * y); push_cast at this
+      calc (u : G) * ((v : G) * (y : G))⁻¹ * a⁻¹ * ((v : G) * (y : G))⁻¹
+          = (u : G) * (((v : G) * (y : G))⁻¹ * a⁻¹ * ((v : G) * (y : G))⁻¹) := by group
+        _ = (u : G) * (a * ((v : G) * (y : G)) * a) := by rw [this]
+        _ = (u : G) * a * (v : G) * ((y : G) * a) := by group
+    · -- u a⁻¹ v y a ∈ f3
+      right
+      exact ⟨⟨u, v * y⟩, by simp only [f2, f3]; push_cast; group⟩
+    · -- u a⁻¹ v a y a = u (v y⁻¹)⁻¹ a (v y⁻¹)⁻¹ y⁻¹
+      left; left
+      refine ⟨⟨u * (v * y⁻¹)⁻¹, (v * y⁻¹)⁻¹ * y⁻¹⟩, ?_⟩
+      simp only [f1]; push_cast
+      have e1 := r1 y
+      have e2 := r2 (v * y⁻¹); push_cast at e2
+      calc (u : G) * ((v : G) * (y : G)⁻¹)⁻¹ * a * (((v : G) * (y : G)⁻¹)⁻¹ * (y : G)⁻¹)
+          = (u : G) * (((v : G) * (y : G)⁻¹)⁻¹ * a * ((v : G) * (y : G)⁻¹)⁻¹) * (y : G)⁻¹ := by group
+        _ = (u : G) * (a⁻¹ * ((v : G) * (y : G)⁻¹) * a⁻¹) * (y : G)⁻¹ := by rw [e2]
+        _ = (u : G) * a⁻¹ * (v : G) * ((y : G)⁻¹ * a⁻¹ * (y : G)⁻¹) := by group
+        _ = (u : G) * a⁻¹ * (v : G) * (a * (y : G) * a) := by rw [e1]
+        _ = (u : G) * a⁻¹ * (v : G) * a * ((y : G) * a) := by group
+  have hsub : P ⊆ Q := by
+    rw [hP]
+    rintro g ⟨xs, hlen, rfl⟩
+    obtain ⟨x, rest, rfl⟩ : ∃ x rest, xs = x :: rest := by
+      cases xs with
+      | nil => simp at hlen
+      | cons x rest => exact ⟨x, rest, rfl⟩
+    have base : ∀ rest : List H, ∀ g ∈ Q, g * (List.map (fun h : H => (h : G) * a) rest).prod ∈ Q := by
+      intro rest
+      induction rest with
+      | nil => intro g hg; simpa using hg
+      | cons y rest ih =>
+        intro g hg
+        simp only [List.map_cons, List.prod_cons]
+        rw [← mul_assoc]
+        exact ih _ (closed g hg y)
+    simp only [List.map_cons, List.prod_cons]
+    exact base rest _ (Or.inl (Or.inl ⟨⟨x, 1⟩, by simp [f1]⟩))
+  have hfinH : (Set.univ : Set (H × H)).Finite := Set.finite_univ
+  have hQfin : Q.Finite := by
+    refine ((Set.finite_range f1).union (Set.finite_range f2)).union (Set.finite_range f3)
+  have hcard : ∀ f : H × H → G, (Set.range f).ncard ≤ h ^ 2 := by
+    intro f
+    rw [← Set.image_univ]
+    refine (Set.ncard_image_le hfinH).trans ?_
+    rw [Set.ncard_univ, Nat.card_prod, h_def, sq]
+  refine ⟨Set.Finite.to_subtype (hQfin.subset hsub), ?_⟩
+  calc P.ncard ≤ Q.ncard := Set.ncard_le_ncard hsub hQfin
+    _ ≤ (Set.range f1 ∪ Set.range f2).ncard + (Set.range f3).ncard := Set.ncard_union_le _ _
+    _ ≤ (Set.range f1).ncard + (Set.range f2).ncard + (Set.range f3).ncard := by
+        gcongr; exact Set.ncard_union_le _ _
+    _ ≤ h ^ 2 + h ^ 2 + h ^ 2 := by gcongr <;> exact hcard _
+    _ = 3 * h ^ 2 := by ring
