@@ -1,0 +1,79 @@
+import Mathlib
+
+open Polynomial Real Complex Matrix Filter Topology Multiset
+
+/-!
+Putnam 1975 B6.  Strict weighted AM-GM (`Real.geom_mean_lt_arith_mean_weighted_iff_of_pos`).
+(1) On 1 + 1/i, i = 1..n, weights 1/n: the product telescopes to n + 1, the mean is
+(n + H_n)/n, and 2 ≠ 3/2 makes it strict.  (2) On 1 − 1/i, i = 2..n, weights 1/(n−1): the
+product telescopes to 1/n, the mean is (n − H_n)/(n − 1), and 1/2 ≠ 2/3 makes it strict;
+(1/n)^(1/(n−1)) = n^(−1/(n−1)).
+-/
+theorem putnam_1975_b6
+(s : ℕ → ℝ)
+(hs : s = fun (n : ℕ) => ∑ i ∈ Finset.Icc 1 n, 1/(i : ℝ))
+: (∀ n : ℕ, n > 1 → n * (n+1 : ℝ)^(1/(n : ℝ)) < n + s n) ∧ (∀ n : ℕ, n > 2 → ((n : ℝ) - 1)*((n : ℝ)^(-1/(n-1 : ℝ))) < n - s n) := by
+  have tel1 : ∀ n : ℕ, ∏ i ∈ Finset.Icc 1 n, (1 + 1 / (i : ℝ)) = n + 1 := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [Finset.prod_Icc_succ_top (by omega), ih]; push_cast; field_simp
+  have tel2 : ∀ n : ℕ, 1 ≤ n → ∏ i ∈ Finset.Ioc 1 n, (1 - 1 / (i : ℝ)) = 1 / n := by
+    intro n hn
+    induction n with
+    | zero => omega
+    | succ n ih =>
+      rcases Nat.eq_zero_or_pos n with rfl | hpos
+      · simp
+      rw [Finset.prod_Ioc_succ_top (by omega), ih (by omega)]
+      have : (0 : ℝ) < n := by exact_mod_cast hpos
+      push_cast; field_simp; ring
+  constructor
+  · intro n hn
+    rw [hs]
+    have hnR : (0 : ℝ) < n := by positivity
+    have hcard : ((Finset.Icc 1 n).card : ℝ) = n := by simp
+    have amgm := (Real.geom_mean_lt_arith_mean_weighted_iff_of_pos (Finset.Icc 1 n)
+      (fun _ => 1 / (n : ℝ)) (fun i => 1 + 1 / (i : ℝ)) (fun _ _ => by positivity)
+      (by rw [Finset.sum_const, nsmul_eq_mul, hcard]; field_simp)
+      (fun _ _ => by positivity)).mpr
+      ⟨1, by simp; omega, 2, by simp; omega, by norm_num⟩
+    rw [Real.finsetProd_rpow _ _ (fun _ _ => by positivity), tel1, ← Finset.mul_sum,
+      Finset.sum_add_distrib, Finset.sum_const, nsmul_eq_mul, hcard, mul_one] at amgm
+    have := mul_lt_mul_of_pos_left amgm hnR
+    rw [← mul_assoc, mul_one_div_cancel hnR.ne', one_mul] at this
+    beta_reduce
+    exact this
+  · intro n hn
+    rw [hs]
+    have hn1 : (1 : ℝ) < n - 1 + 1 := by
+      have : (2 : ℝ) < n := by exact_mod_cast hn
+      linarith
+    have hm : (0 : ℝ) < n - 1 := by linarith
+    have hcard : ((Finset.Ioc 1 n).card : ℝ) = n - 1 := by
+      rw [Nat.card_Ioc]; push_cast [show 1 ≤ n by omega]; ring
+    have amgm := (Real.geom_mean_lt_arith_mean_weighted_iff_of_pos (Finset.Ioc 1 n)
+      (fun _ => 1 / ((n : ℝ) - 1)) (fun i => 1 - 1 / (i : ℝ)) (fun _ _ => by positivity)
+      (by rw [Finset.sum_const, nsmul_eq_mul, hcard]; field_simp)
+      (fun i hi => by
+        have : (1 : ℝ) ≤ i := by
+          have := (Finset.mem_Ioc.mp hi).1; exact_mod_cast this.le
+        rw [sub_nonneg, div_le_one (by linarith)]; exact this)).mpr
+      ⟨2, by simp; omega, 3, by simp; omega, by norm_num⟩
+    rw [Real.finsetProd_rpow _ _ (fun i hi => by
+        have : (1 : ℝ) ≤ i := by
+          have := (Finset.mem_Ioc.mp hi).1; exact_mod_cast this.le
+        rw [sub_nonneg, div_le_one (by linarith)]; exact this),
+      tel2 n (by omega), ← Finset.mul_sum, Finset.sum_sub_distrib, Finset.sum_const,
+      nsmul_eq_mul, hcard, mul_one] at amgm
+    have hsplit : ∑ i ∈ Finset.Icc 1 n, 1 / (i : ℝ) = 1 + ∑ i ∈ Finset.Ioc 1 n, 1 / (i : ℝ) := by
+      rw [← Finset.add_sum_Ioc_eq_sum_Icc (by omega)]; simp
+    have hpow : (1 / (n : ℝ)) ^ (1 / ((n : ℝ) - 1)) = (n : ℝ) ^ (-1 / ((n : ℝ) - 1)) := by
+      rw [one_div, Real.inv_rpow (by positivity), ← Real.rpow_neg (by positivity), neg_div]
+    rw [hpow] at amgm
+    have := mul_lt_mul_of_pos_left amgm hm
+    rw [← mul_assoc, mul_one_div_cancel hm.ne', one_mul] at this
+    beta_reduce
+    rw [hsplit]
+    linarith
