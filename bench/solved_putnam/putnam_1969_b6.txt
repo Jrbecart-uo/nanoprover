@@ -1,0 +1,54 @@
+import Mathlib
+
+open Matrix Filter Topology Set Nat
+
+/-!
+Putnam 1969 B6.  With P = AB: P² = 9P (entrywise), so M = BA satisfies
+M³ = B P² A = 9 B P A = 9 M².  Cauchy–Binet for the 2×3·3×2 product, as a `ring` identity:
+det(BA) = sum of the principal 2×2 minors of AB = 36 + 36 + 9 = 81 ≠ 0, so M² is a unit and
+cancels: M = 9·I.
+-/
+theorem putnam_1969_b6
+(A : Matrix (Fin 3) (Fin 2) ℝ)
+(B : Matrix (Fin 2) (Fin 3) ℝ)
+(p : Fin 3 → Fin 3 → ℝ)
+(hp : p 0 0 = 8 ∧ p 0 1 = 2 ∧ p 0 2 = -2 ∧
+p 1 0 = 2 ∧ p 1 1 = 5 ∧ p 1 2 = 4 ∧
+p 2 0 = -2 ∧ p 2 1 = 4 ∧ p 2 2 = 5)
+(hAB : A * B = Matrix.of p)
+: B * A = 9 * (1 : Matrix (Fin 2) (Fin 2) ℝ) := by
+  obtain ⟨p00, p01, p02, p10, p11, p12, p20, p21, p22⟩ := hp
+  have hP2 : Matrix.of p * Matrix.of p = (9 : ℝ) • Matrix.of p := by
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      simp [Matrix.mul_apply, Fin.sum_univ_three, p00, p01, p02, p10, p11, p12, p20, p21,
+        p22] <;> norm_num
+  set M := B * A with hM
+  have hM3 : M * (M * M) = (9 : ℝ) • (M * M) := by
+    have e1 : M * (M * M) = B * ((A * B) * (A * B)) * A := by
+      simp only [hM, Matrix.mul_assoc]
+    have e2 : M * M = B * (A * B) * A := by simp only [hM, Matrix.mul_assoc]
+    rw [e1, e2, hAB, hP2, Matrix.mul_smul, Matrix.smul_mul]
+  -- Cauchy–Binet: det(BA) = sum of the principal 2×2 minors of AB
+  have hdet : M.det = 81 := by
+    have e : ∀ i j, (A * B) i j = p i j := fun i j => by rw [hAB]; rfl
+    simp only [Matrix.mul_apply, Fin.sum_univ_two] at e
+    rw [hM, Matrix.det_fin_two]
+    simp only [Matrix.mul_apply, Fin.sum_univ_three]
+    have key : (B 0 0 * A 0 0 + B 0 1 * A 1 0 + B 0 2 * A 2 0) *
+        (B 1 0 * A 0 1 + B 1 1 * A 1 1 + B 1 2 * A 2 1) -
+        (B 0 0 * A 0 1 + B 0 1 * A 1 1 + B 0 2 * A 2 1) *
+        (B 1 0 * A 0 0 + B 1 1 * A 1 0 + B 1 2 * A 2 0) =
+        (p 0 0 * p 1 1 - p 0 1 * p 1 0) + (p 0 0 * p 2 2 - p 0 2 * p 2 0)
+        + (p 1 1 * p 2 2 - p 1 2 * p 2 1) := by
+      rw [← e 0 0, ← e 0 1, ← e 1 0, ← e 1 1, ← e 0 2, ← e 2 0, ← e 2 2, ← e 1 2, ← e 2 1]
+      ring
+    rw [key, p00, p01, p02, p10, p11, p12, p20, p21, p22]; norm_num
+  have hU : IsUnit (M * M) := by
+    rw [Matrix.isUnit_iff_isUnit_det, Matrix.det_mul, hdet]; norm_num
+  have : M = (9 : ℝ) • (1 : Matrix (Fin 2) (Fin 2) ℝ) := by
+    apply hU.mul_right_cancel
+    rw [hM3, Matrix.smul_mul, Matrix.one_mul]
+  rw [this]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Matrix.ofNat_apply]
