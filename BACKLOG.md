@@ -11,6 +11,7 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   hardened sandbox) `verification/NS_AUDIT.md`; pre-emptive Millennium statement audits
   `verification/MILLENNIUM_STATEMENTS.md` + Hodge `verification/HODGE_AUDIT.md`; Erdős
   triage `erdos/TRIAGE.md`; tools `tools/claimcheck.py`, `tools/verify_scalps.py`.
+- 2026-09-28: IMO 1985 P6 solved; Erdős #1110 (7,2) density — candidate proof (see Track F).
 - 2026-09-28 session: +47 Putnam scalps (53 → **100**) + 1991_a6 proved VACUOUS; re-triage done
   (`bench/putnam_retriage_notes.md`), cost-1–2 tier cleared, 25 of the cost-3 wave done; all 101
   files re-verified with `verify_scalps.py --kernel`. NEXT: remaining cost-3 list in that file
@@ -94,8 +95,12 @@ essential here — a digon must be a cycle).
       5832484464); 261 already filed as #6538 by an automated LM audit (`ai-audit` label —
       such audits now sweep FC continuously; search before filing). Follow-up: a PR
       re-tagging them needs the Google CLA signed.
-- [ ] Only residual genuine target: #1110 density clause — positive lower density of
-      representables for (7,2) or (4,3) (finite-certificate search + Lean counting).
+- [~] #1110 density clause, (7,2): **candidate computer-assisted proof of positive lower density**
+      (2026-09-28) — `erdos/1110/PROOF_SKETCH.md`. Two-block look-ahead potential certificate at
+      s=11 (ĝ = 3.904698 < 11·26/73 = 3.917808), independent integer verifier PASS, independent
+      big-int cross-check exact at s=11, adversarial referee: no fatal issue (gaps patched).
+      Open decisions (USER): whether/where to report (Erdős forum proof-claims, FC variant);
+      optional next: human-expert review, (9,2)/(5,3) with the same method, a Lean statement.
 - ✅ 261 proof re-checked in the FC environment (clean axioms).
 
 ## Track G — Navier–Stokes (OpenAI, Sep 2026) — AUDIT DONE 2026-09-24
