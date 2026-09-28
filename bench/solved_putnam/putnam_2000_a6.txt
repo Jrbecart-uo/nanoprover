@@ -1,0 +1,91 @@
+import Mathlib
+
+open Topology Filter
+
+/-!
+Putnam 2000 A6.  dₙ = aₙ₊₁ − aₙ satisfies dₙ ∣ dₙ₊₁ (`Polynomial.sub_dvd_eval_sub`) and the
+sequence has period m, so d₀ ∣ dₖ ∣ dₘ = d₀: all |dₖ| (k ≤ m) equal |d₀|.  If d₀ = 0 then
+a₁ = 0.  Otherwise, were every dₖ₊₁ = dₖ, we'd get aₘ = m·d₀ ≠ 0; so some dₖ₊₁ = −dₖ, i.e.
+aₖ₊₂ = aₖ, and the tail is 2-periodic from k.  At n = k·m ≥ k this gives a₂ = a₀ = 0.
+-/
+theorem putnam_2000_a6
+(f : Polynomial ℤ)
+(a : ℕ → ℤ)
+(ha0 : a 0 = 0)
+(ha : ∀ n : ℕ, a (n + 1) = f.eval (a n))
+: ((∃ m > 0, a m = 0) → (a 1 = 0 ∨ a 2 = 0)) := by
+  rintro ⟨m, hm, ham⟩
+  set d : ℕ → ℤ := fun n => a (n + 1) - a n with hd
+  have hdvd : ∀ n, d n ∣ d (n + 1) := by
+    intro n
+    simp only [hd, ha (n + 1), ha n]
+    exact Polynomial.sub_dvd_eval_sub _ _ _
+  -- period m
+  have hper : ∀ k, a (k + m) = a k := by
+    intro k
+    induction k with
+    | zero => simp [ham, ha0]
+    | succ k ih => rw [show k + 1 + m = (k + m) + 1 by ring, ha, ih, ← ha]
+  have hper' : ∀ j n, a (n + j * m) = a n := by
+    intro j
+    induction j with
+    | zero => simp
+    | succ j ih => intro n; rw [show n + (j + 1) * m = (n + j * m) + m by ring, hper, ih]
+  have hdm : d m = d 0 := by simp only [hd, zero_add]; rw [add_comm m 1, hper 1, ham, ha0]
+  -- chain of divisibility
+  have hchain : ∀ k j, k ≤ j → d k ∣ d j := by
+    intro k j hkj
+    induction j with
+    | zero => rw [Nat.le_zero.mp hkj]
+    | succ j ih =>
+      rcases Nat.eq_or_lt_of_le hkj with h | h
+      · rw [h]
+      · exact (ih (by omega)).trans (hdvd j)
+  have habs : ∀ k, k ≤ m → (d k).natAbs = (d 0).natAbs := by
+    intro k hk
+    apply Nat.dvd_antisymm
+    · exact Int.natAbs_dvd_natAbs.mpr (hdm ▸ hchain k m hk)
+    · exact Int.natAbs_dvd_natAbs.mpr (hchain 0 k (Nat.zero_le k))
+  by_cases h0 : d 0 = 0
+  · left; simp only [hd] at h0; linarith
+  right
+  -- some consecutive pair flips sign
+  obtain ⟨k, hk, hflip⟩ : ∃ k, k < m ∧ d (k + 1) = -d k := by
+    by_contra hno
+    push Not at hno
+    have hall : ∀ k, k ≤ m → d k = d 0 := by
+      intro k hk
+      induction k with
+      | zero => rfl
+      | succ k ih =>
+        have e1 := habs (k + 1) hk
+        have e2 := habs k (by omega)
+        rcases Int.natAbs_eq_natAbs_iff.mp (e1.trans e2.symm) with h | h
+        · rw [h, ih (by omega)]
+        · exact absurd h (hno k (by omega))
+    have hlin : ∀ k, k ≤ m → a k = k * d 0 := by
+      intro k hk
+      induction k with
+      | zero => simp [ha0]
+      | succ k ih =>
+        have := hall k (by omega)
+        simp only [hd] at this
+        push_cast
+        linarith [ih (by omega)]
+    have := hlin m le_rfl
+    rw [ham] at this
+    have hm' : (m : ℤ) ≠ 0 := by exact_mod_cast hm.ne'
+    exact h0 ((mul_eq_zero.mp this.symm).resolve_left hm')
+  -- a (k+2) = a k, hence period 2 from k on
+  have hk2 : a (k + 2) = a k := by simp only [hd] at hflip; linarith
+  have h2 : ∀ n, k ≤ n → a (n + 2) = a n := by
+    intro n hn
+    induction n with
+    | zero => rw [Nat.le_zero.mp hn] at hk2; exact hk2
+    | succ n ih =>
+      rcases Nat.eq_or_lt_of_le hn with h | h
+      · rw [← h]; exact hk2
+      · rw [show n + 1 + 2 = (n + 2) + 1 by ring, ha, ih (by omega), ← ha]
+  have := h2 (k * m) (Nat.le_mul_of_pos_right k hm)
+  rw [add_comm, hper' k 2, show k * m = 0 + k * m by ring, hper' k 0, ha0] at this
+  exact this
