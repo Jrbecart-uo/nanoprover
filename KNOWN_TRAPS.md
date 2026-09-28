@@ -149,3 +149,7 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
   a linear ansatz (unknown multipliers of the right weighted degree, `linsolve`) works —
   recentre first to cut variables.  sympy is not in the venv: `pip install --target
   <scratch>/pylib sympy` and run with `PYTHONPATH`.  See 1971_a3 / 2000_a5.
+- Name renames seen 2026-09-28: `le_or_lt` → `le_or_gt`; `Real.finset_prod_rpow` →
+  `Real.finsetProd_rpow`; `Nat.factorization_prod_pow_eq_self` →
+  `Nat.prod_factorization_pow_eq_self`; `Matrix.mul_eq_one_comm` → `mul_eq_one_comm`;
+  `LinearMap.mul_eq_comp` → `Module.End.mul_eq_comp`.
