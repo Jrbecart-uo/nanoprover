@@ -1,0 +1,72 @@
+import Mathlib
+
+open Filter Topology Set
+
+/-!
+Putnam 2010 B6.  Cayley–Hamilton (`Matrix.aeval_self_charpoly`).  For monic q with q(0) = 0
+and natDegree K, if A^d = A^[d] for 1 ≤ d < K then entrywise
+(q(A))ᵢⱼ = (A^K)ᵢⱼ − aᵢⱼ^K + q(aᵢⱼ)  (split off the top coefficient).  With q = X·χ_A and the
+hypothesis up to n+1, every entry satisfies a·χ_A(a) = 0.  Then for k ≥ n+2, q = X^(k−n)·χ_A
+vanishes at A and at every entry, so (A^k)ᵢⱼ = aᵢⱼ^k by strong induction.
+-/
+theorem putnam_2010_b6
+(n : ℕ)
+(npos : n ≥ 1)
+(A : Matrix (Fin n) (Fin n) ℝ)
+(Apow : ℕ → Matrix (Fin n) (Fin n) ℝ)
+(hApow : ∀ k > 0, Apow k = (fun i j : Fin n => (A i j) ^ k))
+: (∀ k ∈ Set.Icc 1 (n + 1), A ^ k = Apow k) → (∀ k ≥ 1, A ^ k = Apow k) := by
+  intro hbase
+  open Polynomial in
+  -- entry (i,j) of q(A) vs q evaluated at the entry, for monic q with q(0) = 0
+  have split : ∀ (q : ℝ[X]) (K : ℕ), q.natDegree = K → q.Monic → q.coeff 0 = 0 →
+      (∀ d, 1 ≤ d → d < K → A ^ d = Apow d) →
+      ∀ i j, (aeval A q) i j = (A ^ K) i j - (A i j) ^ K + q.eval (A i j) := by
+    intro q K hdeg hmon hc0 hlow i j
+    rw [aeval_eq_sum_range, eval_eq_sum_range, hdeg, Finset.sum_range_succ, Finset.sum_range_succ,
+      Matrix.add_apply, Matrix.sum_apply]
+    have hK : q.coeff K = 1 := by rw [← hdeg]; exact hmon.coeff_natDegree
+    have hs : ∑ d ∈ Finset.range K, (q.coeff d • A ^ d) i j
+        = ∑ d ∈ Finset.range K, q.coeff d * (A i j) ^ d := by
+      refine Finset.sum_congr rfl fun d hd => ?_
+      rw [Matrix.smul_apply, smul_eq_mul]
+      rcases Nat.eq_zero_or_pos d with rfl | hdpos
+      · simp [hc0]
+      · rw [hlow d hdpos (Finset.mem_range.mp hd), hApow d hdpos]
+    rw [hs, hK, Matrix.smul_apply, one_smul, one_mul]; ring
+  set χ := A.charpoly
+  have hχdeg : χ.natDegree = n := by rw [Matrix.charpoly_natDegree_eq_dim, Fintype.card_fin]
+  have hχmon : χ.Monic := Matrix.charpoly_monic A
+  -- every entry a satisfies a·χ(a) = 0
+  have hroot : ∀ i j, A i j * χ.eval (A i j) = 0 := by
+    intro i j
+    have h := split (Polynomial.X * χ) (n + 1)
+      (by rw [Polynomial.monic_X.natDegree_mul hχmon, Polynomial.natDegree_X, hχdeg]; ring)
+      (Polynomial.monic_X.mul hχmon) (by simp)
+      (fun d hd1 hd2 => hbase d ⟨hd1, by omega⟩) i j
+    rw [map_mul, Polynomial.aeval_X, Matrix.aeval_self_charpoly, Matrix.mul_zero,
+      hbase (n + 1) ⟨by omega, le_rfl⟩, hApow (n + 1) (by omega)] at h
+    simp only [Matrix.zero_apply, Polynomial.eval_mul, Polynomial.eval_X] at h
+    linarith
+  intro k hk
+  induction k using Nat.strong_induction_on with
+  | _ k ih =>
+    by_cases hkn : k ≤ n + 1
+    · exact hbase k ⟨hk, hkn⟩
+    push Not at hkn
+    set m := k - n with hm
+    have hm2 : 2 ≤ m := by omega
+    ext i j
+    have h := split (Polynomial.X ^ m * χ) k
+      (by rw [(Polynomial.monic_X_pow m).natDegree_mul hχmon, Polynomial.natDegree_X_pow, hχdeg];
+          omega)
+      ((Polynomial.monic_X_pow m).mul hχmon)
+      (by rw [Polynomial.coeff_X_pow_mul']; simp; omega)
+      (fun d hd1 hd2 => ih d hd2 hd1) i j
+    rw [map_mul, Matrix.aeval_self_charpoly, Matrix.mul_zero, Matrix.zero_apply,
+      Polynomial.eval_mul, Polynomial.eval_pow, Polynomial.eval_X] at h
+    have hev : (A i j) ^ m * χ.eval (A i j) = 0 := by
+      rw [show m = (m - 1) + 1 by omega, pow_succ, mul_assoc, hroot, mul_zero]
+    rw [hev, add_zero] at h
+    rw [hApow k (by omega)]
+    linarith
