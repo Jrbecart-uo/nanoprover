@@ -1,0 +1,56 @@
+import Mathlib
+
+open Set Filter Topology Real Polynomial Function
+
+/-!
+Putnam 1985 B6.  Left multiplication by g ∈ G maps G into G injectively (g has an inverse
+in G), hence onto G, so g·S = S for S = Σ_{M∈G} M.  Then S² = Σ_g g·S = |G|·S, so
+P = S/|G| is idempotent with trace 0.  Over ℝ (char 0) an idempotent with trace 0 is 0
+(`LinearMap.IsIdempotentElem.eq_zero_of_trace_eq_zero` via `Matrix.toLin'`), so S = 0.
+-/
+theorem putnam_1985_b6
+(n : ℕ)
+(npos : n > 0)
+(G : Finset (Matrix (Fin n) (Fin n) ℝ))
+(groupG : (∀ g ∈ G, ∀ h ∈ G, g * h ∈ G) ∧ 1 ∈ G ∧ (∀ g ∈ G, ∃ h ∈ G, g * h = 1))
+(hG : ∑ M ∈ G, Matrix.trace M = 0)
+: (∑ M ∈ G, M = 0) := by
+  classical
+  obtain ⟨hmul, h1, hinv⟩ := groupG
+  set S := ∑ M ∈ G, M with hS
+  set k := G.card
+  have hk : (0 : ℝ) < k := by exact_mod_cast Finset.card_pos.mpr ⟨1, h1⟩
+  -- left multiplication by g ∈ G permutes G
+  have hperm : ∀ g ∈ G, ∑ M ∈ G, g * M = S := by
+    intro g hg
+    obtain ⟨h, -, hgh⟩ := hinv g hg
+    have hhg : h * g = 1 := mul_eq_one_comm.mp hgh
+    have hinj : Set.InjOn (fun M => g * M) G := by
+      intro M _ M' _ hMM
+      simpa [← Matrix.mul_assoc, hhg] using congrArg (h * ·) hMM
+    have himg : G.image (fun M => g * M) = G := by
+      apply Finset.eq_of_subset_of_card_le
+      · intro N hN
+        obtain ⟨M, hM, rfl⟩ := Finset.mem_image.mp hN
+        exact hmul g hg M hM
+      · rw [Finset.card_image_of_injOn hinj]
+    rw [← Finset.sum_image (f := fun N => N) hinj, himg]
+  have hSS : S * S = (k : ℝ) • S := by
+    have e : S * S = ∑ g ∈ G, ∑ M ∈ G, g * M := by
+      conv_lhs => rw [hS, Finset.sum_mul]
+      refine Finset.sum_congr rfl fun g _ => ?_
+      rw [Finset.mul_sum]
+    rw [e, Finset.sum_congr rfl hperm, Finset.sum_const, Nat.cast_smul_eq_nsmul]
+  set P := (k : ℝ)⁻¹ • S with hP
+  have hPP : P * P = P := by
+    rw [hP, Matrix.smul_mul, Matrix.mul_smul, hSS, smul_smul, smul_smul]
+    congr 1; field_simp
+  have htr : P.trace = 0 := by
+    rw [hP, Matrix.trace_smul, hS, Matrix.trace_sum, hG, smul_zero]
+  have he : IsIdempotentElem (Matrix.toLin' P) := by
+    rw [IsIdempotentElem, Module.End.mul_eq_comp, ← Matrix.toLin'_mul, hPP]
+  have hz := LinearMap.IsIdempotentElem.eq_zero_of_trace_eq_zero he
+    (by rw [Matrix.trace_toLin'_eq, htr])
+  have hP0 : P = 0 := Matrix.toLin'.map_eq_zero_iff.mp hz
+  rw [hP] at hP0
+  exact (smul_eq_zero.mp hP0).resolve_left (inv_ne_zero hk.ne')
