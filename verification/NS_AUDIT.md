@@ -77,10 +77,10 @@ Run 2 layers, all on the stock 6.6 kernel: systemd-run `RestrictAddressFamilies=
 `SystemCallFilter=~@debug @module @reboot @swap @raw-io @clock @cpu-emulation`; then
 `unshare --user --map-root-user --net --ipc --pid --uts --mount --fork --mount-proc`; then
 landrun `--best-effort`. For this purpose it is stronger than Landlock v9 alone (network is
-removed, not filtered). Script: `external/ns_comparator_strict.sh`.
+removed, not filtered). Script: `verification/ns/comparator_strict.sh`.
 
-**RESULT: both challenges pass under both sandboxes** (`external/ns_comparator.log`,
-`external/ns_comparator_strict.log`); run 2 rebuilt the solution from scratch (previous
+**RESULT: both challenges pass under both sandboxes** (`verification/ns/comparator.log`,
+`verification/ns/comparator_strict.log`); run 2 rebuilt the solution from scratch (previous
 build moved aside), challenge files byte-identical before and after:
 
 | config | statements match challenge | axioms ⊆ permitted | nanoda kernel | Lean kernel | run 1 | run 2 (strict) |

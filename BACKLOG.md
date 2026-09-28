@@ -3,19 +3,24 @@
 Durable handoff. A new session can read this + the auto-memory (`nanoprover-project`,
 `nanoprover-env`, `nanoprover-roadmap`, `cdc-formalization`, `naskrecki-problem`)
 and propose next tasks. Ranked by leverage within each track. Last updated
-2026-09-24.
+2026-09-28.
 
 ## Where the last session (2026-09-24/25) left off
-- All work is on branch **`session-2026-09-24`** (pushed; NOT merged into `main` — merge or
-  open a PR when convenient). Read `CLAUDE.md` for commands.
+- Branch `session-2026-09-24` was **merged (fast-forward) into `main`** on 2026-09-28; work on `main`.
 - Done that session: Putnam 23 → **53** scalps; Navier–Stokes Lean audit (two kernels,
   hardened sandbox) `verification/NS_AUDIT.md`; pre-emptive Millennium statement audits
   `verification/MILLENNIUM_STATEMENTS.md` + Hodge `verification/HODGE_AUDIT.md`; Erdős
   triage `erdos/TRIAGE.md`; tools `tools/claimcheck.py`, `tools/verify_scalps.py`.
-- Suggested next: re-triage the 143 unsolved PutnamBench problems excluded by the
-  analysis-keyword filter (cheap wins first), then the harder ranked list in Track A.
-- Heavy local state (gitignored, may be deleted to free ~25 GB): `external/` (NS clones +
-  builds, formal-conjectures, erdosproblems, Hodge clone, tools, claims).
+- Suggested next: re-triage the unsolved PutnamBench problems that mention ℝ/ℂ/analysis —
+  input list `bench/putnam_retriage.tsv` (244 rows, tiered by what they need: 117
+  `real-algebraic` = ℝ but no limits/calculus/integrals/transcendentals → cheap wins
+  first), then the harder ranked list in Track A. 29 unsolved problems with no analysis
+  at all remain (already triaged; the Track A NEXT list is drawn from them).
+- 2026-09-28 cleanup: the ~58 GB of clones in `external/` (NS ×3, Hodge, formal-conjectures)
+  were deleted — re-fetch with `claimcheck.py fetch` at the commits pinned in the audit docs.
+  Kept: `external/tools/` (claimcheck binaries), `claims/`, `erdosproblems/`, `erdos-wiki/`.
+  NS audit evidence (comparator logs + scripts + follow-ups report) now lives in
+  `verification/ns/`.
 
 ## Session-start ritual
 1. `export PATH="$HOME/.elan/bin:$PATH"`
@@ -97,7 +102,7 @@ essential here — a digon must be a cycle).
   audited; full build + Comparator in a fresh clone; **nanoda + Lean kernels accept both
   challenges**; clean axioms. Tools built locally in `external/tools/` (landrun
   best-effort: WSL Landlock ABI v3 only).
-- [ ] Follow-up candidates (`external/ns_followups_report.md`): independent Euler
+- [ ] Follow-up candidates (`verification/ns/followups_report.md`): independent Euler
       statement for FC; Looi's unforced viscous Obukhov-model regularity (ODE);
       exact-arithmetic checks of exponent thresholds (e.g. (22−8√7)/9).
 - Item 4 PICKED 2026-09-25: no Millennium problem is attackable head-on at our scale; instead
