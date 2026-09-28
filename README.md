@@ -187,10 +187,11 @@ and the corrected double-Gauss proof was accepted next round. Proposers:
   anonymous `example`, which never enters the environment). Benchmarks lie
   in subtle ways; the first (wrong) run scored 8/8.
 
-### 6. Two IMO problems from the never-solved tier
+### 6. IMO problems from the never-solved tier
 
 We aimed the retry loop (session LLM as proposer) at the three miniF2F IMO
-problems most cited as unsolved-by-machines:
+problems most cited as unsolved-by-machines — all three now fall (1985 P6 on
+2026-09-28, after being recorded here as an honest fail):
 
 | problem | result | proof shape |
 |---|---|---|
