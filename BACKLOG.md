@@ -11,7 +11,10 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   hardened sandbox) `verification/NS_AUDIT.md`; pre-emptive Millennium statement audits
   `verification/MILLENNIUM_STATEMENTS.md` + Hodge `verification/HODGE_AUDIT.md`; Erdős
   triage `erdos/TRIAGE.md`; tools `tools/claimcheck.py`, `tools/verify_scalps.py`.
-- Suggested next: re-triage the unsolved PutnamBench problems that mention ℝ/ℂ/analysis —
+- 2026-09-28 session: +22 Putnam scalps (53 → 75) + 1991_a6 proved VACUOUS; the re-triage is
+  done (`bench/putnam_retriage_notes.md`) and its cost-1–2 tier is cleared. NEXT: the cost-3
+  wave in that file.
+- (older) Suggested next: re-triage the unsolved PutnamBench problems that mention ℝ/ℂ/analysis —
   input list `bench/putnam_retriage.tsv` (244 rows, tiered by what they need: 117
   `real-algebraic` = ℝ but no limits/calculus/integrals/transcendentals → cheap wins
   first), then the harder ranked list in Track A. 29 unsolved problems with no analysis
@@ -32,7 +35,7 @@ and propose next tasks. Ranked by leverage within each track. Last updated
 ---
 
 ## Track A — Putnam scalps (theorem-mode; where we are strongest)
-Current: **53 scalps** (2026-09-25: +30 — scoped-out list emptied, then a triage-driven sweep of the unsolved pure-proof set). Reachable wins live here.
+Current: **75 scalps + 1 vacuous** (2026-09-28: +22 real, 1991_a6 vacuous — the whole cost-1–2 tier of `bench/putnam_retriage_notes.md`, plus 2012_a1/1982_a5/1983_b4/2008_b4/1970_b3/1968_b6 from the NEXT list). 2026-09-25: +30. Reachable wins live here.
 - ✅ **Scoped-out list cleared** (4/4 fell when re-examined: 1996_a5, 2001_a5, 1974_b3,
       2007_a5). 1974_b3 needed no algebraic integers (denominators 3^(2^k) grow under
       angle doubling); 2007_a5 passed first try via `card_fixedPoints_modEq` on the

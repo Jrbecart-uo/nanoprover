@@ -1,5 +1,7 @@
 import Mathlib
 
+open Function
+
 set_option maxHeartbeats 800000
 
 /-!

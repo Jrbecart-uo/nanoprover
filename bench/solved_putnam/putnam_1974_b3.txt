@@ -1,5 +1,7 @@
 import Mathlib
 
+open Set Nat Polynomial Filter Topology
+
 /-!
 Putnam 1974 B3.  If `cos (π α) = 1/3` then `α` is irrational.
 

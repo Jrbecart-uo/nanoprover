@@ -1,5 +1,7 @@
 import Mathlib
 
+open Topology Filter Nat Set Function
+
 /-!
 Putnam 2000 B5.  Encode Sₙ by its Bool indicator; one step is T g a = g(a−1) xor g(a).
 By induction on m (T^[2^(m+1)] = T^[2^m] ∘ T^[2^m], `Function.iterate_mul`), for EVERY g:

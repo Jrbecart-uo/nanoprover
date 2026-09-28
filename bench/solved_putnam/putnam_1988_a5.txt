@@ -1,5 +1,7 @@
 import Mathlib
 
+open Set Filter Topology
+
 set_option maxHeartbeats 1600000
 
 open Filter

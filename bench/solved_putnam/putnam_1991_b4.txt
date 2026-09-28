@@ -1,5 +1,7 @@
 import Mathlib
 
+open Filter Topology
+
 set_option maxHeartbeats 1600000
 
 theorem putnam_1991_b4

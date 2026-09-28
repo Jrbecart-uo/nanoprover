@@ -4,26 +4,27 @@ Input: the 117 `real-algebraic` rows of `bench/putnam_retriage.tsv`. Three read-
 rated each by statement only (no Lean): cost 1 (<30 lines) … 5 (major missing theory).
 Estimates, not results — the kernel decides. Solved this session are struck out.
 
-## Cheapest (cost 1–2), with the plan that looked right
+## Cheapest (cost 1–2), with the plan that looked right — ALL DONE 2026-09-28
+21/21 fell (1991_a6 as VACUOUS, counted separately); most passed in 1–3 kernel rounds.
 - ~~2012_a1~~ ~~1982_a5~~ ~~1983_b4~~ ~~2008_b4~~ ~~1970_b3~~ ~~1968_b6~~ (all solved 2026-09-28)
-- 1991_a6 — **VACUOUS** (`→` looser than `∧` in `hA`; the set is infinite, `encard = ⊤`
+- ~~1991_a6~~ ✅ — **VACUOUS** (`→` looser than `∧` in `hA`; the set is infinite, `encard = ⊤`
   contradicts `A n : ℕ`). Label as vacuous if counted.
-- 1986_b6 — `fromBlocks A B C D * fromBlocks Dᵀ (-Bᵀ) (-Cᵀ) Aᵀ = 1`, `Matrix.mul_eq_one_comm`,
+- ~~1986_b6~~ ✅ — `fromBlocks A B C D * fromBlocks Dᵀ (-Bᵀ) (-Cᵀ) Aᵀ = 1`, `Matrix.mul_eq_one_comm`,
   read off block (2,2).
-- 1987_b3 — rational parametrization r = y/(1−x); `field_simp; ring` both ways.
-- 1972_a1 — `Nat.choose_succ_right_eq` ×3 → (n−2r−2)² = n+2 = (n−2r−4)², impossible.
-- 1994_a4 — det(A+tB) quadratic in t, ±1 at t=0..4 → 32 sign cases by omega.
-- 1978_b6 — x_i = A_i/i ∈ [0,m], induct on n, `nlinarith` per step.
-- 1965_a6 — rpow algebra with n = m/(m−1).
-- 2000_b1 — double count over 7 nonzero (r,s,t) ∈ {0,1}³; 4 of 7 odd (`decide` in ZMod 2).
-- 2004_a3 — `det_fin_two`; induction on u n·u(n+1) = n!, u(n+2) = (n+1)·u n.
-- 1978_b4 — Vieta-jumping sequence 1,1,1,2,4,13,85,…; invariant by `linear_combination`.
-- 1999_b6 — `Nat.find` least n with gcd(s,n) > 1 ∀ s; prime p ∣ s; minimality at n/p.
-- 1988_b6 — t triangular ⇔ 8t+1 odd square; family ((2k+1)², k(k+1)/2) injective ⇒ encard ⊤.
-- 2001_b1 — split grid sum; per-row/col counts n/2.
-- 2003_b4 — Vieta by evaluating at 5 points; rational-closure chain.
-- 1969_b6 — P·P = 9P; det(BA) = 81 via Cauchy–Binet `linear_combination`; BA = 9I.
-- 2005_a4 — ‖Σ chosen rows‖² = a·n vs ≥ b·a².
+- ~~1987_b3~~ ✅ — rational parametrization r = y/(1−x); `field_simp; ring` both ways.
+- ~~1972_a1~~ ✅ — `Nat.choose_succ_right_eq` ×3 → (n−2r−2)² = n+2 = (n−2r−4)², impossible.
+- ~~1994_a4~~ ✅ — det(A+tB) quadratic in t, ±1 at t=0..4 → 32 sign cases by omega.
+- ~~1978_b6~~ ✅ — x_i = A_i/i ∈ [0,m], induct on n, `nlinarith` per step.
+- ~~1965_a6~~ ✅ — rpow algebra with n = m/(m−1).
+- ~~2000_b1~~ ✅ — double count over 7 nonzero (r,s,t) ∈ {0,1}³; 4 of 7 odd (`decide` in ZMod 2).
+- ~~2004_a3~~ ✅ — `det_fin_two`; induction on u n·u(n+1) = n!, u(n+2) = (n+1)·u n.
+- ~~1978_b4~~ ✅ — Vieta-jumping sequence 1,1,1,2,4,13,85,…; invariant by `linear_combination`.
+- ~~1999_b6~~ ✅ — `Nat.find` least n with gcd(s,n) > 1 ∀ s; prime p ∣ s; minimality at n/p.
+- ~~1988_b6~~ ✅ — t triangular ⇔ 8t+1 odd square; family ((2k+1)², k(k+1)/2) injective ⇒ encard ⊤.
+- ~~2001_b1~~ ✅ — split grid sum; per-row/col counts n/2.
+- ~~2003_b4~~ ✅ — Vieta by evaluating at 5 points; rational-closure chain.
+- ~~1969_b6~~ ✅ — P·P = 9P; det(BA) = 81 via Cauchy–Binet `linear_combination`; BA = 9I.
+- ~~2005_a4~~ ✅ — ‖Σ chosen rows‖² = a·n vs ≥ b·a².
 
 ## Cost 3 (next wave)
 1993_b5 (mod-8 Gram determinant), 2000_a6 (`sub_dvd_eval_sub` periodicity), 1994_b6

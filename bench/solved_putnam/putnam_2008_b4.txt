@@ -1,5 +1,7 @@
 import Mathlib
 
+open Filter Topology Set Nat
+
 /-!
 Putnam 2008 B4.  Taylor to first order (`Polynomial.binomExpansion`:
 h(x+y) = h(x) + h'(x)·y + c·y²) plus `Polynomial.sub_dvd_eval_sub` (h(x) mod m depends

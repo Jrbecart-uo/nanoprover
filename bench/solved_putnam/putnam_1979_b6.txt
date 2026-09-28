@@ -1,5 +1,7 @@
 import Mathlib
 
+open Set Topology Filter Polynomial MeasureTheory
+
 set_option maxHeartbeats 800000
 
 theorem putnam_1979_b6

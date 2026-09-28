@@ -1,5 +1,7 @@
 import Mathlib
 
+open Topology Filter Polynomial Set
+
 set_option maxHeartbeats 1600000
 
 /-!

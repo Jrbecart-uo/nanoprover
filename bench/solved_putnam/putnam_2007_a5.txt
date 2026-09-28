@@ -1,5 +1,7 @@
 import Mathlib
 
+open Set Nat
+
 /-!
 Putnam 2007 A5.  If `n` is the number of elements of order `p` (prime) in a finite group,
 then `n = 0` or `p ∣ n + 1`.
