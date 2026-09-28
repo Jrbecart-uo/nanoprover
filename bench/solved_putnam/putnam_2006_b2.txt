@@ -1,0 +1,109 @@
+import Mathlib
+
+/-!
+Putnam 2006 B2.  Enumerate X (`orderEmbOfFin`) and take prefix sums P₀ = 0, …, Pₙ.  The n+2
+values fract(P₀), …, fract(Pₙ) and 1 lie in [0,1]; bucket them by min(n, ⌊v(n+1)⌋) into
+n+1 buckets of width 1/(n+1) (`Finset.exists_ne_map_eq_of_card_lt_of_maps_to`).  Two in the
+same bucket: either fract(Pⱼ) − fract(Pᵢ) (i < j), giving the block S = {x_i..x_{j−1}} with
+m = ⌊Pᵢ⌋ − ⌊Pⱼ⌋, or 1 − fract(Pᵢ) (i ≥ 1, since fract P₀ = 0), giving the first i elements
+with m = −⌊Pᵢ⌋ − 1.
+-/
+theorem putnam_2006_b2
+(n : ℕ)
+(npos : n > 0)
+(X : Finset ℝ)
+(hXcard : X.card = n)
+: (∃ S ⊆ X, S ≠ ∅ ∧ ∃ m : ℤ, |m + ∑ s ∈ S, s| ≤ 1 / (n + 1)) := by
+  classical
+  set e := X.orderEmbOfFin hXcard
+  let g : ℕ → ℝ := fun t => if h : t < n then e ⟨t, h⟩ else 0
+  let P : ℕ → ℝ := fun k => ∑ t ∈ Finset.range k, g t
+  let v : ℕ → ℝ := fun k => if k ≤ n then Int.fract (P k) else 1
+  have hN : (0 : ℝ) < n + 1 := by positivity
+  let b : ℕ → ℕ := fun k => min n ⌊v k * ((n : ℝ) + 1)⌋₊
+  have hv01 : ∀ k, 0 ≤ v k ∧ v k ≤ 1 := by
+    intro k; simp only [v]; split_ifs
+    · exact ⟨Int.fract_nonneg _, (Int.fract_lt_one _).le⟩
+    · exact ⟨zero_le_one, le_rfl⟩
+  -- same bucket ⇒ within 1/(n+1)
+  have hbucket : ∀ k, (b k : ℝ) / (n + 1) ≤ v k ∧ v k ≤ (b k + 1) / (n + 1) := by
+    intro k
+    obtain ⟨h0, h1⟩ := hv01 k
+    have hfl := Nat.floor_le (mul_nonneg h0 hN.le : 0 ≤ v k * (n + 1))
+    have hfl2 := Nat.lt_floor_add_one (v k * (n + 1))
+    constructor
+    · rw [div_le_iff₀ hN]
+      have hb : b k ≤ ⌊v k * ((n : ℝ) + 1)⌋₊ := min_le_right _ _
+      have : (b k : ℝ) ≤ ⌊v k * ((n : ℝ) + 1)⌋₊ := by exact_mod_cast hb
+      linarith
+    · rw [le_div_iff₀ hN]
+      rcases le_total n ⌊v k * (n + 1)⌋₊ with hle | hle
+      · have : b k = n := min_eq_left hle
+        rw [this]; nlinarith
+      · have : b k = ⌊v k * (n + 1)⌋₊ := min_eq_right hle
+        rw [this]; linarith
+  have hclose : ∀ i j, b i = b j → |v j - v i| ≤ 1 / (n + 1) := by
+    intro i j hij
+    obtain ⟨a1, a2⟩ := hbucket i
+    obtain ⟨b1, b2⟩ := hbucket j
+    rw [hij] at a1 a2
+    rw [abs_le]; constructor
+    · have : (b j + 1 : ℝ) / (n + 1) - b j / (n + 1) = 1 / (n + 1) := by field_simp; ring
+      linarith
+    · have : (b j + 1 : ℝ) / (n + 1) - b j / (n + 1) = 1 / (n + 1) := by field_simp; ring
+      linarith
+  obtain ⟨i, hi, j, hj, hne, hij⟩ := Finset.exists_ne_map_eq_of_card_lt_of_maps_to
+    (s := Finset.range (n + 2)) (t := Finset.range (n + 1)) (f := b) (by simp)
+    (fun k _ => by simp only [Finset.coe_range, Set.mem_Iio]; exact Nat.lt_succ_of_le (min_le_left _ _))
+  simp only [Finset.mem_range] at hi hj
+  -- the block [lo, hi) of the enumeration
+  have block : ∀ lo hi', lo < hi' → hi' ≤ n → ∃ S ⊆ X, S ≠ ∅ ∧ ∑ s ∈ S, s = P hi' - P lo := by
+    intro lo hi' hlt hle
+    have hinj : Set.InjOn g (Finset.Ico lo hi' : Set ℕ) := by
+      intro x hx y hy hxy
+      simp only [Finset.coe_Ico, Set.mem_Ico] at hx hy
+      simp only [g, dif_pos (show x < n by omega), dif_pos (show y < n by omega)] at hxy
+      have := e.injective hxy
+      simpa using this
+    refine ⟨(Finset.Ico lo hi').image g, ?_, ?_, ?_⟩
+    · intro s hs
+      obtain ⟨t, ht, rfl⟩ := Finset.mem_image.mp hs
+      have : t < n := by simp at ht; omega
+      simp only [g, dif_pos this]
+      exact Finset.orderEmbOfFin_mem _ _ _
+    · rw [← Finset.nonempty_iff_ne_empty]
+      exact ⟨g lo, Finset.mem_image_of_mem _ (by simp; omega)⟩
+    · rw [Finset.sum_image hinj, Finset.sum_Ico_eq_sub _ hlt.le]
+  -- cases on which indices collided
+  have key : ∀ i j, i < j → j < n + 2 → b i = b j →
+      ∃ S ⊆ X, S ≠ ∅ ∧ ∃ m : ℤ, |m + ∑ s ∈ S, s| ≤ 1 / (n + 1) := by
+    intro i j hlt hj hbij
+    have hc := hclose i j hbij
+    by_cases hjn : j ≤ n
+    · obtain ⟨S, hS, hSne, hsum⟩ := block i j hlt hjn
+      refine ⟨S, hS, hSne, ⌊P i⌋ - ⌊P j⌋, ?_⟩
+      simp only [v, if_pos hjn, if_pos (show i ≤ n by omega)] at hc
+      rw [hsum]; push_cast
+      have e1 := Int.floor_add_fract (P i)
+      have e2 := Int.floor_add_fract (P j)
+      rw [show (⌊P i⌋ : ℝ) - ⌊P j⌋ + (P j - P i) = Int.fract (P j) - Int.fract (P i) by linarith]
+      exact hc
+    · have hin : i ≤ n := by omega
+      simp only [v, if_neg hjn, if_pos hin] at hc
+      have hi0 : i ≠ 0 := by
+        rintro rfl
+        have hP0 : P 0 = 0 := by simp [P]
+        rw [hP0, Int.fract_zero, sub_zero, abs_one, le_div_iff₀ hN, one_mul] at hc
+        have : (1 : ℝ) ≤ n := by exact_mod_cast npos
+        linarith
+      obtain ⟨S, hS, hSne, hsum⟩ := block 0 i (by omega) hin
+      refine ⟨S, hS, hSne, -⌊P i⌋ - 1, ?_⟩
+      rw [hsum]
+      have hP0 : P 0 = 0 := by simp [P]
+      rw [hP0]; push_cast
+      have e1 := Int.floor_add_fract (P i)
+      rw [show -(⌊P i⌋ : ℝ) - 1 + (P i - 0) = -(1 - Int.fract (P i)) by linarith, abs_neg]
+      exact hc
+  rcases Nat.lt_or_gt_of_ne hne with h | h
+  · exact key i j h hj hij
+  · exact key j i h hi hij.symm
