@@ -1,0 +1,74 @@
+import Mathlib
+
+open Filter Topology Metric
+
+/-!
+Putnam 1999 B6.  Let n be the least positive integer sharing a factor with every s ∈ S
+(`Nat.find`; ∏ S is a witness).  The hypothesis at n gives s ∈ S with s ∣ n; take a prime
+p ∣ s.  Minimality at k = n/p gives t ∈ S coprime to k, so gcd(t, n) = gcd(t, p)
+(`Nat.Coprime.gcd_mul_right_cancel`) > 1, hence p ∣ t.  Then p ∣ gcd(s,t) ∣ gcd(n,t) ∣ p,
+so gcd(s, t) = p is prime.
+-/
+theorem putnam_1999_b6
+  (S : Finset ℤ)
+  (hSgt : ∀ s, s ∈ S → s > 1)
+  (hSgcd : ∀ n, ∃ s ∈ S, Int.gcd s n = 1 ∨ Int.gcd s n = s) :
+  ∃ᵉ (s ∈ S) (t ∈ S), Prime (Int.gcd s t) := by
+  classical
+  -- natural-number view: Int.gcd s ↑m = Nat.gcd s.natAbs m
+  have hg : ∀ (s : ℤ) (m : ℕ), Int.gcd s (m : ℤ) = Nat.gcd s.natAbs m := by
+    intro s m; rw [Int.gcd_eq_natAbs]; simp
+  have hex : ∃ m : ℕ, 0 < m ∧ ∀ s ∈ S, 1 < Nat.gcd s.natAbs m := by
+    refine ⟨(∏ s ∈ S, s).natAbs, ?_, ?_⟩
+    · rw [Int.natAbs_pos, Finset.prod_ne_zero_iff]
+      intro s hs; have := hSgt s hs; omega
+    · intro s hs
+      have hd : s.natAbs ∣ (∏ s ∈ S, s).natAbs :=
+        Int.natAbs_dvd_natAbs.mpr (Finset.dvd_prod_of_mem _ hs)
+      rw [Nat.gcd_eq_left hd]
+      have := hSgt s hs; omega
+  set n := Nat.find hex with hn
+  obtain ⟨hnpos, hnall⟩ := Nat.find_spec hex
+  rw [← hn] at hnpos hnall
+  obtain ⟨s, hsS, hs⟩ := hSgcd (n : ℤ)
+  have hsn : s.natAbs ∣ n := by
+    rcases hs with h | h
+    · have := hnall s hsS; rw [← hg, h] at this; omega
+    · have h' : (Int.gcd s n : ℤ) ∣ (n : ℤ) := Int.gcd_dvd_right s n
+      rw [h] at h'
+      exact Int.natAbs_dvd_natAbs.mpr h' |>.trans (by simp)
+  have hs1 : 1 < s.natAbs := by have := hSgt s hsS; omega
+  obtain ⟨p, hp, hps⟩ := Nat.exists_prime_and_dvd (show s.natAbs ≠ 1 by omega)
+  have hpn : p ∣ n := hps.trans hsn
+  obtain ⟨k, hk⟩ := hpn
+  have hkpos : 0 < k := by
+    rcases Nat.eq_zero_or_pos k with h | h
+    · rw [h] at hk; omega
+    · exact h
+  have hklt : k < n := by
+    rw [hk]; have := hp.two_le; nlinarith
+  have hkmin : ¬ (0 < k ∧ ∀ s ∈ S, 1 < Nat.gcd s.natAbs k) := Nat.find_min hex hklt
+  push Not at hkmin
+  obtain ⟨t, htS, htk⟩ := hkmin hkpos
+  have ht1 : 1 < t.natAbs := by have := hSgt t htS; omega
+  have htk1 : Nat.Coprime t.natAbs k := by
+    have : 0 < Nat.gcd t.natAbs k := Nat.gcd_pos_of_pos_left _ (by omega)
+    exact (by omega : Nat.gcd t.natAbs k = 1)
+  -- gcd(t, n) = gcd(t, p) and it is > 1, so p ∣ t
+  have htn : Nat.gcd t.natAbs n = Nat.gcd t.natAbs p := by
+    rw [hk, Nat.gcd_comm, Nat.Coprime.gcd_mul_right_cancel p htk1.symm, Nat.gcd_comm]
+  have hpt : p ∣ t.natAbs := by
+    have h1 := hnall t htS
+    rw [htn] at h1
+    rcases (Nat.coprime_or_dvd_of_prime hp t.natAbs) with h | h
+    · rw [Nat.Coprime, Nat.gcd_comm] at h; omega
+    · exact h
+  refine ⟨s, hsS, t, htS, ?_⟩
+  rw [Int.gcd_eq_natAbs, ← Nat.prime_iff]
+  have hgp : Nat.gcd s.natAbs t.natAbs = p := by
+    apply Nat.dvd_antisymm
+    · have : Nat.gcd s.natAbs t.natAbs ∣ Nat.gcd n t.natAbs := Nat.gcd_dvd_gcd_of_dvd_left _ hsn
+      rw [Nat.gcd_comm n, htn] at this
+      exact this.trans (Nat.gcd_dvd_right _ _)
+    · exact Nat.dvd_gcd hps hpt
+  rw [hgp]; exact hp
