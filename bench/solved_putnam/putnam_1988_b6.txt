@@ -1,0 +1,78 @@
+import Mathlib
+
+open Set Filter Topology
+
+/-!
+Putnam 1988 B6.  x is triangular iff x ≥ 0 and 8x + 1 is a square (odd s = 2n+1 gives
+x = n(n+1)/2; `Int.even_mul_succ_self` makes the ℤ-division exact).  For
+a = (2k+1)², b = k(k+1)/2: 8(at + b) + 1 = (2k+1)²(8t + 1), and (2k+1)² ∣ S² ⇒ (2k+1) ∣ S
+(`Int.pow_dvd_pow_iff`), so at + b is triangular iff t is.  k ↦ (a, b) is injective,
+so the set is infinite and its `encard` is ⊤.
+-/
+theorem putnam_1988_b6
+(trinums : Set ℤ)
+(htrinums : trinums = {t : ℤ | ∃ n : ℤ, t ≥ 0 ∧ t = (n * (n + 1)) / 2})
+: {(a, b) : ℤ × ℤ | ∀ t > 0, (a * t + b) ∈ trinums ↔ t ∈ trinums}.encard = ⊤ := by
+  -- triangular ⇔ nonnegative with 8x+1 a square
+  have hhalf : ∀ n : ℤ, 2 * ((n * (n + 1)) / 2) = n * (n + 1) := by
+    intro n
+    obtain ⟨r, hr⟩ := Int.even_mul_succ_self n
+    rw [hr]; omega
+  have L : ∀ x : ℤ, x ∈ trinums ↔ 0 ≤ x ∧ ∃ s : ℤ, 8 * x + 1 = s ^ 2 := by
+    intro x
+    rw [htrinums]
+    constructor
+    · rintro ⟨n, hx0, rfl⟩
+      refine ⟨hx0, 2 * n + 1, ?_⟩
+      have := hhalf n
+      linear_combination 4 * this
+    · rintro ⟨hx0, s, hs⟩
+      have hodd : s % 2 = 1 := by
+        rcases Int.emod_two_eq_zero_or_one s with h | h
+        · exfalso
+          obtain ⟨q, hq⟩ : 2 ∣ s := Int.dvd_of_emod_eq_zero h
+          have : 8 * x + 1 = 4 * q ^ 2 := by rw [hs, hq]; ring
+          omega
+        · exact h
+      refine ⟨s / 2, hx0, ?_⟩
+      have hs' : s = 2 * (s / 2) + 1 := by omega
+      set n := s / 2
+      have h2 := hhalf n
+      rw [hs'] at hs
+      have h4 : 4 * (2 * x) = 4 * (n * (n + 1)) := by linear_combination hs
+      have : 2 * x = n * (n + 1) := mul_left_cancel₀ (by norm_num) h4
+      omega
+  rw [Set.encard_eq_top_iff]
+  let f : ℕ → ℤ × ℤ := fun k => ((2 * k + 1) ^ 2, ((k : ℤ) * (k + 1)) / 2)
+  have hinj : Function.Injective f := by
+    intro k l hkl
+    have h1 : ((2 * (k : ℤ) + 1) ^ 2) = (2 * l + 1) ^ 2 := congrArg Prod.fst hkl
+    have h2 : (2 * (k : ℤ) + 1) = 2 * l + 1 :=
+      (pow_left_inj₀ (by positivity) (by positivity) two_ne_zero).mp h1
+    omega
+  apply Set.infinite_of_injective_forall_mem hinj
+  intro k
+  simp only [Set.mem_setOf_eq, f]
+  intro t ht
+  set m : ℤ := 2 * k + 1 with hm
+  have hb := hhalf (k : ℤ)
+  set b := ((k : ℤ) * (k + 1)) / 2
+  have hkey : 8 * (m ^ 2 * t + b) + 1 = m ^ 2 * (8 * t + 1) := by
+    rw [hm]; linear_combination 4 * hb
+  have hb0 : 0 ≤ b := by
+    have : 0 ≤ (k : ℤ) * (k + 1) := by positivity
+    omega
+  rw [L, L]
+  constructor
+  · rintro ⟨-, S, hS⟩
+    refine ⟨ht.le, ?_⟩
+    rw [hkey] at hS
+    have hd : m ∣ S := (Int.pow_dvd_pow_iff two_ne_zero).mp ⟨8 * t + 1, by rw [hS]⟩
+    obtain ⟨q, rfl⟩ := hd
+    refine ⟨q, ?_⟩
+    have hm0 : m ^ 2 ≠ 0 := by positivity
+    apply mul_left_cancel₀ hm0
+    linear_combination hS
+  · rintro ⟨-, s, hs⟩
+    refine ⟨by positivity, m * s, ?_⟩
+    rw [hkey, hs]; ring
