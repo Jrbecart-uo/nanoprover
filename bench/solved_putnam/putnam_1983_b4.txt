@@ -1,0 +1,45 @@
+import Mathlib
+
+open Nat Real
+
+/-!
+Putnam 1983 B4.  With ⌊√n⌋ = `Nat.sqrt n` (`Real.floor_real_sqrt_eq_nat_sqrt`) the map is
+n ↦ n + sqrt n.  Write aₙ = k² + j (0 ≤ j ≤ 2k).  If 1 ≤ j ≤ k, two steps give
+k² + k + j and then (k+1)² + (j−1) (`Nat.sqrt_add_eq'` pins the root at k both times),
+so induction on j reaches j = 0, a square.  If j > k, one step gives
+(k+1)² + (j−k−1) with j−k−1 ≤ k+1.  (The hypothesis a₀ > 0 is not needed.)
+-/
+theorem putnam_1983_b4
+    (f : ℕ → ℤ)
+    (a : ℕ → ℕ)
+    (hf : f = fun (n : ℕ) ↦ n + Int.floor (√n))
+    (ha0 : a 0 > 0)
+    (han : ∀ n : ℕ, a (n + 1) = f (a n)) :
+    (∃ i : ℕ, ∃ s : ℤ, a i = s ^ 2) := by
+  have step : ∀ n, a (n + 1) = a n + Nat.sqrt (a n) := by
+    intro n
+    have h := han n
+    simp only [hf, Real.floor_real_sqrt_eq_nat_sqrt] at h
+    exact_mod_cast h
+  have claim : ∀ j n k, a n = k ^ 2 + j → j ≤ k → ∃ i : ℕ, ∃ s : ℤ, a i = s ^ 2 := by
+    intro j
+    induction j with
+    | zero => intro n k h _; exact ⟨n, k, by rw [h]; push_cast; ring⟩
+    | succ j ih =>
+      intro n k h hj
+      have s1 : Nat.sqrt (a n) = k := by rw [h]; exact Nat.sqrt_add_eq' k (by omega)
+      have e1 : a (n + 1) = k ^ 2 + (k + j + 1) := by rw [step, s1, h]; ring
+      have s2 : Nat.sqrt (a (n + 1)) = k := by rw [e1]; exact Nat.sqrt_add_eq' k (by omega)
+      have e2 : a (n + 1 + 1) = (k + 1) ^ 2 + j := by rw [step, s2, e1]; ring
+      exact ih (n + 1 + 1) (k + 1) e2 (by omega)
+  set k := Nat.sqrt (a 0) with hk
+  obtain ⟨j, hj⟩ : ∃ j, a 0 = k ^ 2 + j := ⟨a 0 - k ^ 2, by
+    have := Nat.sqrt_le' (a 0); rw [← hk] at this; omega⟩
+  have hj2 : j ≤ k + k := by
+    have := Nat.sqrt_le_add (a 0); rw [← hk] at this; nlinarith
+  by_cases hjk : j ≤ k
+  · exact claim j 0 k hj hjk
+  · have e1 : a 1 = (k + 1) ^ 2 + (j - k - 1) := by
+      obtain ⟨t, ht⟩ : ∃ t, j = k + 1 + t := ⟨j - (k + 1), by omega⟩
+      rw [show j - k - 1 = t by omega, step, ← hk, hj, ht]; ring
+    exact claim (j - k - 1) 1 (k + 1) e1 (by omega)
