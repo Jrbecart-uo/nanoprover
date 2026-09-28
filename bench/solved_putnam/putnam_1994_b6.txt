@@ -1,0 +1,78 @@
+import Mathlib
+
+open Filter Topology
+
+/-!
+Putnam 1994 B6.  nₐ ≡ a (mod 100) and nₐ ≡ 2ᵃ (mod 101).  So a+b ≡ c+d (mod 100), and since
+2 has order 100 in ZMod 101 (`orderOf_eq_of_pow_and_pow_div_prime`: 2¹⁰⁰ = 1, 2⁵⁰ ≠ 1,
+2²⁰ ≠ 1 by `decide`), 2ᵃ·2ᵇ = 2ᶜ·2ᵈ (`pow_mod_orderOf`); with 2ᵃ + 2ᵇ = 2ᶜ + 2ᵈ this gives
+(x−z)(x−w) = 0 in the field ZMod 101.  a ↦ 2ᵃ is injective on [0,99]
+(`pow_injOn_Iio_orderOf`), so {a,b} = {c,d}.
+-/
+theorem putnam_1994_b6
+(n : ℕ → ℤ)
+(hn : ∀ a : ℕ, n a = 101 * a - 100 * 2 ^ a)
+: ∀ a b c d : Set.Icc 0 99, (n a + n b ≡ n c + n d [ZMOD 10100]) → (({a, b} : Set (Set.Icc 0 99)) = {c, d}) := by
+  have p100 : (2 : ZMod 101) ^ 100 = 1 := by set_option maxRecDepth 20000 in decide
+  have p50 : (2 : ZMod 101) ^ 50 ≠ 1 := by set_option maxRecDepth 20000 in decide
+  have p20 : (2 : ZMod 101) ^ 20 ≠ 1 := by set_option maxRecDepth 20000 in decide
+  have h101 : (101 : ZMod 101) = 0 := by set_option maxRecDepth 20000 in decide
+  have h100' : (100 : ZMod 101) = -1 := by set_option maxRecDepth 20000 in decide
+  have hord : orderOf (2 : ZMod 101) = 100 := by
+    apply orderOf_eq_of_pow_and_pow_div_prime (by norm_num) p100
+    intro p hp hpd
+    have : p = 2 ∨ p = 5 := by
+      have h' : p ∣ 2 ^ 2 * 5 ^ 2 := by norm_num; exact hpd
+      rcases (Nat.Prime.dvd_mul hp).mp h' with h | h
+      · left; exact (Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp (hp.dvd_of_dvd_pow h)
+      · right; exact (Nat.prime_dvd_prime_iff_eq hp (by norm_num)).mp (hp.dvd_of_dvd_pow h)
+    rcases this with rfl | rfl
+    · exact p50
+    · exact p20
+  have hinj : ∀ i j : ℕ, i ≤ 99 → j ≤ 99 → (2 : ZMod 101) ^ i = 2 ^ j → i = j := by
+    intro i j hi hj h
+    apply pow_injOn_Iio_orderOf _ _ h
+    · simp only [Set.mem_Iio, hord]; omega
+    · simp only [Set.mem_Iio, hord]; omega
+  have e101 : ∀ k : ℕ, (((101 * (k : ℤ) - 100 * 2 ^ k : ℤ)) : ZMod 101) = 2 ^ k := by
+    intro k
+    push_cast
+    rw [h101, h100']; ring
+  rintro ⟨A, hA⟩ ⟨B, hB⟩ ⟨C, hC⟩ ⟨D, hD⟩ h
+  simp only [Set.mem_Icc] at hA hB hC hD
+  simp only [hn] at h
+  -- mod 100: A + B ≡ C + D
+  have h100 : (A + B) % 100 = (C + D) % 100 := by
+    have := (show (10100 : ℤ) = 101 * 100 by norm_num) ▸ h
+    have := Int.ModEq.of_mul_left 101 this
+    unfold Int.ModEq at this
+    omega
+  -- mod 101: 2^A + 2^B = 2^C + 2^D
+  have hs : (2 : ZMod 101) ^ A + 2 ^ B = 2 ^ C + 2 ^ D := by
+    have := (show (10100 : ℤ) = 101 * 100 by norm_num) ▸ h
+    have := Int.ModEq.of_mul_right 100 this
+    have := (ZMod.intCast_eq_intCast_iff _ _ 101).mpr this
+    push_cast at this
+    have e := fun k => e101 k
+    push_cast at e
+    rw [e A, e B, e C, e D] at this
+    exact this
+  have hp : (2 : ZMod 101) ^ A * 2 ^ B = 2 ^ C * 2 ^ D := by
+    rw [← pow_add, ← pow_add, ← pow_mod_orderOf, hord, h100, ← hord, pow_mod_orderOf]
+  set x := (2 : ZMod 101) ^ A
+  set y := (2 : ZMod 101) ^ B
+  set z := (2 : ZMod 101) ^ C
+  set w := (2 : ZMod 101) ^ D
+  haveI : Fact (Nat.Prime 101) := ⟨by norm_num⟩
+  have hq : (x - z) * (x - w) = 0 := by linear_combination x * hs - hp
+  rcases mul_eq_zero.mp hq with h1 | h1
+  · have hxz : x = z := sub_eq_zero.mp h1
+    have hyw : y = w := by linear_combination hs - hxz
+    have := hinj A C hA.2 hC.2 hxz
+    have := hinj B D hB.2 hD.2 hyw
+    subst A; subst B; rfl
+  · have hxw : x = w := sub_eq_zero.mp h1
+    have hyz : y = z := by linear_combination hs - hxw
+    have := hinj A D hA.2 hD.2 hxw
+    have := hinj B C hB.2 hC.2 hyz
+    subst A; subst B; exact Set.pair_comm _ _
