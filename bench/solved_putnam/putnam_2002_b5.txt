@@ -1,0 +1,78 @@
+import Mathlib
+
+open Nat Set Topology Filter
+
+/-!
+Putnam 2002 B5.  n = 2^12020 and, for j < 2002, b_j = 2^(6010−j) − 1: since
+4^j (b_j + 1)² = 2^(2j) · 2^(2(6010−j)) = 2^12020, the base-b_j digits of n are
+[4^j, 2·4^j, 4^j] (`Nat.digits_add`, both digits < b_j because 2j + 2 < 6010 − j) — a
+3-digit palindrome.  j ↦ b_j is injective, and the set is finite (b > n gives one digit),
+so its `ncard` is ≥ 2002.  All powers stay symbolic (`congrArg` on exponents, never `congr`).
+-/
+theorem putnam_2002_b5
+: ∃ n : ℕ, {b : ℕ | b ≥ 1 ∧ (Nat.digits b n).length = 3 ∧ List.Palindrome (Nat.digits b n)}.ncard ≥ 2002 := by
+  refine ⟨2 ^ 12020, ?_⟩
+  set N : ℕ := 2 ^ 12020 with hN
+  have hN0 : N ≠ 0 := by positivity
+  let g : ℕ → ℕ := fun j => 2 ^ (6010 - j) - 1
+  -- in base g j (j < 2002), N has digits [4^j, 2·4^j, 4^j]
+  have hdig : ∀ j, j < 2002 → Nat.digits (g j) N = [4 ^ j, 2 * 4 ^ j, 4 ^ j] := by
+    intro j hj
+    set B := 2 ^ (6010 - j) with hB
+    have hB1 : 1 ≤ B := Nat.one_le_two_pow
+    have hgB : g j + 1 = B := Nat.sub_add_cancel hB1
+    have hy : 2 * 4 ^ j + 1 < B := by
+      have e1 : 2 * 4 ^ j + 1 ≤ 2 ^ (2 * j + 2) := by
+        rw [pow_add, pow_mul]; norm_num
+        have : 1 ≤ 4 ^ j := Nat.one_le_pow _ _ (by norm_num)
+        omega
+      have e2 : 2 ^ (2 * j + 2) < 2 ^ (6010 - j) :=
+        Nat.pow_lt_pow_right (by norm_num) (by omega)
+      omega
+    have hx0 : 0 < 4 ^ j := by positivity
+    have hxb : 4 ^ j < g j := by omega
+    have hyb : 2 * 4 ^ j < g j := by omega
+    have hg1 : 1 < g j := by omega
+    have hN' : N = 4 ^ j + g j * (2 * 4 ^ j + g j * (4 ^ j)) := by
+      have : 4 ^ j + g j * (2 * 4 ^ j + g j * (4 ^ j)) = 4 ^ j * (g j + 1) ^ 2 := by ring
+      rw [this, hgB, hB, hN, show (4 : ℕ) = 2 ^ 2 by norm_num, ← pow_mul, ← pow_mul, ← pow_add]
+      exact congrArg (HPow.hPow 2) (by omega)
+    rw [hN', Nat.digits_add _ hg1 _ _ hxb (Or.inl hx0.ne'),
+      Nat.digits_add _ hg1 _ _ hyb (Or.inl (by omega)),
+      Nat.digits_of_lt _ _ hx0.ne' hxb]
+  have hginj : Set.InjOn g (Finset.range 2002 : Set ℕ) := by
+    intro j hj j' hj' h
+    simp only [Finset.coe_range, Set.mem_Iio] at hj hj'
+    have h1 : 2 ^ (6010 - j) = 2 ^ (6010 - j') := by
+      have a1 : 1 ≤ 2 ^ (6010 - j) := Nat.one_le_two_pow
+      have a2 : 1 ≤ 2 ^ (6010 - j') := Nat.one_le_two_pow
+      have h' : 2 ^ (6010 - j) - 1 = 2 ^ (6010 - j') - 1 := h
+      omega
+    have := Nat.pow_right_injective (le_refl 2) h1
+    omega
+  have hsub : (↑((Finset.range 2002).image g) : Set ℕ) ⊆
+      {b : ℕ | b ≥ 1 ∧ (Nat.digits b N).length = 3 ∧ List.Palindrome (Nat.digits b N)} := by
+    intro b hb
+    simp only [Finset.coe_image, Finset.coe_range, Set.mem_image, Set.mem_Iio] at hb
+    obtain ⟨j, hj, rfl⟩ := hb
+    refine ⟨?_, ?_, ?_⟩
+    · have := hdig j hj
+      have : 1 ≤ 2 ^ (6010 - j) - 1 := by
+        have : 2 ^ 1 < 2 ^ (6010 - j) := Nat.pow_lt_pow_right (by norm_num) (by omega)
+        omega
+      exact this
+    · rw [hdig j hj]; rfl
+    · rw [hdig j hj]; exact List.Palindrome.of_reverse_eq rfl
+  have hfin : {b : ℕ | b ≥ 1 ∧ (Nat.digits b N).length = 3 ∧
+      List.Palindrome (Nat.digits b N)}.Finite := by
+    apply (Set.finite_Iic N).subset
+    rintro b ⟨-, hlen, -⟩
+    simp only [Set.mem_Iic]
+    by_contra hlt
+    push Not at hlt
+    rw [Nat.digits_of_lt _ _ hN0 hlt] at hlen
+    simp at hlen
+  calc 2002 = ((Finset.range 2002).image g).card := by
+        rw [Finset.card_image_of_injOn hginj, Finset.card_range]
+    _ = (↑((Finset.range 2002).image g) : Set ℕ).ncard := (Set.ncard_coe_finset _).symm
+    _ ≤ _ := Set.ncard_le_ncard hsub hfin
