@@ -1,0 +1,59 @@
+import Mathlib
+
+open EuclideanGeometry Topology Filter Complex
+
+/-!
+Putnam 1965 A6.  Pure `rpow` algebra (the tangency condition is given as u = x^(m−1)).
+(→) n = m/(m−1): (x^(m−1))^(m/(m−1)) = x^m (`Real.rpow_mul`), so uⁿ + vⁿ = x^m + y^m = 1.
+(←) m⁻¹ + n⁻¹ = 1 forces n = m/(m−1); take x = u^(1/(m−1)), y = v^(1/(m−1)), so
+x^(m−1) = u, x^m = uⁿ, and u·x = x^(m−1)·x = x^m (`Real.rpow_add`).
+-/
+theorem putnam_1965_a6
+    (u v m : ℝ)
+    (hu : 0 < u)
+    (hv : 0 < v)
+    (hm : 1 < m) :
+    (∃ᵉ (x > 0) (y > 0),
+      u * x + v * y = 1 ∧
+      x ^ m + y ^ m = 1 ∧
+      u = x ^ (m - 1) ∧
+      v = y ^ (m - 1)) ↔
+    ∃ n, u ^ n + v ^ n = 1 ∧ m⁻¹ + n⁻¹ = 1 := by
+  have hm1 : m - 1 ≠ 0 := by linarith
+  have hm0 : m ≠ 0 := by linarith
+  -- (x^(m-1))^(m/(m-1)) = x^m
+  have pw : ∀ x : ℝ, 0 < x → (x ^ (m - 1)) ^ (m / (m - 1)) = x ^ m := by
+    intro x hx
+    rw [← Real.rpow_mul hx.le]; congr 1; field_simp
+  constructor
+  · rintro ⟨x, hx, y, hy, -, hxy, rfl, rfl⟩
+    refine ⟨m / (m - 1), ?_, ?_⟩
+    · rw [pw x hx, pw y hy, hxy]
+    · field_simp; ring
+  · rintro ⟨n, hn, hmn⟩
+    have hn' : n = m / (m - 1) := by
+      have hn0 : n ≠ 0 := by
+        rintro rfl; rw [inv_zero, add_zero, inv_eq_one] at hmn; exact (ne_of_gt hm) hmn
+      field_simp at hmn
+      field_simp
+      linarith
+    subst hn'
+    set x := u ^ (1 / (m - 1)) with hxdef
+    set y := v ^ (1 / (m - 1)) with hydef
+    have hx : 0 < x := Real.rpow_pos_of_pos hu _
+    have hy : 0 < y := Real.rpow_pos_of_pos hv _
+    have hux : x ^ (m - 1) = u := by
+      rw [hxdef, ← Real.rpow_mul hu.le, div_mul_cancel₀ 1 hm1, Real.rpow_one]
+    have hvy : y ^ (m - 1) = v := by
+      rw [hydef, ← Real.rpow_mul hv.le, div_mul_cancel₀ 1 hm1, Real.rpow_one]
+    have hxm : x ^ m = u ^ (m / (m - 1)) := by rw [← hux, pw x hx]
+    have hym : y ^ m = v ^ (m / (m - 1)) := by rw [← hvy, pw y hy]
+    have hxm' : x ^ (m - 1) * x = x ^ m := by
+      conv_rhs => rw [show m = (m - 1) + 1 by ring]
+      rw [Real.rpow_add hx, Real.rpow_one]
+    have hym' : y ^ (m - 1) * y = y ^ m := by
+      conv_rhs => rw [show m = (m - 1) + 1 by ring]
+      rw [Real.rpow_add hy, Real.rpow_one]
+    refine ⟨x, hx, y, hy, ?_, ?_, hux.symm, hvy.symm⟩
+    · rw [← hux, ← hvy, hxm', hym', hxm, hym, hn]
+    · rw [hxm, hym, hn]
