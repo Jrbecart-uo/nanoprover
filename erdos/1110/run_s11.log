@@ -1,0 +1,10 @@
+chains after prune: 70701 (34.5/res)
+exact-2look s=11 H=10 it=0 g in [0.00000, 7.00000] per-bit [0.00000, 0.63636] need < 0.35621
+exact-2look s=11 H=10 it=1 g in [0.00000, 7.00000] per-bit [0.00000, 0.63636] need < 0.35621
+exact-2look s=11 H=10 it=2 g in [2.03467, 4.55762] per-bit [0.18497, 0.41433] need < 0.35621
+exact-2look s=11 H=10 it=3 g in [3.53582, 4.30056] per-bit [0.32144, 0.39096] need < 0.35621
+exact-2look s=11 H=10 it=4 g in [3.74338, 4.14753] per-bit [0.34031, 0.37705] need < 0.35621
+exact-2look s=11 H=10 it=5 g in [3.82907, 3.97251] per-bit [0.34810, 0.36114] need < 0.35621
+exact-2look s=11 H=10 it=6 g in [3.88374, 3.93835] per-bit [0.35307, 0.35803] need < 0.35621
+exact-2look s=11 H=10 it=7 g in [3.89362, 3.92008] per-bit [0.35397, 0.35637] need < 0.35621
+exact-2look s=11 H=10 it=8 g in [3.89649, 3.90748] per-bit [0.35423, 0.35523] need < 0.35621

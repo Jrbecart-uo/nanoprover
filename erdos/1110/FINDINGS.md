@@ -1,6 +1,6 @@
 # Erdős #1110 — density clause for (p,q) = (7,2): attack log (2026-09-28)
 
-**Status: OPEN. No proof.** Status re-checked 2026-09-28: the only density claim is Ding–Li–Liu–Zhang
+**Status: candidate proof of positive lower density for (7,2) — see `PROOF_SKETCH.md` (computer-verified certificate, review pending).** Earlier sections below record the path. Status re-checked 2026-09-28: the only density claim is Ding–Li–Liu–Zhang
 (2026-08-24, (5,2), positive lower density of representables). Pairs still open for density:
 (7,2), (9,2), (4,3), (5,3).
 
