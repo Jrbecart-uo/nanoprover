@@ -131,3 +131,6 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
   (128 branches) hits the heartbeat limit.** Escape: cast to `ZMod 2`
   (`← ZMod.intCast_eq_one_iff_odd`, `push_cast`), state the finite fact for all
   `A B C : ZMod 2`, and close it with `decide` (instant).
+- **`linarith` failed on `hm : 1 < m`, `hmn : m = 1 ⊢ False`** (ℝ; context also held rpow
+  hypotheses like `u ^ 0 + v ^ 0 = 1` and a `∀` lemma) — cause not isolated. Escape for such
+  one-step contradictions: `exact (ne_of_gt hm) hmn` (or `absurd`), don't debug linarith.
