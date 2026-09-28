@@ -1,0 +1,86 @@
+import Mathlib
+
+/-!
+Putnam 1978 A2.  f(x) = det(A − xJ), J the all-ones matrix, is affine in x: with the unit
+upper-triangular E subtracting the next row (det E = 1), E·J is zero except its last row, so
+E(A − xJ) differs from EA only in the last row, and `det_updateRow_add/smul` give
+f(x) = det A − x·K.  A − aJ is lower triangular and A − bJ upper triangular with diagonal
+cᵢ − x, so f(a) = p(a), f(b) = p(b); eliminate K.
+-/
+theorem putnam_1978_a2
+(n : ℕ)
+(npos : n > 0)
+(a b : ℝ)
+(hab : a ≠ b)
+(c : Fin n → ℝ)
+(A : Matrix (Fin n) (Fin n) ℝ)
+(hA : A = fun i j ↦ ite (i < j) a (ite (i > j) b (c i)))
+(p : ℝ → ℝ)
+(hp : p = fun x ↦ ∏ i : Fin n, (c i - x))
+: (A.det = ((b * p a - a * p b) / (b - a))) := by
+  classical
+  set J : Matrix (Fin n) (Fin n) ℝ := Matrix.of fun _ _ => 1
+  set last : Fin n := ⟨n - 1, by omega⟩
+  -- E subtracts the next row: rows of E*J vanish except the last
+  set E : Matrix (Fin n) (Fin n) ℝ := Matrix.of fun i k =>
+    (if k = i then 1 else 0) - (if (k : ℕ) = i + 1 then 1 else 0)
+  have hEdet : E.det = 1 := by
+    rw [Matrix.det_of_upperTriangular]
+    · refine Finset.prod_eq_one fun i _ => ?_
+      simp [E]
+    · intro i j hji
+      have h1 : j ≠ i := ne_of_lt hji
+      have h2 : (j : ℕ) ≠ i + 1 := by
+        have : (j : ℕ) < i := hji
+        omega
+      simp [E, h1, h2]
+  have hEJ : E * J = Matrix.updateRow 0 last 1 := by
+    ext i j
+    rw [Matrix.mul_apply, Matrix.updateRow_apply]
+    simp only [E, J, Matrix.of_apply, mul_one]
+    rw [Finset.sum_sub_distrib, Finset.sum_ite_eq' Finset.univ i,
+      Fin.sum_univ_eq_sum_range (fun k => if k = (i : ℕ) + 1 then (1 : ℝ) else 0) n,
+      Finset.sum_ite_eq']
+    simp only [Finset.mem_univ, if_true, Finset.mem_range]
+    by_cases hi : i = last
+    · have : ¬ ((i : ℕ) + 1 < n) := by rw [hi]; simp only [last]; omega
+      rw [if_neg this, if_pos hi]; simp
+    · have : (i : ℕ) + 1 < n := by
+        have := i.2
+        have : (i : ℕ) ≠ n - 1 := fun h => hi (Fin.ext h)
+        omega
+      simp [hi, this]
+  -- f(x) = det(A - x J) is affine in x
+  set K := (Matrix.updateRow (E * A) last 1).det
+  have hf : ∀ x : ℝ, (A - x • J).det = A.det - x * K := by
+    intro x
+    have e1 : E * (A - x • J) = Matrix.updateRow (E * A) last ((E * A) last + (-x) • (1 : Fin n → ℝ)) := by
+      rw [Matrix.mul_sub, Matrix.mul_smul, hEJ]
+      ext i j
+      rw [Matrix.updateRow_apply]
+      by_cases hi : i = last
+      · simp [hi, Matrix.updateRow_apply]; ring
+      · simp [hi, Matrix.updateRow_apply]
+    have := congrArg Matrix.det e1
+    rw [Matrix.det_mul, hEdet, one_mul, Matrix.det_updateRow_add, Matrix.updateRow_eq_self,
+      Matrix.det_mul, hEdet, one_mul, Matrix.det_updateRow_smul] at this
+    rw [this]; ring
+  have hfa : (A - a • J).det = p a := by
+    rw [hp, Matrix.det_of_lowerTriangular]
+    · refine Finset.prod_congr rfl fun i _ => ?_
+      simp [hA, J]
+    · intro i j hij
+      have : i < j := hij
+      simp [hA, J, this]
+  have hfb : (A - b • J).det = p b := by
+    rw [hp, Matrix.det_of_upperTriangular]
+    · refine Finset.prod_congr rfl fun i _ => ?_
+      simp [hA, J]
+    · intro i j hji
+      have h2 : j < i := hji
+      have h1 : ¬ i < j := not_lt.mpr h2.le
+      simp [hA, J, h1, h2]
+  rw [← hfa, ← hfb, hf a, hf b]
+  have : b - a ≠ 0 := sub_ne_zero.mpr (Ne.symm hab)
+  field_simp
+  ring
