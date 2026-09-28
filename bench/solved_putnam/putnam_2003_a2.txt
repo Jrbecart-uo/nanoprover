@@ -1,0 +1,60 @@
+import Mathlib
+
+open MvPolynomial
+
+/-!
+Putnam 2003 A2.  Superadditivity of the geometric mean.  If some aᵢ + bᵢ = 0 then
+aᵢ = bᵢ = 0 and the left side is 0.  Otherwise, with cᵢ = aᵢ + bᵢ > 0 and weights 1/n,
+weighted AM-GM (`Real.geom_mean_le_arith_mean_weighted`) gives (∏a)^(1/n)/(∏c)^(1/n) ≤
+(1/n)Σ aᵢ/cᵢ and likewise for b; the right sides add to 1.
+-/
+theorem putnam_2003_a2
+    (n : ℕ)
+    (hn : 0 < n)
+    (a b : Fin n → ℝ)
+    (abnneg : ∀ i, a i ≥ 0 ∧ b i ≥ 0) :
+    (∏ i, a i) ^ ((1 : ℝ) / n) +
+    (∏ i, b i) ^ ((1 : ℝ) / n) ≤
+    (∏ i, (a i + b i)) ^ ((1 : ℝ) / n) := by
+  set r : ℝ := (1 : ℝ) / n with hr
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hr0 : r ≠ 0 := by rw [hr]; positivity
+  have hcnn : 0 ≤ ∏ i, (a i + b i) :=
+    Finset.prod_nonneg fun i _ => add_nonneg (abnneg i).1 (abnneg i).2
+  by_cases hz : ∃ i, a i + b i = 0
+  · obtain ⟨i, hi⟩ := hz
+    have hai : a i = 0 := by linarith [(abnneg i).1, (abnneg i).2]
+    have hbi : b i = 0 := by linarith [(abnneg i).1, (abnneg i).2]
+    rw [Finset.prod_eq_zero (Finset.mem_univ i) hai, Finset.prod_eq_zero (Finset.mem_univ i) hbi,
+      Real.zero_rpow hr0, zero_add]
+    exact Real.rpow_nonneg hcnn _
+  push Not at hz
+  have hc : ∀ i, 0 < a i + b i := fun i =>
+    lt_of_le_of_ne (add_nonneg (abnneg i).1 (abnneg i).2) (Ne.symm (hz i))
+  set C := ∏ i, (a i + b i)
+  have hC : 0 < C := Finset.prod_pos fun i _ => hc i
+  have hCr : 0 < C ^ r := Real.rpow_pos_of_pos hC r
+  have hw : ∀ i ∈ (Finset.univ : Finset (Fin n)), 0 ≤ (fun _ => r) i := fun _ _ => by
+    rw [hr]; positivity
+  have hw1 : ∑ i : Fin n, (fun _ => r) i = 1 := by
+    simp [hr]; field_simp
+  -- AM-GM for a/c and b/c
+  have key : ∀ f : Fin n → ℝ, (∀ i, 0 ≤ f i) →
+      (∏ i, f i) ^ r / C ^ r ≤ ∑ i, r * (f i / (a i + b i)) := by
+    intro f hf
+    have := Real.geom_mean_le_arith_mean_weighted Finset.univ (fun _ => r)
+      (fun i => f i / (a i + b i)) hw hw1 (fun i _ => div_nonneg (hf i) (hc i).le)
+    rw [Real.finsetProd_rpow _ _ (fun i _ => div_nonneg (hf i) (hc i).le),
+      Finset.prod_div_distrib, Real.div_rpow (Finset.prod_nonneg fun i _ => hf i) hC.le] at this
+    exact this
+  have ka := key a (fun i => (abnneg i).1)
+  have kb := key b (fun i => (abnneg i).2)
+  have hsum : ∑ i, r * (a i / (a i + b i)) + ∑ i, r * (b i / (a i + b i)) = 1 := by
+    rw [← Finset.sum_add_distrib]
+    have : ∀ i, r * (a i / (a i + b i)) + r * (b i / (a i + b i)) = r := by
+      intro i; field_simp [(hc i).ne']
+    simp_rw [this]
+    simp [hr]; field_simp
+  have := add_le_add ka kb
+  rw [hsum, ← add_div, div_le_one hCr] at this
+  exact this
