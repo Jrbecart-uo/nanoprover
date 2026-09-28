@@ -1,0 +1,55 @@
+import Mathlib
+
+open Nat Set
+
+/-!
+Putnam 2005 A4.  Let v = sum of the a chosen rows of H.  Rows are orthogonal with
+⟨Hᵢ, Hᵢ⟩ = n (±1 entries), so ‖v‖² = Σ_{k,k'} ⟨H_{rk}, H_{rk'}⟩ = a·n.  On the b chosen
+columns every entry of v equals a (the submatrix is all ones), so ‖v‖² ≥ b·a²
+(`Finset.sum_image` + `sum_le_sum_of_subset_of_nonneg`).  Hence b·a² ≤ a·n and ab ≤ n.
+-/
+theorem putnam_2005_a4
+(n : ℕ)
+(H : Matrix (Fin n) (Fin n) ℝ)
+(a b : ℕ)
+(S : Matrix (Fin a) (Fin b) ℝ)
+(npos : n ≥ 1)
+(Hentries : ∀ i j : Fin n, H i j = 1 ∨ H i j = -1)
+(Hortho : H.HasOrthogonalRows)
+(hab : 1 ≤ a ∧ a ≤ n ∧ 1 ≤ b ∧ b ≤ n)
+(Ssub : ∃ (rri : Fin a → Fin n) (cri : Fin b → Fin n), rri.Injective ∧ cri.Injective ∧ S = H.submatrix rri cri)
+(Sentries : ∀ (i : Fin a) (j : Fin b), S i j = 1)
+: a * b ≤ n := by
+  classical
+  obtain ⟨rri, cri, hr, hc, hS⟩ := Ssub
+  let v : Fin n → ℝ := fun j => ∑ k : Fin a, H (rri k) j
+  have hsq : ∀ i j, H i j * H i j = 1 := by
+    intro i j; rcases Hentries i j with h | h <;> rw [h] <;> norm_num
+  have hdot : ∀ k k' : Fin a, ∑ j, H (rri k) j * H (rri k') j = if k = k' then (n : ℝ) else 0 := by
+    intro k k'
+    split_ifs with h
+    · subst h; simp [hsq]
+    · exact Hortho (hr.ne h)
+  have hnorm : ∑ j, v j ^ 2 = a * n := by
+    have : ∀ j, v j ^ 2 = ∑ k : Fin a, ∑ k' : Fin a, H (rri k) j * H (rri k') j := by
+      intro j; simp only [v, sq, Finset.sum_mul_sum]
+    simp_rw [this]
+    rw [Finset.sum_comm]
+    simp_rw [fun k => (Finset.sum_comm : ∑ j, ∑ k' : Fin a, H (rri k) j * H (rri k') j = _), hdot]
+    simp
+  have hcol : ∀ l : Fin b, v (cri l) = a := by
+    intro l
+    simp only [v]
+    have : ∀ k, H (rri k) (cri l) = 1 := fun k => by
+      have := Sentries k l; rwa [hS, Matrix.submatrix_apply] at this
+    simp [this]
+  have hge : ∑ l : Fin b, v (cri l) ^ 2 ≤ ∑ j, v j ^ 2 := by
+    rw [← Finset.sum_image (f := fun j => v j ^ 2) (fun x _ y _ h => hc h)]
+    exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
+      (fun j _ _ => sq_nonneg _)
+  simp_rw [hcol] at hge
+  rw [hnorm] at hge
+  simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] at hge
+  have ha : (0 : ℝ) < a := by exact_mod_cast hab.1
+  have : (a : ℝ) * b ≤ n := by nlinarith
+  exact_mod_cast this
