@@ -1,0 +1,47 @@
+import Mathlib
+
+open RingHom Set Nat Filter Topology
+
+/-!
+Putnam 1977 B5.  Fix i < j and merge aᵢ, aⱼ into one entry: b = a with bᵢ = aᵢ + aⱼ, summed
+over the n − 1 indices ≠ j.  Σb = Σa and Σb² = Σa² + 2aᵢaⱼ, so Cauchy–Schwarz
+(`sq_sum_le_card_mul_sum_sq`) gives (Σa)²/(n−1) ≤ Σa² + 2aᵢaⱼ; with the hypothesis,
+A < 2aᵢaⱼ.
+-/
+theorem putnam_1977_b5
+(n : ℕ)
+(hn : n > 1)
+(a : Fin n → ℝ)
+(A : ℝ)
+(hA : A + ∑ i : Fin n, (a i)^2 < (1/((n : ℝ) - 1))*(∑ i : Fin n, a i)^2)
+: ∀ i j : Fin n, i < j → A < 2*(a i)*(a j) := by
+  classical
+  intro i j hij
+  have hne : i ≠ j := ne_of_lt hij
+  set s := (Finset.univ : Finset (Fin n)).erase j
+  have his : i ∈ s := Finset.mem_erase.mpr ⟨hne, Finset.mem_univ _⟩
+  let b : Fin n → ℝ := fun k => if k = i then a i + a j else a k
+  have hb_sum : ∑ k ∈ s, b k = ∑ k, a k := by
+    rw [← Finset.add_sum_erase s b his, ← Finset.add_sum_erase _ a (Finset.mem_univ j),
+      ← Finset.add_sum_erase s a his]
+    have : ∑ k ∈ s.erase i, b k = ∑ k ∈ s.erase i, a k :=
+      Finset.sum_congr rfl fun k hk => by simp [b, (Finset.ne_of_mem_erase hk)]
+    rw [this]; simp [b]; ring
+  have hb_sq : ∑ k ∈ s, b k ^ 2 = ∑ k, a k ^ 2 + 2 * a i * a j := by
+    rw [← Finset.add_sum_erase s (fun k => b k ^ 2) his,
+      ← Finset.add_sum_erase _ (fun k => a k ^ 2) (Finset.mem_univ j),
+      ← Finset.add_sum_erase s (fun k => a k ^ 2) his]
+    have : ∑ k ∈ s.erase i, b k ^ 2 = ∑ k ∈ s.erase i, a k ^ 2 :=
+      Finset.sum_congr rfl fun k hk => by simp [b, (Finset.ne_of_mem_erase hk)]
+    rw [this]; simp [b]; ring
+  have hcard : (s.card : ℝ) = n - 1 := by
+    rw [Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, Fintype.card_fin]
+    push_cast [Nat.cast_sub (by omega : 1 ≤ n)]; ring
+  have hcs := sq_sum_le_card_mul_sum_sq (s := s) (f := b)
+  rw [hb_sum, hb_sq, hcard] at hcs
+  have hn1 : (0 : ℝ) < n - 1 := by
+    have : (1 : ℝ) < n := by exact_mod_cast hn
+    linarith
+  have : 1 / ((n : ℝ) - 1) * (∑ i : Fin n, a i) ^ 2 ≤ ∑ k, a k ^ 2 + 2 * a i * a j := by
+    rw [div_mul_eq_mul_div, one_mul, div_le_iff₀ hn1]; linarith
+  linarith
