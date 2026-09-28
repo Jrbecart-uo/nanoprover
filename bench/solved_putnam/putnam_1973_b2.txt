@@ -1,0 +1,52 @@
+import Mathlib
+
+open Nat Set MeasureTheory Topology Filter
+
+/-!
+Putnam 1973 B2.  Complex numbers with rational coordinates are closed under · and ⁻¹, so
+w = zⁿ (n ∈ ℤ) has rational coordinates, and ‖w‖ = 1 gives w⁻¹ = w̄.  Then
+z^(2n) − 1 = w(w − w⁻¹) = w(w − w̄) = w·(2·Im w)·i (`Complex.sub_conj`), so
+‖z^(2n) − 1‖ = 2|Im w| ∈ ℚ.
+-/
+theorem putnam_1973_b2
+(z : ℂ)
+(hzrat : ∃ q1 q2 : ℚ, z.re = q1 ∧ z.im = q2)
+(hznorm : ‖z‖ = 1)
+: ∀ n : ℤ, ∃ q : ℚ, ‖z^(2*n) - 1‖ = q := by
+  -- complex numbers with rational coordinates are closed under * and ⁻¹
+  let R : ℂ → Prop := fun u => ∃ a b : ℚ, u.re = a ∧ u.im = b
+  have Rmul : ∀ u v, R u → R v → R (u * v) := by
+    rintro u v ⟨a, b, ha, hb⟩ ⟨c, d, hc, hd⟩
+    exact ⟨a * c - b * d, a * d + b * c, by simp [Complex.mul_re, ha, hb, hc, hd],
+      by simp [Complex.mul_im, ha, hb, hc, hd]⟩
+  have Rinv : ∀ u, R u → R u⁻¹ := by
+    rintro u ⟨a, b, ha, hb⟩
+    refine ⟨a / (a * a + b * b), -b / (a * a + b * b), ?_, ?_⟩
+    · simp [Complex.inv_re, Complex.normSq_apply, ha, hb]
+    · simp [Complex.inv_im, Complex.normSq_apply, ha, hb, neg_div]
+  have Rone : R 1 := ⟨1, 0, by simp, by simp⟩
+  have Rz : R z := hzrat
+  have Rpow : ∀ n : ℤ, R (z ^ n) := by
+    intro n
+    induction n using Int.induction_on with
+    | zero => simpa using Rone
+    | succ i ih =>
+      rw [zpow_add_one₀ (by intro h; rw [h] at hznorm; simp at hznorm)]
+      exact Rmul _ _ ih Rz
+    | pred i ih =>
+      rw [zpow_sub_one₀ (by intro h; rw [h] at hznorm; simp at hznorm)]
+      exact Rmul _ _ ih (Rinv _ Rz)
+  intro n
+  set w := z ^ n with hw
+  have hw1 : ‖w‖ = 1 := by rw [hw, norm_zpow, hznorm, one_zpow]
+  have hw0 : w ≠ 0 := by intro h; rw [h] at hw1; simp at hw1
+  obtain ⟨a, b, ha, hb⟩ := Rpow n
+  refine ⟨2 * |b|, ?_⟩
+  have hns : Complex.normSq w = 1 := by rw [Complex.normSq_eq_norm_sq, hw1]; norm_num
+  have hinv : w⁻¹ = (starRingEnd ℂ) w := by rw [Complex.inv_def, hns]; simp
+  have e : z ^ (2 * n) - 1 = w * (w - w⁻¹) := by
+    rw [mul_sub, mul_inv_cancel₀ hw0, hw, mul_comm (2 : ℤ) n, zpow_mul, zpow_two]
+  rw [e, Complex.norm_mul, hw1, one_mul, hinv, Complex.sub_conj, Complex.norm_mul,
+    Complex.norm_I, mul_one, Complex.norm_real, Real.norm_eq_abs, hb]
+  push_cast
+  rw [abs_mul, abs_two]
