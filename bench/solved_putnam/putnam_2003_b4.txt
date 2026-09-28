@@ -1,0 +1,58 @@
+import Mathlib
+
+open MvPolynomial Set Nat
+
+/-!
+Putnam 2003 B4.  Vieta via finite differences: evaluating the identity at z = 0, ±1, ±2 and
+taking the 5-point stencils (`linear_combination … / 12`, `/ 24`) gives
+b = −a(s+t), c = a(st + p + q), d = −a(pt + qs) with s = r₁+r₂, t = r₃+r₄, p = r₁r₂,
+q = r₃r₄.  With s rational: t, p + q and pt + qs are rational, and
+p(t − s) = (pt + qs) − s(p + q), so p is rational since t ≠ s.
+-/
+theorem putnam_2003_b4
+  (f : ℝ → ℝ)
+  (a b c d e : ℤ)
+  (r1 r2 r3 r4 : ℝ)
+  (ane0 : a ≠ 0)
+  (hf1 : ∀ z, f z = a * z ^ 4 + b * z ^ 3 + c * z ^ 2 + d * z + e)
+  (hf2 : ∀ z, f z = a * (z - r1) * (z - r2) * (z - r3) * (z - r4)) :
+  (¬Irrational (r1 + r2) ∧ r1 + r2 ≠ r3 + r4) → ¬Irrational (r1 * r2) := by
+  rintro ⟨hrat, hne⟩
+  have H : ∀ z, (a : ℝ) * z ^ 4 + b * z ^ 3 + c * z ^ 2 + d * z + e
+      = a * (z - r1) * (z - r2) * (z - r3) * (z - r4) := fun z => by rw [← hf1, ← hf2]
+  have h0 := H 0
+  have h1 := H 1
+  have hm1 := H (-1)
+  have h2 := H 2
+  have hm2 := H (-2)
+  have aR : (a : ℝ) ≠ 0 := by exact_mod_cast ane0
+  set s := r1 + r2
+  set t := r3 + r4
+  set p := r1 * r2
+  set q := r3 * r4
+  -- Vieta, via finite differences at 0, ±1, ±2
+  have vb : (b : ℝ) = -a * (s + t) := by
+    linear_combination (h2 - 2 * h1 + 2 * hm1 - hm2) / 12
+  have vc : (c : ℝ) = a * (s * t + p + q) := by
+    linear_combination (-h2 + 16 * h1 - 30 * h0 + 16 * hm1 - hm2) / 24
+  have vd : (d : ℝ) = -a * (p * t + q * s) := by
+    linear_combination (-h2 + 8 * h1 - 8 * hm1 + hm2) / 12
+  unfold Irrational at hrat ⊢
+  push Not at hrat ⊢
+  obtain ⟨Q, hQ⟩ := hrat
+  -- t = -b/a - s, p + q = c/a - s t, p t + q s = -d/a, and p (t - s) = (p t + q s) - s (p + q)
+  set T : ℚ := -(b : ℚ) / a - Q
+  set PQ : ℚ := (c : ℚ) / a - Q * T
+  set R : ℚ := -(d : ℚ) / a
+  have hT : (T : ℝ) = t := by
+    simp only [T]; push_cast; rw [hQ]; field_simp; linear_combination -vb
+  have hPQ : (PQ : ℝ) = p + q := by
+    simp only [PQ]; push_cast; rw [hQ, hT]; field_simp; linear_combination vc
+  have hR : (R : ℝ) = p * t + q * s := by
+    simp only [R]; push_cast; field_simp; linear_combination -vd
+  have hts : t - s ≠ 0 := sub_ne_zero.mpr (Ne.symm hne)
+  refine ⟨(R - Q * PQ) / (T - Q), ?_⟩
+  push_cast
+  rw [hR, hQ, hPQ, hT]
+  field_simp
+  ring
