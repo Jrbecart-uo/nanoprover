@@ -1,0 +1,73 @@
+import Mathlib
+
+open Nat Topology Filter
+
+/-!
+Putnam 1967 B4 (lockers).  By induction, after pass k locker i is open iff
+#{d ∈ [1,k] : d ∣ i} is odd; at k = n ≥ i this is the number of divisors of i.  Then
+τ(m) = ∏_p (e_p + 1) (`Nat.card_divisors`) is odd iff every exponent e_p is even iff m is
+a square (m = (∏ p^(e_p/2))² via `Nat.prod_factorization_pow_eq_self`; conversely the
+factorization of j² is 2 • that of j).
+-/
+theorem putnam_1967_b4
+(n : ℕ)
+(lockers : ℕ → Set.Icc 1 n → Bool)
+(npos : n ≥ 1)
+(hlockers0 : ∀ i : Set.Icc 1 n, lockers 0 i = false)
+(hlockersk : ∀ k ∈ Set.Icc 1 n, ∀ i : Set.Icc 1 n, lockers k i = if k ∣ i then !(lockers (k - 1) i) else (lockers (k - 1) i))
+: ∀ i : Set.Icc 1 n, lockers n i ↔ (∃ j : ℤ, j ^ 2 = i) := by
+  classical
+  -- odd product ⇔ all factors odd
+  have hoddprod : ∀ (s : Finset ℕ) (f : ℕ → ℕ), Odd (∏ x ∈ s, f x) ↔ ∀ x ∈ s, Odd (f x) := by
+    intro s f
+    induction s using Finset.induction_on with
+    | empty => simp
+    | insert x s hx ih => rw [Finset.prod_insert hx, Nat.odd_mul, ih, Finset.forall_mem_insert]
+  -- odd number of divisors ⇔ square
+  have hsq : ∀ m : ℕ, m ≠ 0 → (Odd m.divisors.card ↔ ∃ j : ℤ, j ^ 2 = m) := by
+    intro m hm
+    rw [Nat.card_divisors hm, hoddprod]
+    simp only [Nat.odd_add_one, Nat.not_odd_iff_even]
+    constructor
+    · intro hev
+      refine ⟨((∏ p ∈ m.primeFactors, p ^ (m.factorization p / 2) : ℕ) : ℤ), ?_⟩
+      have : (∏ p ∈ m.primeFactors, p ^ (m.factorization p / 2)) ^ 2 = m := by
+        rw [← Finset.prod_pow]
+        conv_rhs => rw [← Nat.prod_factorization_pow_eq_self hm]
+        rw [Finsupp.prod, Nat.support_factorization]
+        refine Finset.prod_congr rfl fun p hp => ?_
+        rw [← pow_mul]
+        obtain ⟨r, hr⟩ := hev p hp
+        congr 1; omega
+      exact_mod_cast this
+    · rintro ⟨j, hj⟩ p _
+      have hm' : m = j.natAbs ^ 2 := by
+        have : ((j.natAbs ^ 2 : ℕ) : ℤ) = m := by push_cast; rw [sq_abs]; exact hj
+        exact_mod_cast this.symm
+      rw [hm', Nat.factorization_pow]
+      simp
+  intro i
+  obtain ⟨hi1, hin⟩ := i.2
+  -- after pass k, locker i is open iff #{d ≤ k : d ∣ i} is odd
+  have claim : ∀ k, k ≤ n →
+      lockers k i = decide (Odd ((Finset.Icc 1 k).filter (· ∣ (i : ℕ))).card) := by
+    intro k hk
+    induction k with
+    | zero => simp [hlockers0]
+    | succ k ih =>
+      rw [hlockersk (k + 1) ⟨by omega, hk⟩ i, Nat.add_sub_cancel, ih (by omega)]
+      rw [Finset.card_filter, Finset.card_filter, Finset.sum_Icc_succ_top (by omega)]
+      split_ifs with h
+      · simp [Nat.odd_add_one, ← Nat.not_even_iff_odd]
+      · simp
+  have hdiv : (Finset.Icc 1 n).filter (· ∣ (i : ℕ)) = (i : ℕ).divisors := by
+    ext d
+    simp only [Finset.mem_filter, Finset.mem_Icc, Nat.mem_divisors]
+    constructor
+    · rintro ⟨-, hd⟩; exact ⟨hd, by omega⟩
+    · rintro ⟨hd, -⟩
+      have := Nat.le_of_dvd (by omega) hd
+      have := Nat.pos_of_dvd_of_pos hd (by omega)
+      exact ⟨⟨by omega, by omega⟩, hd⟩
+  rw [claim n le_rfl, hdiv, decide_eq_true_iff]
+  exact hsq _ (by omega)
