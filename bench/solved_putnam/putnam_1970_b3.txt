@@ -1,0 +1,30 @@
+import Mathlib
+
+open Metric Set EuclideanGeometry Filter Topology
+
+/-!
+Putnam 1970 B3.  The projection to the y-axis of a closed S ⊆ (a,b) × ℝ is closed.
+Pull S back along g : [a,b] × ℝ → ℝ × ℝ (continuous, so the preimage is closed); the set
+is `Prod.snd '' (g ⁻¹' S)`, and `Prod.snd` is a closed map because [a,b] is compact
+(`isClosedMap_snd_of_compactSpace`).  (a < b is not needed.)
+-/
+theorem putnam_1970_b3
+(S : Set (ℝ × ℝ))
+(a b : ℝ)
+(hab : a < b)
+(hS : ∀ s ∈ S, s.1 ∈ Ioo a b)
+(hSclosed : IsClosed S)
+: IsClosed {y | ∃ x : ℝ, ⟨x,y⟩ ∈ S} := by
+  let g : Icc a b × ℝ → ℝ × ℝ := fun p => (p.1.1, p.2)
+  have hg : Continuous g := by fun_prop
+  have hpre : IsClosed (g ⁻¹' S) := hSclosed.preimage hg
+  have heq : {y | ∃ x : ℝ, ⟨x,y⟩ ∈ S} = Prod.snd '' (g ⁻¹' S) := by
+    ext y
+    constructor
+    · rintro ⟨x, hx⟩
+      have := hS _ hx
+      exact ⟨(⟨x, Ioo_subset_Icc_self this⟩, y), hx, rfl⟩
+    · rintro ⟨⟨x, y'⟩, hx, rfl⟩
+      exact ⟨x.1, hx⟩
+  rw [heq]
+  exact isClosedMap_snd_of_compactSpace _ hpre
