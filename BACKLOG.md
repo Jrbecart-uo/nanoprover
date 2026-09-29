@@ -3,9 +3,21 @@
 Durable handoff. A new session can read this + the auto-memory (`nanoprover-project`,
 `nanoprover-env`, `nanoprover-roadmap`, `cdc-formalization`, `naskrecki-problem`)
 and propose next tasks. Ranked by leverage within each track. Last updated
-2026-09-29.
+2026-09-29 (second session of the day).
 
-## Where the last session (2026-09-29) left off — START HERE
+## Where the last session (2026-09-29, later) left off — START HERE
+- **Project Euler #1008, #1009, #1010, #1011 SOLVED 2026-09-29** (all published Sep 5-26, after the model's
+  training cutoff; #1011 within its publication week). Code in `euler/` (`p1008.c` + `p1008_ref.py`, `p1009.py` +
+  `p1009_check.py`, `p1010.py`, `p1011.c` + `p1011_check.py` + `p1011_brute.py`); each answer cross-checked by an
+  independent implementation and brute force at small sizes. Answers were given to the user in chat (not
+  committed: PE asks not to publish); **the user submits them** — record site confirmations when reported.
+- **#1110 (9,2)/(5,3): investigated, NOT solvable with the certificate method** (`erdos/1110/FINDINGS.md`, section
+  "quenched vs annealed"). Quenched (offline) encoding rates are ~1-4% below mu (positive density plausible;
+  constructive beams on 4000-digit targets), but online/finite-window encodings approach them only like
+  W^-0.6..-0.7 ((9,2): 1.117 mu at W=31) -> a certificate would need ~300+ digits of look-ahead. Needs a
+  non-causal proof idea (e.g. truncated second moment under strong disorder). New tools: `nbrw.c` (beam, any
+  base), `exactmin.c` (IDA*), `hmean.c` (exact mean min-cost over all k-digit targets), `rollout.c`.
+- Forum (erdosproblems.com/forum/thread/1110): no comments yet on the (7,2) claim (checked 2026-09-29 afternoon).
 - Work is on `main`; REPL daemon stopped. nanoprover repo still PRIVATE. Public results repo:
   https://github.com/Jrbecart-uo/erdos-1110-72 (root = (7,2); `4-3/` = (4,3); release `v43-certificate` = 410 MB table).
 - **Erdős #1110 (density of non-representables), our results:**
@@ -17,8 +29,7 @@ and propose next tasks. Ranked by leverage within each track. Last updated
     **forum claim is HELD by the user** (wants expert review first) — do not post without explicit go-ahead.
   - Neither result is human-expert-reviewed yet (the most valuable next step; only the user can arrange it).
 - **Open for #1110:** (9,2), (5,3). Exact MC (`repdfs.c`): flat densities ≈0.06 / ≈0.04 up to 2^64 / 2^80 (likely
-  positive), but the certificate method needs look-ahead windows of ~35–60 digits (ratios ≥1.14 at feasible sizes).
-  Needs a NEW idea (compressed/coarse value functions verified on full states, hierarchical look-ahead, …).
+  positive). The later session showed finite-window certificates cannot reach them (see START HERE above).
   Also suggestive: (5,2) 99.94% representable at 2^48 → "almost all representable" conjecture (no approach yet).
 - Tools built 2026-09-29 (all in `erdos/1110/`, see `FINDINGS.md`): `repdfs.c` exact representability test;
   `gvid.c` D-digit/s-block look-ahead value iteration with dead states + viable set (transposed V layout);
@@ -27,7 +38,7 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   10-min Bash cap; poll with an `until … do sleep; done` in a background Bash.
 - Other tracks unchanged since 2026-09-28: Putnam 100 scalps (+1 vacuous; all re-verified with
   `verify_scalps.py --kernel`); re-triage in `bench/putnam_retriage_notes.md` (~15 cost-3 left, geometry/ε-δ heavy;
-  analysis tiers of `bench/putnam_retriage.tsv` untriaged). IMO 1985 P6 solved. Project Euler #1008 when it drops.
+  analysis tiers of `bench/putnam_retriage.tsv` untriaged). IMO 1985 P6 solved. Project Euler: next is #1012 (weekly).
   Tooling tip: sympy finds `linear_combination` multipliers (install with `pip --target` into scratch).
   2026-09-28 cleanup deleted ~58 GB of clones in `external/` (NS evidence kept in `verification/ns/`).
 
@@ -99,8 +110,9 @@ essential here — a digon must be a cycle).
       5832484464); 261 already filed as #6538 by an automated LM audit (`ai-audit` label —
       such audits now sweep FC continuously; search before filing). Follow-up: a PR
       re-tagging them needs the Google CLA signed.
-- [~] #1110 density: (7,2) ✅ posted; (4,3) ✅ verified + public on GitHub, forum claim held; (9,2), (5,3) open
-      (see "Where the last session left off"). Earlier (5,2): Ding–Li–Liu–Zhang claim.
+- [~] #1110 density: (7,2) ✅ posted; (4,3) ✅ verified + public on GitHub, forum claim held; (9,2), (5,3) open —
+      out of reach of finite certificates (quenched-rate analysis 2026-09-29, `erdos/1110/FINDINGS.md`).
+      Earlier (5,2): Ding–Li–Liu–Zhang claim.
 - ✅ 261 proof re-checked in the FC environment (clean axioms).
 
 ## Track G — Navier–Stokes (OpenAI, Sep 2026) — AUDIT DONE 2026-09-24
@@ -141,7 +153,8 @@ essential here — a digon must be a cycle).
 - [ ] Write the 9 missing `analogy.py` STORIES (see `tools/analogy.py` index).
 
 ## Track E — Project Euler (renewable, uncontaminated demo)
-- [ ] **#1008** (and later) when it drops — proven pipeline, 3/3 site-confirmed
+- [x] **#1008-#1011** solved 2026-09-29 (answers with the user for submission; site confirmation pending).
+- [ ] **#1012** (and later) when it drops — proven pipeline, 3/3 site-confirmed before this batch
       (#1005 award, #1006 first-15-worldwide, #1007). Solve week-of-publication
       for the clean no-contamination demonstration. Files: `euler/`.
 

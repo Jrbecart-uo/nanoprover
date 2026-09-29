@@ -195,3 +195,18 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
 - Value iteration without the look-up table (direct random access into a 16M-entry array per fresh digit)
   was ~15× slower; store V with the fresh-digit index fastest-varying ("transposed") so each chain's update
   reads one contiguous row (`gvid.c`).
+
+## Added 2026-09-29 (later session) (Erdős #1110 quenched-rate tools, Project Euler 1008-1011)
+- **Fell into the `pkill -f` trap again** (exit 144, rest of the command line never ran). Never put `pkill -f`
+  in a compound command; kill by exact argv via a /proc scan in a separate Python snippet.
+- **IDA\* off-by-one**: with a start offset (G = -1), the tightest admissible bound was `LB - 1`, but the loop
+  `bound = LB - 1; while (!found) { bound++; dfs(); }` increments BEFORE the first try, so it starts at `LB`;
+  symptom: optimum too large by 1 on some targets. Use `for (bound = LB0;; bound++) { dfs(); if (found) break; }`.
+  Caught only by the cross-check against an independent Python brute force — always write one.
+- **Beam/search caps sized for one base break another**: a gamma cap of 0.8·L is fine in base 2 (rate ~0.3)
+  but kills every particle in base 5/9 (rate ~1.5-3.2). Symptom: `pop=0`, nonsense velocities. Scale caps by mu.
+- **Brute-force validators must reduce as they go**: multiplying ~10^6 exact big integers and reducing mod p
+  only at the end ran for 10+ minutes; `prod = prod * (f % p) % p` finished in seconds.
+- Harness: `sleep N; cmd` is blocked; wait with a background `until …; do sleep; done` script instead. The rtk
+  hook mangled a bash `case … ;;` (became `; ;`) → do /proc scans in Python.
+- Python `-c` prints are block-buffered when redirected (background task output looked empty): use `-u`.
