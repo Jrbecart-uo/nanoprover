@@ -33,9 +33,10 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   density of Representable 7 2` (FC's definition verbatim). Only the finite certificate check is trusted to C.
   Toy `Cert 1 1` instance shows the hypothesis structure is inhabited.
 - 2026-09-29: PUBLIC bundle https://github.com/Jrbecart-uo/erdos-1110-72 (README = NOTE.md, lean/, certificate/);
-  user posting a proof claim at erdosproblems.com/forum/thread/1110/submit-proof (record the claim link here).
+  ✅ POSTED 2026-09-29 by the user as a partial proof claim on https://www.erdosproblems.com/forum/thread/1110/proof-claims
+  (AI credited: Claude Opus 5.5). Watch that page for comments/objections.
 - Possible next: (a) check a SAMPLE of the certificate inequality in Lean (e.g. the argmax state) for extra
-  confidence in the C↔Lean field correspondence; (b) human-expert review of NOTE.md; (c) USER decision on reporting.
+  confidence in the C↔Lean field correspondence; (b) human-expert review of NOTE.md; (c) respond to forum feedback; seek a human expert reader.
 
 ## Session-start ritual
 1. `export PATH="$HOME/.elan/bin:$PATH"`
