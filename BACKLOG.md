@@ -3,50 +3,33 @@
 Durable handoff. A new session can read this + the auto-memory (`nanoprover-project`,
 `nanoprover-env`, `nanoprover-roadmap`, `cdc-formalization`, `naskrecki-problem`)
 and propose next tasks. Ranked by leverage within each track. Last updated
-2026-09-28.
+2026-09-29.
 
-## Where the last session (2026-09-28) left off
-- Work is on `main` (branch `session-2026-09-24` merged). REPL daemon stopped. Repo still private.
-- **Erdős #1110, (7,2) density: candidate computer-assisted proof** of positive lower density —
-  `erdos/1110/PROOF_SKETCH.md` (certificate s=11, ĝ = 3.904698 < 11·26/73; independent verifier PASS;
-  independent big-int cross-check exact; adversarial referee agent: no fatal issue). NOT expert-reviewed.
-  **Pending USER decision:** whether/where to report it — never post without explicit go-ahead.
-  Optional next: same method for (9,2)/(5,3) (thinner margins); short write-up; Lean statement.
-- IMO 1985 P6 solved (`bench/solved_imo/imo_1985_p6.txt`).
-- Putnam 53 → **100** (+ 1991_a6 proved VACUOUS, counted separately); all 101 files re-verified with
-  `verify_scalps.py --kernel`. Re-triage: `bench/putnam_retriage_notes.md` (cost-1–2 tier cleared,
-  25 cost-3 done; ~15 cost-3 left, geometry/ε-δ heavy); analysis tiers of `bench/putnam_retriage.tsv`
-  (limits/integrals/calculus) not yet triaged.
-- Tooling notes: sympy certificates for `linear_combination` (install to scratch with `pip --target`),
-  save/verify helper pattern, many new entries in `KNOWN_TRAPS.md`.
-- Earlier (2026-09-24/25): NS Lean audit, Millennium statement audits, Erdős triage, claimcheck;
+## Where the last session (2026-09-29) left off — START HERE
+- Work is on `main`; REPL daemon stopped. nanoprover repo still PRIVATE. Public results repo:
+  https://github.com/Jrbecart-uo/erdos-1110-72 (root = (7,2); `4-3/` = (4,3); release `v43-certificate` = 410 MB table).
+- **Erdős #1110 (density of non-representables), our results:**
+  - **(7,2) positive lower density** — `erdos/1110/NOTE.md`, Lean reduction `erdos/1110/lean/E1110.lean`.
+    POSTED by the user on the erdosproblems.com proof-claims page (2026-09-29). Watch it for comments.
+  - **(4,3) positive lower density** — `erdos/1110/NOTE43.md`, GENERAL Lean reduction `erdos/1110/lean/E1110G.lean`
+    (`pos_lower_density` for any coprime bases with a viable set; `erdos1110_43_density`; clean axioms). Certificate
+    base 4, s=2, D=14: g = 2.5148 < 2·29/23; `verifyd.c` PASS ×2; Python big-int probe 16/16. Public on GitHub, but the
+    **forum claim is HELD by the user** (wants expert review first) — do not post without explicit go-ahead.
+  - Neither result is human-expert-reviewed yet (the most valuable next step; only the user can arrange it).
+- **Open for #1110:** (9,2), (5,3). Exact MC (`repdfs.c`): flat densities ≈0.06 / ≈0.04 up to 2^64 / 2^80 (likely
+  positive), but the certificate method needs look-ahead windows of ~35–60 digits (ratios ≥1.14 at feasible sizes).
+  Needs a NEW idea (compressed/coarse value functions verified on full states, hierarchical look-ahead, …).
+  Also suggestive: (5,2) 99.94% representable at 2^48 → "almost all representable" conjecture (no approach yet).
+- Tools built 2026-09-29 (all in `erdos/1110/`, see `FINDINGS.md`): `repdfs.c` exact representability test;
+  `gvid.c` D-digit/s-block look-ahead value iteration with dead states + viable set (transposed V layout);
+  `verifyd.c` exact certificate checker; `verify43_probe.py` independent big-int spot check; `shadow.c`, `gvik.c`,
+  `gvis1.c`, `gvi2.c` (exploration). Long jobs: run detached (`nohup setsid bash -c '…' &`) — they outlive the
+  10-min Bash cap; poll with an `until … do sleep; done` in a background Bash.
+- Other tracks unchanged since 2026-09-28: Putnam 100 scalps (+1 vacuous; all re-verified with
+  `verify_scalps.py --kernel`); re-triage in `bench/putnam_retriage_notes.md` (~15 cost-3 left, geometry/ε-δ heavy;
+  analysis tiers of `bench/putnam_retriage.tsv` untriaged). IMO 1985 P6 solved. Project Euler #1008 when it drops.
+  Tooling tip: sympy finds `linear_combination` multipliers (install with `pip --target` into scratch).
   2026-09-28 cleanup deleted ~58 GB of clones in `external/` (NS evidence kept in `verification/ns/`).
-
-## Later on 2026-09-28 (#1110 follow-up), resume here
-- (7,2) RECHECKED: `verify.c` re-run gives GNUM 8385274094, PASS. The new independent full-state checker `verify2.c` gives the same
-  GNUM and argmax over all 2^22 states. V SHA matches. Literature re-checked: only the (5,2) density claim exists.
-- (9,2)/(5,3): out of reach for this method (`gvi.c`; VI lower bracket/threshold 1.13–1.15 at feasible s vs 0.9965 for (7,2)).
-- Write-up: `erdos/1110/NOTE.md`. It uses a simpler Section 4 with an exponential potential Ψ=exp(θ(G_t−tλ+V(X_t))),
-  e^w≤1+w+w², and Markov. No Azuma and no coupling.
-- ✅ 2026-09-29 **Lean formalization of Theorem A DONE**: `erdos/1110/lean/E1110.lean` (1112 lines, `lake env lean`
-  exit 0, clean axioms). `E1110.erdos1110_72_density : (∃ K : Cert 11 10, K.g = 8385274094/2^31) → positive lower
-  density of Representable 7 2` (FC's definition verbatim). Only the finite certificate check is trusted to C.
-  Toy `Cert 1 1` instance shows the hypothesis structure is inhabited.
-- 2026-09-29: PUBLIC bundle https://github.com/Jrbecart-uo/erdos-1110-72 (README = NOTE.md, lean/, certificate/);
-  ✅ POSTED 2026-09-29 by the user as a partial proof claim on https://www.erdosproblems.com/forum/thread/1110/proof-claims
-  (AI credited: Claude Opus 5.5). Watch that page for comments/objections.
-- ✅ 2026-09-29 **(4,3): positive lower density — certificate found and verified.** `erdos/1110/NOTE43.md`.
-  General Lean reduction `erdos/1110/lean/E1110G.lean` (any coprime bases, D-digit states, viable set;
-  `pos_lower_density` + `erdos1110_43_density`, clean axioms, `lake env lean` exit 0). Certificate: base 4,
-  s=2, D=14 (2^28 states), |W| = 2/3, g = 42192162/(16·2^20) = 2.5148 < 2·29/23; `verifyd.c` PASS (twice),
-  16/16 sampled states match an independent Python big-int check. Table `data_43/V43_final.bin.xz` (410 MB,
-  gitignored). PUBLISHED 2026-09-29 (user: repo only, NO forum claim yet): https://github.com/Jrbecart-uo/erdos-1110-72/tree/main/4-3,
-  table = release v43-certificate. Forum claim for (4,3) held (user decision; e.g. after expert review).
-- Empirics (exact test `repdfs.c`): local density at 2^64: (7,2) 0.33↑, (4,3) 0.18↑, (9,2) 0.06, (5,3) 0.04;
-  (5,2) 0.9994 at 2^48 (almost all representable?). (9,2)/(5,3) out of reach of the certificate method
-  (ratios ≥1.14 at feasible windows).
-- Possible next: (a) check a SAMPLE of the certificate inequality in Lean (e.g. the argmax state) for extra
-  confidence in the C↔Lean field correspondence; (b) human-expert review of NOTE.md; (c) respond to forum feedback; seek a human expert reader.
 
 ## Session-start ritual
 1. `export PATH="$HOME/.elan/bin:$PATH"`
@@ -116,12 +99,8 @@ essential here — a digon must be a cycle).
       5832484464); 261 already filed as #6538 by an automated LM audit (`ai-audit` label —
       such audits now sweep FC continuously; search before filing). Follow-up: a PR
       re-tagging them needs the Google CLA signed.
-- [~] #1110 density clause, (7,2): **candidate computer-assisted proof of positive lower density**
-      (2026-09-28) — `erdos/1110/PROOF_SKETCH.md`. Two-block look-ahead potential certificate at
-      s=11 (ĝ = 3.904698 < 11·26/73 = 3.917808), independent integer verifier PASS, independent
-      big-int cross-check exact at s=11, adversarial referee: no fatal issue (gaps patched).
-      Open decisions (USER): whether/where to report (Erdős forum proof-claims, FC variant);
-      optional next: human-expert review, (9,2)/(5,3) with the same method, a Lean statement.
+- [~] #1110 density: (7,2) ✅ posted; (4,3) ✅ verified + public on GitHub, forum claim held; (9,2), (5,3) open
+      (see "Where the last session left off"). Earlier (5,2): Ding–Li–Liu–Zhang claim.
 - ✅ 261 proof re-checked in the FC environment (clean axioms).
 
 ## Track G — Navier–Stokes (OpenAI, Sep 2026) — AUDIT DONE 2026-09-24
