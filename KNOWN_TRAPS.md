@@ -198,7 +198,10 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
 
 ## Added 2026-09-29 (later session) (Erdős #1110 quenched-rate tools, Project Euler 1008-1011)
 - **Fell into the `pkill -f` trap again** (exit 144, rest of the command line never ran). Never put `pkill -f`
-  in a compound command; kill by exact argv via a /proc scan in a separate Python snippet.
+  in a compound command; kill by exact argv via a /proc scan in a separate Python snippet. Even then: a
+  heredoc'd Python killer is PART of the invoking bash's cmdline, so matching a `bash` wrapper by substring
+  (e.g. 'jobs.txt' + 'xargs') killed my own shell (exit 144 again). Skip `os.getpid()`/`os.getppid()` and only
+  match `argv[0]` of the real targets.
 - **IDA\* off-by-one**: with a start offset (G = -1), the tightest admissible bound was `LB - 1`, but the loop
   `bound = LB - 1; while (!found) { bound++; dfs(); }` increments BEFORE the first try, so it starts at `LB`;
   symptom: optimum too large by 1 on some targets. Use `for (bound = LB0;; bound++) { dfs(); if (found) break; }`.
