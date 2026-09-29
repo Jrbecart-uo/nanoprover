@@ -97,8 +97,8 @@ rate < mu = log_R B (the certificate proves exactly this with a finite-window on
 | (5,2) b2 | 0.43068 | 0.29382 | 0.3588 | 0.349 (flat from k=15 on) | — (DLLZ: 12-bit block suffices) |
 | (7,2) b2 | 0.35621 | 0.29382 | 0.3412 (0.958 mu) | 0.3395 at k=26, still falling | W=21/25/29: 1.038/1.025/1.014 mu (VI W=33: 0.9965 = our certificate) |
 | (9,2) b2 | 0.31546 | 0.29382 | **0.3117, 0.3133, 0.3143** (0.988/0.993/0.996 mu, 3 seeds; final cost/L 0.3128-0.3135) | 0.3295 at k=26, still falling | W=13/17/21/25/29/31: 1.225/1.188/1.161/1.140/1.124/1.117 mu |
-| (5,3) b3 | 0.68261 | 0.64179 | N=3e5: 0.976 mu (N=1e4: 0.992-0.996) | 0.722 at k=17, still falling | (VI W<=13 trits: 1.15-1.20) |
-| (5,3) b5 | 1.46497 | 1.36213 | N=1e5: 0.992 mu (N=1e4: 0.973-0.980; single targets vary by ~2%) | — | (VI s=3: 1.21) |
+| (5,3) b3 | 0.68261 | 0.64179 | N=1e6: 0.977, 0.979 mu (2 seeds; N=3e5: 0.976; N=1e4: 0.992-0.996) | 0.722 at k=17, still falling | (VI W<=13 trits: 1.15-1.20) |
+| (5,3) b5 | 1.46497 | 1.36213 | N=1e5: 0.970, 0.992 mu (2 seeds; N=1e4: 0.973-0.980; single targets vary by ~2%) | — | (VI s=3: 1.21) |
 
 Conclusions.
 1. **Strong disorder**: the quenched rate exceeds the annealed one by 7-22%, and the gap depends on the
