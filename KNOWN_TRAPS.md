@@ -176,3 +176,22 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
 - Pattern that worked well: digit windows `win k j w := ((w.val / 2^k : ℕ) : ZMod (2^j))` with ONE core lemma
   `win k j (x + 2^k e) = win k j x + e.val`; ring-hom facts via `ZMod.castHom` (`val_cast_eq_castHom`).
   Conditional expectation replaced by averaging over translations `y ↦ y + 2^K δ` (`Fintype.sum_equiv (Equiv.addRight _)`).
+
+## Added 2026-09-29 (Erdős #1110 (4,3) certificate + general Lean reduction `erdos/1110/lean/E1110G.lean`)
+- **Killing by command-line substring kills your own shell** (`pkill -f PATTERN`, or a /proc scan matching
+  the pattern): the invoking bash's own cmdline contains PATTERN → exit 144 and the rest of the command never
+  runs. Match `argv[0]` exactly (`erdos/1110`-era helper: `scratchpad/killexe.py NAME`).
+- **The rtk hook rewrites `grep`/`wc` output**: `grep … | awk '{print $3}'` picked up the word "in" from rtk's
+  "17 matches in 1 files:" header; `wc -l < file` printed 0 for a non-empty file. Never parse grep/wc output
+  in pipelines that feed programs — do it in Python.
+- `(time cmd > f)` inside a compound command lost the program's output once; run the program plainly.
+- Lean: `have h := by tac1; tac2` inside another `by` — the `;` binds to the inner block, leaving the outer
+  goal unsolved ("No goals" + "unsolved goals"). Put the second tactic on its own line.
+- Lean: after `rw [hN0] at h` a term `C * x ^ (0 + 1)` stays as `(0+1)`; linarith treats it as a new atom.
+  Add `zero_add` to the rewrite.
+- Lean: `rw [hy]` with `hy : y = …` rewrote `y` inside `GG K lam y` too (again) — use `linear_combination hy`.
+- Lean: a stray `have … := fun y => …` whose binder type involves an implicit (`ZMod (b ^ ?m)`) fails with
+  "don't know how to synthesize implicit argument" — delete unused helpers or annotate the type.
+- Value iteration without the look-up table (direct random access into a 16M-entry array per fresh digit)
+  was ~15× slower; store V with the fresh-digit index fastest-varying ("transposed") so each chain's update
+  reads one contiguous row (`gvid.c`).

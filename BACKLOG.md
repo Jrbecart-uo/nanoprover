@@ -35,6 +35,15 @@ and propose next tasks. Ranked by leverage within each track. Last updated
 - 2026-09-29: PUBLIC bundle https://github.com/Jrbecart-uo/erdos-1110-72 (README = NOTE.md, lean/, certificate/);
   ✅ POSTED 2026-09-29 by the user as a partial proof claim on https://www.erdosproblems.com/forum/thread/1110/proof-claims
   (AI credited: Claude Opus 5.5). Watch that page for comments/objections.
+- ✅ 2026-09-29 **(4,3): positive lower density — certificate found and verified.** `erdos/1110/NOTE43.md`.
+  General Lean reduction `erdos/1110/lean/E1110G.lean` (any coprime bases, D-digit states, viable set;
+  `pos_lower_density` + `erdos1110_43_density`, clean axioms, `lake env lean` exit 0). Certificate: base 4,
+  s=2, D=14 (2^28 states), |W| = 2/3, g = 42192162/(16·2^20) = 2.5148 < 2·29/23; `verifyd.c` PASS (twice),
+  16/16 sampled states match an independent Python big-int check. Table `data_43/V43_final.bin.xz` (410 MB,
+  gitignored — publish as a GitHub release asset). NOT yet public; USER decision: publish + forum claim.
+- Empirics (exact test `repdfs.c`): local density at 2^64: (7,2) 0.33↑, (4,3) 0.18↑, (9,2) 0.06, (5,3) 0.04;
+  (5,2) 0.9994 at 2^48 (almost all representable?). (9,2)/(5,3) out of reach of the certificate method
+  (ratios ≥1.14 at feasible windows).
 - Possible next: (a) check a SAMPLE of the certificate inequality in Lean (e.g. the argmax state) for extra
   confidence in the C↔Lean field correspondence; (b) human-expert review of NOTE.md; (c) respond to forum feedback; seek a human expert reader.
 

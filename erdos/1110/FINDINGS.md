@@ -53,3 +53,29 @@ checked by an independent verifier.
   (7,2) calib 1.017 (s=8), 1.010 (s=9), 0.9965 (s=11); (9,2) 1.145 (s=8), 1.131 (s=9);
   (5,3) base 3: 1.155 (s=5), 1.136 (s=6); base 5: 1.212 (s=3). Beam on 300-bit targets: (9,2) ≈ 0.319 vs μ = 0.3155.
   Extrapolated need: blocks ~2^19 / 3^13 — out of reach for this state space. NOT pursued further.
+
+## 2026-09-29: densities at large scale, (4,3) attack, new tools
+**Exact representability test** `repdfs.c`: n is representable iff, after stripping q's, one can subtract p^a with
+a strictly decreasing (and q | remainder) down to exactly 0 (the smallest-q-power term carries the largest
+p-power). Matches brute force for all n < 2^20 for (9,2),(7,2),(5,3),(4,3),(5,2),(3,2) (0 mismatches; (3,2): all).
+Monte Carlo (local density of n in [2^(L-1),2^L), 20k-40k samples, +-0.002-0.006):
+| L | (5,2) | (7,2) | (4,3) | (9,2) | (5,3) |
+|---|---|---|---|---|---|
+| 32 | 0.975 | 0.245 | 0.138 | 0.070 | 0.052 |
+| 48 | 0.9994 | 0.258 | 0.152 | 0.0605 | 0.043 |
+| 56 | | | | 0.0614 | |
+| 64 | | 0.329 | 0.180 | 0.0605 | 0.040 |
+| 80 | | | | | 0.043 |
+Enumeration (`rep2.c`, exact cumulative to 2^32..2^34): (7,2) flat ~0.22, (4,3) ~0.15, (9,2) 0.137 -> 0.073,
+(5,3) 0.106 -> 0.055 over 2^17..2^32 (the early decline flattens at larger L). Conjecture suggested by the data:
+non-representables have density 0 when the antichain-counting exponent exceeds 1 and there is no congruence
+obstruction ((5,2) is already at 99.94%); (4,3) is capped by the mod-3 / mod-4 obstructions.
+**2-adic shadow** (`shadow.c`): |O_A mod 2^k| / 2^(k-1) at the critical top exponent stays ~constant
+(0.12-0.26 for (9,2) up to k=30) -> no density-zero proof from 2-adic information alone.
+**Certificate search, general form** (`gvik.c`, `gvid.c`): state = D digits, blocks of s digits, fresh block
+enters at the top (window W = D+s); dead residues (no chain) and the viable set W (closed under all fresh
+blocks and under x -> Qx, needed for padded steps). Findings: ratio depends mainly on the window, and finer
+blocks are better at equal window. (4,3) base 4, s=2: W=12 1.0278, 13 1.0180, 14 1.0096, 15 1.0024 -> W=16
+expected ~0.996 (run in progress). (9,2) s=1: W=13..21 -> 1.21..1.14; (5,3) s=1: 1.20..1.15 (W=9..13 trits):
+out of reach. (4,3) viable set = exactly 2/3 of states (stuck states: (4^(D-s)-1)/3 of them).
+`verifyd.c`: independent exact checker for such certificates (reproduces gvid's ghat at W=12).
