@@ -32,6 +32,8 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   exit 0, clean axioms). `E1110.erdos1110_72_density : (∃ K : Cert 11 10, K.g = 8385274094/2^31) → positive lower
   density of Representable 7 2` (FC's definition verbatim). Only the finite certificate check is trusted to C.
   Toy `Cert 1 1` instance shows the hypothesis structure is inhabited.
+- 2026-09-29: PUBLIC bundle https://github.com/Jrbecart-uo/erdos-1110-72 (README = NOTE.md, lean/, certificate/);
+  user posting a proof claim at erdosproblems.com/forum/thread/1110/submit-proof (record the claim link here).
 - Possible next: (a) check a SAMPLE of the certificate inequality in Lean (e.g. the argmax state) for extra
   confidence in the C↔Lean field correspondence; (b) human-expert review of NOTE.md; (c) USER decision on reporting.
 
