@@ -40,7 +40,8 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   `pos_lower_density` + `erdos1110_43_density`, clean axioms, `lake env lean` exit 0). Certificate: base 4,
   s=2, D=14 (2^28 states), |W| = 2/3, g = 42192162/(16·2^20) = 2.5148 < 2·29/23; `verifyd.c` PASS (twice),
   16/16 sampled states match an independent Python big-int check. Table `data_43/V43_final.bin.xz` (410 MB,
-  gitignored — publish as a GitHub release asset). NOT yet public; USER decision: publish + forum claim.
+  gitignored). PUBLISHED 2026-09-29 (user: repo only, NO forum claim yet): https://github.com/Jrbecart-uo/erdos-1110-72/tree/main/4-3,
+  table = release v43-certificate. Forum claim for (4,3) held (user decision; e.g. after expert review).
 - Empirics (exact test `repdfs.c`): local density at 2^64: (7,2) 0.33↑, (4,3) 0.18↑, (9,2) 0.06, (5,3) 0.04;
   (5,2) 0.9994 at 2^48 (almost all representable?). (9,2)/(5,3) out of reach of the certificate method
   (ratios ≥1.14 at feasible windows).
