@@ -153,3 +153,26 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
   `Real.finsetProd_rpow`; `Nat.factorization_prod_pow_eq_self` →
   `Nat.prod_factorization_pow_eq_self`; `Matrix.mul_eq_one_comm` → `mul_eq_one_comm`;
   `LinearMap.mul_eq_comp` → `Module.End.mul_eq_comp`.
+
+## Added 2026-09-29 (Erdős #1110 Lean reduction, `erdos/1110/lean/E1110.lean`)
+- **`norm_num` refuses to evaluate big powers** like `(7:ℝ)^286` or `(7:ℕ)^286 < 2^803` (it evaluates
+  `2^803` but leaves `7^286`). Escape: factor, e.g. `7^286 = (7^26)^11 < (2^73)^11` via `pow_lt_pow_left₀`.
+- **`(2 : ℝ) ^ s ^ n` parses as `2 ^ (s ^ n)`** — write `((2 : ℝ) ^ s) ^ n`.
+- **`rw [← h]` with `h : … = 2 ^ m` also hits the type index of `ZMod (2 ^ m)`** ("motive is not type
+  correct", "`#bad` expected Finset (ZMod _a)"). Escape: `have := congrArg (Nat.cast : ℕ → ℝ) h; push_cast at this`.
+- `set good := univ.filter …` then `simp only [mem_filter] at ⊢` does NOT unfold `good`; add `good` to the simp set.
+- `abbrev` of an `ℝ`-valued `Real.exp` expression must be `noncomputable abbrev`; defs by recursion over a
+  structure with `ℝ` fields need `noncomputable section` (otherwise the equation lemmas are missing and `rfl`
+  unfolding lemmas fail with "enableRealizationsForConst").
+- `open Classical in` must come BEFORE the doc comment (`/-- … -/ open …` is a parse error). Needed for
+  `(range n).filter (Representable 7 2)` (no `DecidablePred`).
+- `omega` atomizes `s * t` but treats `s * (t + 1)` as a different atom: `rw [mul_add, mul_one]` first, or
+  derive via `Nat.mul_le_mul_left s h` + `rw [mul_add] at this`.
+- `rw [lemma (by omega)]` where the lemma's inequality argument mentions implicit sizes: the `by omega` is
+  elaborated before unification → "unsolved goals ⊢ j ≤ m". Pass the implicits: `lemma (m := m) (j := 3*s) (by omega)`.
+- `abbrev WW := 7^G * ρ` hides `ρ` from `rw [hr]`; `show` the unfolded form first.
+- Renames/nonexistent: `isUnit_of_mul_eq_one` → `IsUnit.of_mul_eq_one`; `Real.exp_lt_one` → `Real.exp_lt_one_iff`;
+  `push_neg` deprecated → `push Not`.
+- Pattern that worked well: digit windows `win k j w := ((w.val / 2^k : ℕ) : ZMod (2^j))` with ONE core lemma
+  `win k j (x + 2^k e) = win k j x + e.val`; ring-hom facts via `ZMod.castHom` (`val_cast_eq_castHom`).
+  Conditional expectation replaced by averaging over translations `y ↦ y + 2^K δ` (`Fintype.sum_equiv (Equiv.addRight _)`).

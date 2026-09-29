@@ -1,6 +1,6 @@
 # Integers representable by $\{7,2\}$-antichains have positive lower density
 
-*Draft note, 2026-09-28. Computer-assisted. Not yet reviewed by a human expert. Developed with an AI
+*Draft note, 2026-09-28; Lean formalization of Theorem A added 2026-09-29. Computer-assisted. Not yet reviewed by a human expert. Developed with an AI
 assistant (Claude); every computational claim below was checked by two independently written programs.*
 
 ## 1. Statement
@@ -146,6 +146,20 @@ Margin: $\delta=\lambda-\hat g\approx0.0131$ per 11-bit block, i.e. $0.35497$ vs
   Extrapolation suggests blocks of about $2^{19}$ or $3^{13}$ would be needed. The heuristic antichain-count exponents
   are $1.127$ for $(7,2)$, $1.045$ for $(9,2)$ and $1.034$ for $(5,3)$, so the margins there really are much thinner.
   $(4,3)$ has congruence obstructions in both orientations.
+
+## Lean formalization (2026-09-29)
+
+`erdos/1110/lean/E1110.lean` (1112 lines, Mathlib, `lake env lean` exit 0, no `sorry`/`native_decide`,
+axioms `[propext, Classical.choice, Quot.sound]`) proves Theorem A in full:
+`E1110.pos_lower_density (K : Cert s H) (lam) (0 ≤ lam) (K.g < lam) ((7:ℝ)^lam < 2^s) :
+∃ c > 0, ∃ x₀, ∀ x ≥ x₀, c·x ≤ #{n ≤ x : Representable 7 2 n}`, with `Representable` copied verbatim
+from formal-conjectures. `E1110.erdos1110_72_density` specialises to s = 11, H = 10, λ = 286/73 (proving
+7^{286/73} < 2^{11} and ĝ < λ in Lean): its only hypothesis is `∃ K : Cert 11 10, K.g = 8385274094/2^31`,
+i.e. exactly the finite inequality that `verify.c` / `verify2.c` check. That check (2^22 states × 2^11
+look-aheads × ~35 chains) is **trusted to C**, not done in Lean. A toy `Cert 1 1` instance in the file shows the
+structure is inhabited (the hypothesis is not vacuous for structural reasons). The Lean proof follows §3–4
+with the exponential potential; conditional expectation is replaced by averaging over translations
+$y\mapsto y+2^{s(t+2)}\delta$.
 
 ## Files
 
