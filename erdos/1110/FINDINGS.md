@@ -79,3 +79,38 @@ blocks are better at equal window. (4,3) base 4, s=2: W=12 1.0278, 13 1.0180, 14
 expected ~0.996 (run in progress). (9,2) s=1: W=13..21 -> 1.21..1.14; (5,3) s=1: 1.20..1.15 (W=9..13 trits):
 out of reach. (4,3) viable set = exactly 2/3 of states (stuck states: (4^(D-s)-1)/3 of them).
 `verifyd.c`: independent exact checker for such certificates (reproduces gvid's ghat at W=12).
+
+## 2026-09-29 (later session): quenched vs annealed rates — why (9,2) and (5,3) are out of reach of finite certificates
+Encoding rate = exponent range used per target digit; positive density needs typical targets encodable at
+rate < mu = log_R B (the certificate proves exactly this with a finite-window online policy). Three rates:
+* **annealed** (first moment, root of (1+r)H(1/(1+r)) = log2 B): 0.29382 for EVERY (p,2) (kappa > 1 <=> p <= 10,
+  exactly Yu-Chen's threshold); (5,3): 0.64179 in base 3, 1.36213 in base 5; (9,2) in base 9: 2.82351.
+* **quenched** (offline optimum for a fixed typical target). Constructive upper bounds from a large-population
+  beam (`nbrw.c`, keep the N cheapest partial staircases; every traced solution re-verified with Python
+  big-int arithmetic; beam = exact optimum on 12 random 18-bit targets); estimates from the exact mean over ALL
+  k-digit targets (`hmean.c`, min-plus transfer operator; E[H_k]/k is itself an upper bound by subadditivity).
+* **online** with a W-digit look-ahead (what a finite-state certificate can certify): `rollout.c` (optimal
+  W-bit plan, first step committed; ~0.01-0.02 worse than the previous VI at equal window).
+
+| pair (base) | mu | annealed | quenched <= (beam N=1e6, L=4000) | exact increment E[H_k]-E[H_{k-1}] | online (rollout) |
+|---|---|---|---|---|---|
+| (5,2) b2 | 0.43068 | 0.29382 | 0.3588 | 0.349 (flat from k=15 on) | — (DLLZ: 12-bit block suffices) |
+| (7,2) b2 | 0.35621 | 0.29382 | 0.3412 (0.958 mu) | 0.3395 at k=26, still falling | W=21/25/29: 1.038/1.025/1.014 mu (VI W=33: 0.9965 = our certificate) |
+| (9,2) b2 | 0.31546 | 0.29382 | **0.3117, 0.3133, 0.3143** (0.988/0.993/0.996 mu, 3 seeds; final cost/L 0.3128-0.3135) | 0.3295 at k=26, still falling | W=13/17/21/25/29/31: 1.225/1.188/1.161/1.140/1.124/1.117 mu |
+| (5,3) b3 | 0.68261 | 0.64179 | N=3e5: 0.976 mu (N=1e4: 0.992-0.996) | 0.722 at k=17, still falling | (VI W<=13 trits: 1.15-1.20) |
+| (5,3) b5 | 1.46497 | 1.36213 | N=1e5: 0.992 mu (N=1e4: 0.973-0.980; single targets vary by ~2%) | — | (VI s=3: 1.21) |
+
+Conclusions.
+1. **Strong disorder**: the quenched rate exceeds the annealed one by 7-22%, and the gap depends on the
+   arithmetic of p ((5,2) has the largest). The first-moment heuristic (kappa > 1) badly overstates margins.
+2. **(9,2) and (5,3) look quenched-SUPERcritical**: random 4000-bit targets are encodable below mu
+   (constructively, both seeds), so positive density of representables is plausible; the flat ~6% / ~4% local
+   densities fit a near-critical supercritical branching process (survival probability ~ 2 eps / sigma^2),
+   not a subcritical one. Margins are thin: ~1-4% for (9,2), ~1-3% for (5,3) (either orientation).
+3. **Finite certificates cannot reach them**: the online rate approaches the offline one only like
+   W^(-0.6..-0.7) ((9,2): 1.117 mu at W=31); crossing mu would need a look-ahead of several hundred bits
+   (2^300 states). (5,2) has short memory (exact increments converge by k~15), (7,2) moderate, (9,2) long.
+4. A proof needs a genuinely non-causal (offline) argument, e.g. a truncated second moment for the number
+   of cheap staircases; the plain second moment diverges exponentially because of the strong disorder.
+5. Side note: for (9,2), n = 3, 6 (mod 9) is never representable (at most one summand has a = 0, and 2^b is a
+   unit mod 9) and 9m is representable iff m is, so non-representables have density >= 1/4.
