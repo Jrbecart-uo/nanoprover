@@ -1,0 +1,69 @@
+import Mathlib
+
+open Topology Filter
+
+/-!
+Putnam 1966 B4 (Mirsky for divisibility).  Induction on n.  M = elements of S dividing no other element
+of S is an antichain; if |M| ≥ m+1 we are done.  Otherwise S \ M has ≥ mn+1 elements; the induction
+hypothesis on mn+1 of them gives an antichain (done) or a chain of n+1; its top c is not in M, so c ∣ y for
+some y ∈ S, y ≠ c, hence y > c, and y extends the chain (every chain element divides c).
+-/
+
+theorem putnam_1966_b4
+(m n : ℕ)
+(S : Finset ℕ)
+(hS : (∀ i ∈ S, i > 0) ∧ S.card = m * n + 1)
+: ∃ T ⊆ S, (T.card = m + 1 ∧ ∀ j ∈ T, ∀ i ∈ T, i ≠ j → ¬(j ∣ i)) ∨ (T.card = n + 1 ∧ ∀ i ∈ T, ∀ j ∈ T, j < i → j ∣ i) := by
+  induction n generalizing S with
+  | zero =>
+    refine ⟨S, Finset.Subset.refl _, Or.inr ⟨by simpa using hS.2, ?_⟩⟩
+    intro i hi j hj hji
+    have h1 : S.card = 1 := by simpa using hS.2
+    obtain ⟨a, ha⟩ := Finset.card_eq_one.mp h1
+    rw [ha, Finset.mem_singleton] at hi hj
+    omega
+  | succ n ih =>
+    classical
+    set M := S.filter (fun x => ∀ y ∈ S, x ∣ y → x = y) with hM
+    by_cases hbig : m + 1 ≤ M.card
+    · obtain ⟨T, hTM, hTc⟩ := Finset.exists_subset_card_eq hbig
+      refine ⟨T, hTM.trans (Finset.filter_subset _ _), Or.inl ⟨hTc, ?_⟩⟩
+      intro j hj i hi hij hdvd
+      have := (Finset.mem_filter.mp (hTM hj)).2 i (Finset.mem_filter.mp (hTM hi)).1 hdvd
+      exact hij this.symm
+    · push Not at hbig
+      have hMS : M ⊆ S := Finset.filter_subset _ _
+      have hcard : m * n + 1 ≤ (S \ M).card := by
+        rw [Finset.card_sdiff_of_subset hMS, hS.2]
+        have : m * (n + 1) = m * n + m := by ring
+        omega
+      obtain ⟨S', hS'sub, hS'c⟩ := Finset.exists_subset_card_eq hcard
+      have hS'S : S' ⊆ S := hS'sub.trans Finset.sdiff_subset
+      obtain ⟨T, hTS', hT⟩ := ih S' ⟨fun i hi => hS.1 i (hS'S hi), hS'c⟩
+      rcases hT with ⟨hTc, hTa⟩ | ⟨hTc, hTch⟩
+      · exact ⟨T, hTS'.trans hS'S, Or.inl ⟨hTc, hTa⟩⟩
+      · have hTne : T.Nonempty := by rw [← Finset.card_pos, hTc]; omega
+        set c := T.max' hTne with hc
+        have hcT : c ∈ T := T.max'_mem hTne
+        have hcS : c ∈ S := hS'S (hTS' hcT)
+        have hcnM : c ∉ M := (Finset.mem_sdiff.mp (hS'sub (hTS' hcT))).2
+        have : ¬ ∀ y ∈ S, c ∣ y → c = y := fun h => hcnM (Finset.mem_filter.mpr ⟨hcS, h⟩)
+        push Not at this
+        obtain ⟨y, hyS, hcy, hcne⟩ := this
+        have hypos := hS.1 y hyS
+        have hcy' : c < y := lt_of_le_of_ne (Nat.le_of_dvd hypos hcy) hcne
+        have hyT : y ∉ T := fun h => absurd (T.le_max' y h) (by omega)
+        refine ⟨insert y T, Finset.insert_subset hyS (hTS'.trans hS'S), Or.inr ⟨?_, ?_⟩⟩
+        · rw [Finset.card_insert_of_notMem hyT, hTc]
+        · intro i hi j hj hji
+          rw [Finset.mem_insert] at hi hj
+          have hdc : ∀ j ∈ T, j ∣ c := by
+            intro j hj
+            rcases eq_or_lt_of_le (T.le_max' j hj) with h | h
+            · rw [← hc] at h; rw [h]
+            · exact hTch c hcT j hj h
+          rcases hi with rfl | hi <;> rcases hj with rfl | hj
+          · omega
+          · exact dvd_trans (hdc j hj) hcy
+          · have := T.le_max' i hi; omega
+          · exact hTch i hi j hj hji

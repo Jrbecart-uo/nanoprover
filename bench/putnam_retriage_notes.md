@@ -31,11 +31,9 @@ Also solved the same day, from the older NEXT list: 2000_b5.
 ✅ done 2026-09-28 (25): 1993_b5, 2000_a6, 1994_b6, 2002_b5, 1968_a4, 1977_b5, 2003_a2, 2015_a6,
 1985_b6, 2010_b6, 2018_b6, 2019_b3, 1967_b4, 1971_a3, 2000_a5, 2004_b1, 1973_b3, 1994_b5,
 1975_b6, 2006_b2, 1977_b6, 1978_a2, 1967_b5, 1987_b2 (+ 1973_b2 from the older NEXT list).
-Remaining: 2007_b5 (coefficients of ∏(n−j−k·m) in m), 2003_a4 (case split on disc(Q); needs
-|a| ≤ |A| from large x), 1970_a2 (ε-δ), 2012_b5 (sSup; needs ℝ ≃ ℝ×ℝ indexing), 1966_b4
-(Mirsky), 1973_b1, 1998_a5, 2002_a2 (hemisphere; cross product + encard bookkeeping),
+✅ 2026-09-30: 2007_b5, 2003_a4, 1966_b4, 1973_b1 (+ 2017_a2, 2005_a1, 2025_a1 from the older list).
+Remaining: 1970_a2 (ε-δ), 2012_b5 (sSup; needs ℝ ≃ ℝ×ℝ indexing), 1998_a5, 2002_a2 (hemisphere; cross product + encard bookkeeping),
 1987_b6, 1964_b6 (needs isometry surjectivity), 1973_a6, 2017_b1, 2023_a4, 1996_a4.
-Also from the older NEXT list: 2017_a2, 2005_a1, 2025_a1.
 
 ## Statement findings
 - 1991_a6 VACUOUS (above).

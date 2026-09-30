@@ -1,0 +1,120 @@
+import Mathlib
+
+open Nat
+open Finset
+
+/-!
+Putnam 2005 A1.  Every positive integer is a sum of numbers 2^a 3^b, none dividing another (the
+Erdős–Lewin {2,3} case of Erdős #1110).  Strong induction, keeping the terms as an antichain of exponent
+pairs: n = 2m doubles a representation of m (shift a ↦ a+1); for odd n take the largest 3^b ≤ n, and
+(n − 3^b)/2 < 3^b has a representation whose 3-exponents are all < b, so (0,b) is incomparable with
+every shifted term.  2^a 3^b ∣ 2^c 3^d forces a ≤ c and b ≤ d (coprimality), so an antichain of
+exponent pairs gives pairwise non-dividing terms.
+-/
+
+namespace P2005A1
+
+def val (T : Finset (ℕ × ℕ)) : ℕ := ∑ p ∈ T, 2 ^ p.1 * 3 ^ p.2
+
+def AC (T : Finset (ℕ × ℕ)) : Prop := ∀ p ∈ T, ∀ q ∈ T, p ≠ q → ¬ (p.1 ≤ q.1 ∧ p.2 ≤ q.2)
+
+def shE : ℕ × ℕ ↪ ℕ × ℕ := ⟨fun p => (p.1 + 1, p.2), by
+  intro p q h; simp only [Prod.mk.injEq, add_left_inj] at h; exact Prod.ext h.1 h.2⟩
+
+def sh (T : Finset (ℕ × ℕ)) : Finset (ℕ × ℕ) := T.map shE
+
+lemma val_sh (T : Finset (ℕ × ℕ)) : val (sh T) = 2 * val T := by
+  simp only [val, sh, sum_map, shE, Function.Embedding.coeFn_mk, mul_sum]
+  refine sum_congr rfl (fun p _ => ?_)
+  ring
+
+lemma AC_sh {T : Finset (ℕ × ℕ)} (h : AC T) : AC (sh T) := by
+  intro p hp q hq hpq
+  simp only [sh, mem_map, shE, Function.Embedding.coeFn_mk] at hp hq
+  obtain ⟨p', hp', rfl⟩ := hp
+  obtain ⟨q', hq', rfl⟩ := hq
+  have hne : p' ≠ q' := by rintro rfl; exact hpq rfl
+  have := h p' hp' q' hq' hne
+  simp only [add_le_add_iff_right]
+  exact this
+
+lemma term_le {T : Finset (ℕ × ℕ)} {p : ℕ × ℕ} (hp : p ∈ T) : 2 ^ p.1 * 3 ^ p.2 ≤ val T :=
+  single_le_sum (f := fun p : ℕ × ℕ => 2 ^ p.1 * 3 ^ p.2) (fun _ _ => Nat.zero_le _) hp
+
+lemma key (n : ℕ) (hn : 0 < n) : ∃ T : Finset (ℕ × ℕ), AC T ∧ val T = n := by
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+  rcases Nat.even_or_odd n with ⟨m, hm⟩ | hodd
+  · -- n = m + m
+    obtain ⟨T, hT, hv⟩ := ih m (by omega) (by omega)
+    exact ⟨sh T, AC_sh hT, by rw [val_sh, hv]; omega⟩
+  · set b := Nat.log 3 n with hb
+    have h1 : 3 ^ b ≤ n := Nat.pow_log_le_self 3 hn.ne'
+    have h2 : n < 3 ^ (b + 1) := Nat.lt_pow_succ_log_self (by norm_num) n
+    have hodd3 : Odd (3 ^ b) := Odd.pow (by decide)
+    by_cases heq : n = 3 ^ b
+    · refine ⟨{(0, b)}, ?_, ?_⟩
+      · intro p hp q hq hpq; simp only [mem_singleton] at hp hq; subst hp; subst hq; exact absurd rfl hpq
+      · simp [val, heq]
+    · have hev : Even (n - 3 ^ b) := Nat.Odd.sub_odd hodd hodd3
+      obtain ⟨m, hm⟩ := hev
+      have hm0 : 0 < m := by omega
+      have hmlt : m < 3 ^ b := by rw [pow_succ] at h2; omega
+      obtain ⟨T, hT, hv⟩ := ih m (by omega) hm0
+      have hsmall : ∀ p ∈ T, p.2 < b := by
+        intro p hp
+        have := term_le hp
+        rw [hv] at this
+        have h3 : 3 ^ p.2 < 3 ^ b := by
+          have : 3 ^ p.2 ≤ 2 ^ p.1 * 3 ^ p.2 := Nat.le_mul_of_pos_left _ (by positivity)
+          omega
+        exact (Nat.pow_lt_pow_iff_right (by norm_num)).mp h3
+      have hnot : (0, b) ∉ sh T := by
+        simp only [sh, mem_map, shE, Function.Embedding.coeFn_mk, not_exists, not_and]
+        intro x _ h; simp only [Prod.mk.injEq] at h; omega
+      refine ⟨insert (0, b) (sh T), ?_, ?_⟩
+      · have hshT := AC_sh hT
+        have hs : ∀ q ∈ sh T, 1 ≤ q.1 ∧ q.2 < b := by
+          intro q hq
+          simp only [sh, mem_map, shE, Function.Embedding.coeFn_mk] at hq
+          obtain ⟨q', hq', rfl⟩ := hq
+          exact ⟨by simp, hsmall q' hq'⟩
+        intro p hp q hq hpq
+        rw [mem_insert] at hp hq
+        rcases hp with rfl | hp <;> rcases hq with rfl | hq
+        · exact absurd rfl hpq
+        · have := hs q hq; simp only; omega
+        · have := hs p hp; simp only; omega
+        · exact hshT p hp q hq hpq
+      · rw [val, sum_insert hnot, ← val, val_sh, hv]; simp; omega
+
+lemma dvd_imp {a b c d : ℕ} (h : 2 ^ a * 3 ^ b ∣ 2 ^ c * 3 ^ d) : a ≤ c ∧ b ≤ d := by
+  constructor
+  · have h1 : 2 ^ a ∣ 2 ^ c * 3 ^ d := dvd_trans (dvd_mul_right _ _) h
+    have hc : Nat.Coprime (2 ^ a) (3 ^ d) := Nat.Coprime.pow _ _ (by norm_num)
+    exact (Nat.pow_dvd_pow_iff_le_right (by norm_num)).mp (hc.dvd_of_dvd_mul_right h1)
+  · have h1 : 3 ^ b ∣ 2 ^ c * 3 ^ d := dvd_trans (dvd_mul_left _ _) h
+    have hc : Nat.Coprime (3 ^ b) (2 ^ c) := Nat.Coprime.pow _ _ (by norm_num)
+    exact (Nat.pow_dvd_pow_iff_le_right (by norm_num)).mp (hc.dvd_of_dvd_mul_left h1)
+
+end P2005A1
+
+theorem putnam_2005_a1
+: ∀ n : ℤ, n > 0 → (∃ k : ℕ, ∃ a : Fin k → Fin 2 → ℕ, n = ∑ i : Fin k, 2^(a i 0)*3^(a i 1) ∧
+(∀ i j : Fin k, i ≠ j → ¬(2^(a i 0)*3^(a i 1) ∣ 2^(a j 0)*3^(a j 1)))) := by
+  intro n hn
+  obtain ⟨T, hT, hv⟩ := P2005A1.key n.toNat (by omega)
+  let e := T.equivFin
+  refine ⟨T.card, fun i => ![(e.symm i).1.1, (e.symm i).1.2], ?_, ?_⟩
+  · simp only [Matrix.cons_val_zero, Matrix.cons_val_one]
+    have : (n : ℤ) = ((P2005A1.val T : ℕ) : ℤ) := by rw [hv]; omega
+    rw [this, P2005A1.val]
+    push_cast
+    rw [← Finset.sum_coe_sort T]
+    exact (Fintype.sum_equiv e.symm _ _ (fun _ => rfl)).symm
+  · intro i j hij hdvd
+    simp only [Matrix.cons_val_zero, Matrix.cons_val_one] at hdvd
+    have hne : (e.symm i).1 ≠ (e.symm j).1 := by
+      intro h; exact hij (e.symm.injective (Subtype.ext h))
+    exact hT _ (e.symm i).2 _ (e.symm j).2 hne (P2005A1.dvd_imp hdvd)
+

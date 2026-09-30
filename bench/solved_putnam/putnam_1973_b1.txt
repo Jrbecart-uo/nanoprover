@@ -1,0 +1,75 @@
+import Mathlib
+
+open Nat Set MeasureTheory Topology Filter
+open Finset
+
+/-!
+Putnam 1973 B1.  Infinite descent, generalized over the vector b.  Removing i leaves sum(total) − b_i =
+2·(sum of T), so every b_i ≡ total (mod 2) and all differences are even.  Writing b_x − b_i = 2 c_x, the
+property transfers to c (both halves have n elements, so the shift n·b_i cancels, then divide by 2).
+Induction on k: 2^k ∣ b_i − b_j for every k, hence a_i = a_j (take k = |a_i − a_j| < 2^k).
+-/
+
+namespace P1973B1
+
+def Prop1 {ι : Type*} [DecidableEq ι] (n : ℕ) (b : ι → ℤ) : Prop :=
+  ∀ S : Finset ι, S.card = 2 * n → ∃ T, T ⊆ S ∧ T.card = n ∧ ∑ i ∈ T, b i = ∑ i ∈ (S \ T), b i
+
+lemma parity {ι : Type*} [Fintype ι] [DecidableEq ι] {n : ℕ} (hcard : Fintype.card ι = 2 * n + 1)
+    {b : ι → ℤ} (hb : Prop1 n b) (i j : ι) : 2 ∣ b i - b j := by
+  have key : ∀ i, 2 ∣ (∑ x, b x) - b i := by
+    intro i
+    obtain ⟨T, hTS, -, hsum⟩ := hb (univ.erase i) (by rw [Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, hcard]; omega)
+    have h1 : ∑ x ∈ univ.erase i, b x = ∑ x ∈ T, b x + ∑ x ∈ (univ.erase i) \ T, b x := by
+      rw [← Finset.sum_union Finset.disjoint_sdiff, Finset.union_sdiff_of_subset hTS]
+    have h2 : ∑ x, b x = b i + ∑ x ∈ univ.erase i, b x := (Finset.add_sum_erase _ _ (Finset.mem_univ i)).symm
+    exact ⟨∑ x ∈ T, b x, by linarith⟩
+  have := dvd_sub (key j) (key i)
+  have e : (∑ x, b x - b j) - (∑ x, b x - b i) = b i - b j := by ring
+  rwa [e] at this
+
+lemma descent {ι : Type*} [Fintype ι] [DecidableEq ι] {n : ℕ} (hcard : Fintype.card ι = 2 * n + 1) :
+    ∀ k : ℕ, ∀ b : ι → ℤ, Prop1 n b → ∀ i j, (2 : ℤ) ^ k ∣ b i - b j := by
+  intro k
+  induction k with
+  | zero => intro b _ i j; simp
+  | succ k ih =>
+    intro b hb i j
+    have hpar := parity hcard hb
+    choose c hc using fun x => hpar x i
+    -- b x - b i = 2 * c x
+    have hc' : Prop1 n c := by
+      intro S hS
+      obtain ⟨T, hTS, hTc, hsum⟩ := hb S hS
+      refine ⟨T, hTS, hTc, ?_⟩
+      have hcd : (S \ T).card = n := by rw [Finset.card_sdiff_of_subset hTS]; omega
+      have e1 : ∑ x ∈ T, b x = ∑ x ∈ T, (2 * c x + b i) := Finset.sum_congr rfl (fun x _ => by linarith [hc x])
+      have e2 : ∑ x ∈ S \ T, b x = ∑ x ∈ S \ T, (2 * c x + b i) := Finset.sum_congr rfl (fun x _ => by linarith [hc x])
+      rw [e1, e2, Finset.sum_add_distrib, Finset.sum_add_distrib, Finset.sum_const, Finset.sum_const, hTc, hcd, ← Finset.mul_sum, ← Finset.mul_sum] at hsum
+      linarith
+    have := ih c hc' i j
+    have e : b i - b j = 2 * (c i - c j) := by linarith [hc i, hc j]
+    rw [e, pow_succ, mul_comm ((2 : ℤ) ^ k)]
+    exact mul_dvd_mul_left 2 this
+
+end P1973B1
+
+theorem putnam_1973_b1
+(n : ℕ)
+(a : Finset.Icc 1 (2 * n + 1) → ℤ)
+(h_remove : ∀ S : Finset (Finset.Icc 1 (2 * n + 1)), S.card = 2*n → ∃ T, T ⊆ S ∧ T.card = n ∧ ∑ i ∈ T, a i = ∑ i ∈ (S \ T), a i)
+: ∀ i j : Finset.Icc 1 (2 * n + 1), a i = a j := by
+  intro i j
+  have hcard : Fintype.card (Finset.Icc 1 (2 * n + 1)) = 2 * n + 1 := by simp
+  set d := a i - a j
+  have hd := P1973B1.descent hcard d.natAbs a h_remove i j
+  have hlt : d.natAbs < 2 ^ d.natAbs := Nat.lt_two_pow_self
+  have : d = 0 := by
+    by_contra hne
+    have h1 := Int.natAbs_dvd_natAbs.mpr hd
+    rw [Int.natAbs_pow] at h1
+    have := Nat.le_of_dvd (Int.natAbs_pos.mpr hne) h1
+    simp at this
+    omega
+  linarith
+

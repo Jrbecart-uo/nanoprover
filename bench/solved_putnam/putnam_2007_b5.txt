@@ -1,0 +1,65 @@
+import Mathlib
+
+open Set Nat Function
+open Polynomial
+
+/-!
+Putnam 2007 B5.  Put a_j = (X − j)/k ∈ ℝ[X] and F(Y) = ∏_{j<k} (Y − a_j) ∈ ℝ[X][Y], monic of degree k;
+P_i = −(coefficient of Y^i).  For an integer n, map the coefficients by X ↦ n: the factor with
+j = n − k⌊n/k⌋ ∈ [0,k) vanishes at Y = ⌊n/k⌋, so ⌊n/k⌋^k + Σ_{i<k} coeff_i(n) ⌊n/k⌋^i = 0.
+-/
+
+theorem putnam_2007_b5
+(k : ℕ) (kpos : k > 0) :
+(∃ P : Finset.range k → Polynomial ℝ, ∀ n : ℤ, ⌊(n : ℝ) / k⌋ ^ k = ∑ i : Finset.range k, (P i).eval (n : ℝ) * ⌊(n : ℝ) / k⌋ ^ (i : ℕ)) := by
+  let a : ℕ → ℝ[X] := fun j => Polynomial.C ((k : ℝ)⁻¹) * (Polynomial.X - Polynomial.C (j : ℝ))
+  let F : ℝ[X][X] := ∏ j ∈ Finset.range k, (Polynomial.X - Polynomial.C (a j))
+  refine ⟨fun i => -(F.coeff i), fun n => ?_⟩
+  set q : ℤ := ⌊(n : ℝ) / k⌋ with hq
+  let ev := Polynomial.evalRingHom (n : ℝ)
+  set G : ℝ[X] := F.map ev with hGdef
+  have hG : G = ∏ j ∈ Finset.range k, (Polynomial.X - Polynomial.C (ev (a j))) := by
+    simp [G, F, Polynomial.map_prod]
+  have hdeg : G.natDegree = k := by
+    rw [hG, Polynomial.natDegree_finsetProd_X_sub_C_eq_card, Finset.card_range]
+  have hmon : G.Monic := by
+    rw [hG]; exact Polynomial.monic_prod_of_monic _ _ (fun j _ => Polynomial.monic_X_sub_C _)
+  have hk0 : (0 : ℝ) < k := by exact_mod_cast kpos
+  have hfl1 : (q : ℝ) ≤ (n : ℝ) / k := Int.floor_le _
+  have hfl2 : (n : ℝ) / k < q + 1 := Int.lt_floor_add_one _
+  set r : ℤ := n - k * q with hr
+  have hr0 : 0 ≤ r := by
+    have : (k : ℝ) * q ≤ n := by rw [le_div_iff₀ hk0] at hfl1; linarith
+    have : ((k * q : ℤ) : ℝ) ≤ (n : ℝ) := by push_cast; exact this
+    have := Int.cast_le.mp this
+    omega
+  have hrk : r < k := by
+    have : (n : ℝ) < k * (q + 1) := by rw [div_lt_iff₀ hk0] at hfl2; linarith
+    have : ((n : ℤ) : ℝ) < ((k * (q + 1) : ℤ) : ℝ) := by push_cast; exact this
+    have := Int.cast_lt.mp this
+    rw [hr]; linarith
+  have hzero : G.eval (q : ℝ) = 0 := by
+    rw [hG, Polynomial.eval_prod]
+    apply Finset.prod_eq_zero (i := r.toNat)
+    · rw [Finset.mem_range]; omega
+    · have hrr : ((r.toNat : ℕ) : ℝ) = (r : ℝ) := by
+        have : ((r.toNat : ℕ) : ℤ) = r := Int.toNat_of_nonneg hr0
+        exact_mod_cast this
+      simp only [ev, a, Polynomial.coe_evalRingHom, Polynomial.eval_sub, Polynomial.eval_X, Polynomial.eval_C,
+        Polynomial.eval_mul, hrr]
+      rw [hr]
+      push_cast
+      field_simp
+      ring
+  have hk1 : G.coeff k = 1 := by rw [← hdeg]; exact hmon.coeff_natDegree
+  rw [Polynomial.eval_eq_sum_range, hdeg, Finset.sum_range_succ, hk1, one_mul] at hzero
+  have hcoeff : ∀ i, G.coeff i = (F.coeff i).eval (n : ℝ) := fun i => by
+    simp [G, Polynomial.coeff_map, ev]
+  have hsum : ∑ i : Finset.range k, (-(F.coeff (i : ℕ))).eval (n : ℝ) * (q : ℝ) ^ (i : ℕ)
+      = -∑ i ∈ Finset.range k, G.coeff i * (q : ℝ) ^ i := by
+    rw [Finset.sum_coe_sort (Finset.range k) (fun i => (-(F.coeff i)).eval (n : ℝ) * (q : ℝ) ^ i),
+      ← Finset.sum_neg_distrib]
+    refine Finset.sum_congr rfl (fun i _ => ?_)
+    rw [hcoeff, Polynomial.eval_neg]; ring
+  rw [hsum]
+  linarith

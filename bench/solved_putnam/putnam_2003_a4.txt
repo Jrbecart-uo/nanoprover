@@ -1,0 +1,165 @@
+import Mathlib
+
+open MvPolynomial
+
+/-!
+Putnam 2003 A4.  Large x gives |a| ≤ |A|.  If B² − 4AC > 0, F has two distinct real roots; |f| ≤ |F|
+makes them roots of f, so f − (a/A)F is linear with two roots, i.e. f = tF with |t| ≤ 1, and
+disc f = t² disc F.  If B² − 4AC ≤ 0, WLOG A > 0 (negate F); then F ≥ 0, so F − f and F + f are
+nonnegative quadratics: their coefficients (p₁,p₂,p₃), (n₁,n₂,n₃) satisfy p₁,p₃,n₁,n₃ ≥ 0,
+p₂² ≤ 4p₁p₃, n₂² ≤ 4n₁n₃.  Summing gives b² − 4ac ≤ 4AC − B²; and 4AC − B² − (4ac − b²) =
+2(p₁n₃ + n₁p₃) − p₂n₂ ≥ 0 by (p₂n₂)² ≤ 16p₁p₃n₁n₃ ≤ 4(p₁n₃ + n₁p₃)² (AM–GM).
+-/
+
+namespace P2003A4
+
+lemma quad_nonneg {p q r : ℝ} (h : ∀ x : ℝ, 0 ≤ p * x ^ 2 + q * x + r) :
+    0 ≤ p ∧ 0 ≤ r ∧ q ^ 2 ≤ 4 * p * r := by
+  have hd : discrim p q r ≤ 0 := discrim_le_zero (fun x => by have := h x; nlinarith)
+  unfold discrim at hd
+  have hr : 0 ≤ r := by simpa using h 0
+  refine ⟨?_, hr, by linarith⟩
+  by_contra hp
+  push Not at hp
+  have hq : q = 0 := by nlinarith [sq_nonneg q]
+  have hpn : 0 < -p := by linarith
+  set x := (r + 1) / (-p) + 1 with hx
+  have h0 : 0 ≤ (r + 1) / (-p) := div_nonneg (by linarith) hpn.le
+  have hx1 : 1 ≤ x := by linarith
+  have h3 : r + 1 ≤ -p * x := by
+    have : (r + 1) / (-p) * (-p) = r + 1 := div_mul_cancel₀ _ hpn.ne'
+    nlinarith
+  have := h x
+  rw [hq] at this
+  nlinarith
+
+lemma lead_le {a b c A B C : ℝ} (hle : ∀ x : ℝ, |a * x ^ 2 + b * x + c| ≤ |A * x ^ 2 + B * x + C|) :
+    |a| ≤ |A| := by
+  by_contra h
+  push Not at h
+  set δ := |a| - |A| with hδ
+  have hδ0 : 0 < δ := by linarith
+  set M := |b| + |B| + |c| + |C| + 1 with hM
+  have hM0 : 0 < M := by positivity
+  set x := M / δ + 1 with hx
+  have h0 : 0 ≤ M / δ := div_nonneg hM0.le hδ0.le
+  have hx1 : 1 ≤ x := by linarith
+  have hx0 : 0 ≤ x := by linarith
+  have hxM : M ≤ δ * x := by
+    have : M / δ * δ = M := div_mul_cancel₀ _ hδ0.ne'
+    nlinarith
+  have e1 : |a * x ^ 2| ≤ |a * x ^ 2 + b * x + c| + |b * x| + |c| := by
+    have := abs_add_three (a * x ^ 2 + b * x + c) (-(b * x)) (-c)
+    rw [abs_neg, abs_neg] at this
+    have e : a * x ^ 2 + b * x + c + -(b * x) + -c = a * x ^ 2 := by ring
+    rwa [e] at this
+  have e2 : |A * x ^ 2 + B * x + C| ≤ |A * x ^ 2| + |B * x| + |C| := abs_add_three _ _ _
+  have hax : |a * x ^ 2| = |a| * x ^ 2 := by rw [abs_mul, abs_of_nonneg (sq_nonneg x)]
+  have hAx : |A * x ^ 2| = |A| * x ^ 2 := by rw [abs_mul, abs_of_nonneg (sq_nonneg x)]
+  have hbx : |b * x| = |b| * x := by rw [abs_mul, abs_of_nonneg hx0]
+  have hBx : |B * x| = |B| * x := by rw [abs_mul, abs_of_nonneg hx0]
+  have := hle x
+  rw [hax, hbx] at e1
+  rw [hAx, hBx] at e2
+  have key : δ * x ^ 2 ≤ (|b| + |B|) * x + (|c| + |C|) := by rw [hδ]; linarith
+  have hc : |c| + |C| ≤ (|c| + |C|) * x := by nlinarith [abs_nonneg c, abs_nonneg C]
+  have : M * x ≤ δ * x ^ 2 := by nlinarith
+  nlinarith [abs_nonneg b, abs_nonneg B]
+
+/-- The case `A > 0`, `B² − 4AC ≤ 0`. -/
+lemma case_neg {a b c A B C : ℝ} (hA : 0 < A) (hD : B ^ 2 - 4 * A * C ≤ 0)
+    (hle : ∀ x : ℝ, |a * x ^ 2 + b * x + c| ≤ |A * x ^ 2 + B * x + C|) :
+    |b ^ 2 - 4 * a * c| ≤ |B ^ 2 - 4 * A * C| := by
+  have hF : ∀ x : ℝ, 0 ≤ A * x ^ 2 + B * x + C := by
+    intro x
+    have : 0 ≤ 4 * A * (A * x ^ 2 + B * x + C) := by nlinarith [sq_nonneg (2 * A * x + B)]
+    nlinarith
+  have h1 : ∀ x : ℝ, 0 ≤ (A - a) * x ^ 2 + (B - b) * x + (C - c) := by
+    intro x
+    have := hle x
+    rw [abs_of_nonneg (hF x)] at this
+    have := (abs_le.mp this).2
+    nlinarith
+  have h2 : ∀ x : ℝ, 0 ≤ (A + a) * x ^ 2 + (B + b) * x + (C + c) := by
+    intro x
+    have := hle x
+    rw [abs_of_nonneg (hF x)] at this
+    have := (abs_le.mp this).1
+    nlinarith
+  obtain ⟨n1, n3, n2⟩ := quad_nonneg h1
+  obtain ⟨p1, p3, p2⟩ := quad_nonneg h2
+  rw [abs_of_nonpos hD]
+  -- (p2 n2)^2 ≤ (2(p1 n3 + n1 p3))^2
+  have hprod : ((B + b) * (B - b)) ^ 2 ≤ (2 * ((A + a) * (C - c) + (A - a) * (C + c))) ^ 2 := by
+    have e1 : ((B + b) * (B - b)) ^ 2 = (B + b) ^ 2 * (B - b) ^ 2 := by ring
+    have e2 : (B + b) ^ 2 * (B - b) ^ 2 ≤ (4 * (A + a) * (C + c)) * (4 * (A - a) * (C - c)) :=
+      mul_le_mul p2 n2 (sq_nonneg _) (by positivity)
+    nlinarith [sq_nonneg ((A + a) * (C - c) - (A - a) * (C + c))]
+  have hab := abs_le_of_sq_le_sq hprod (by positivity)
+  have hup := (abs_le.mp hab).2
+  rw [abs_le]
+  constructor <;> nlinarith
+
+end P2003A4
+
+theorem putnam_2003_a4
+(a b c A B C : ℝ)
+(aAne0 : a ≠ 0 ∧ A ≠ 0)
+(hle : ∀ x : ℝ, |a * x ^ 2 + b * x + c| ≤ |A * x ^ 2 + B * x + C|)
+: |b ^ 2 - 4 * a * c| ≤ |B ^ 2 - 4 * A * C| := by
+  rcases le_or_gt (B ^ 2 - 4 * A * C) 0 with hD | hD
+  · rcases lt_or_gt_of_ne aAne0.2 with hA | hA
+    · have hle' : ∀ x : ℝ, |a * x ^ 2 + b * x + c| ≤ |(-A) * x ^ 2 + (-B) * x + (-C)| := by
+        intro x
+        have e : (-A) * x ^ 2 + (-B) * x + (-C) = -(A * x ^ 2 + B * x + C) := by ring
+        rw [e, abs_neg]; exact hle x
+      have := P2003A4.case_neg (by linarith) (by nlinarith) hle'
+      have e : (-B) ^ 2 - 4 * (-A) * (-C) = B ^ 2 - 4 * A * C := by ring
+      rwa [e] at this
+    · exact P2003A4.case_neg hA hD hle
+  · -- two distinct real roots of F are roots of f, so f = t F with |t| ≤ 1
+    set s := Real.sqrt (B ^ 2 - 4 * A * C) with hs
+    have hs0 : 0 < s := Real.sqrt_pos.mpr hD
+    have hss : discrim A B C = s * s := by
+      rw [discrim, hs, Real.mul_self_sqrt hD.le]
+    have hA := aAne0.2
+    set r1 := (-B + s) / (2 * A)
+    set r2 := (-B - s) / (2 * A)
+    have hF1 : A * (r1 * r1) + B * r1 + C = 0 := (quadratic_eq_zero_iff hA hss r1).mpr (Or.inl rfl)
+    have hF2 : A * (r2 * r2) + B * r2 + C = 0 := (quadratic_eq_zero_iff hA hss r2).mpr (Or.inr rfl)
+    have hf : ∀ r, A * (r * r) + B * r + C = 0 → a * r ^ 2 + b * r + c = 0 := by
+      intro r hr
+      have := hle r
+      have e : A * r ^ 2 + B * r + C = 0 := by rw [← hr]; ring
+      rw [e, abs_zero] at this
+      exact abs_eq_zero.mp (le_antisymm this (abs_nonneg _))
+    have hf1 := hf r1 hF1
+    have hf2 := hf r2 hF2
+    have hr12 : r1 - r2 ≠ 0 := by
+      have : r1 - r2 = s / A := by simp only [r1, r2]; field_simp; ring
+      rw [this]; exact div_ne_zero hs0.ne' hA
+    set t := a / A with ht
+    have hat : a = t * A := by rw [ht]; field_simp
+    -- g = f − t F is linear and vanishes at r1 ≠ r2
+    have g1 : (b - t * B) * r1 + (c - t * C) = 0 := by
+      have : a * r1 ^ 2 + b * r1 + c - t * (A * (r1 * r1) + B * r1 + C) = 0 := by rw [hf1, hF1]; ring
+      rw [hat] at this; linarith
+    have g2 : (b - t * B) * r2 + (c - t * C) = 0 := by
+      have : a * r2 ^ 2 + b * r2 + c - t * (A * (r2 * r2) + B * r2 + C) = 0 := by rw [hf2, hF2]; ring
+      rw [hat] at this; linarith
+    have hb : b = t * B := by
+      have : (b - t * B) * (r1 - r2) = 0 := by linarith
+      rcases mul_eq_zero.mp this with h | h
+      · linarith
+      · exact absurd h hr12
+    have hc : c = t * C := by rw [hb] at g1; linarith
+    have ht1 : |t| ≤ 1 := by
+      rw [ht, abs_div, div_le_one (abs_pos.mpr hA)]
+      exact P2003A4.lead_le hle
+    have e : b ^ 2 - 4 * a * c = t ^ 2 * (B ^ 2 - 4 * A * C) := by rw [hb, hc, hat]; ring
+    rw [e, abs_mul, abs_of_nonneg (sq_nonneg t)]
+    have : t ^ 2 ≤ 1 := by
+      have := abs_le.mp ht1
+      nlinarith
+    have := abs_nonneg (B ^ 2 - 4 * A * C)
+    nlinarith

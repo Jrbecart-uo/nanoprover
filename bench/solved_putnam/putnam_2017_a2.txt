@@ -1,0 +1,72 @@
+import Mathlib
+
+open Polynomial
+
+/-!
+Putnam 2017 A2.  The integer polynomials P_0 = 1, P_1 = X, P_{n+2} = X P_{n+1} − P_n satisfy the invariant
+P_{n+1}^2 − P_n P_{n+2} = 1 (one linear_combination step), and P_n(2) = n + 1 ≠ 0, so P_n ≠ 0 in RatFunc ℚ.
+Hence (P_{n+1}^2 − 1)/P_n = P_{n+2}, and a two-step induction gives Q_n = P_n.
+-/
+
+namespace P2017A2
+
+noncomputable def P : ℕ → ℤ[X]
+  | 0 => 1
+  | 1 => X
+  | n + 2 => X * P (n + 1) - P n
+
+lemma P_succ_succ (n : ℕ) : P (n + 2) = X * P (n + 1) - P n := rfl
+
+lemma P_inv (n : ℕ) : P (n + 1) ^ 2 - P n * P (n + 2) = 1 := by
+  induction n with
+  | zero => simp only [P_succ_succ]; simp [P]; ring
+  | succ n ih =>
+    rw [P_succ_succ (n + 1)]
+    linear_combination ih + P (n + 2) * P_succ_succ n
+
+lemma P_eval (n : ℕ) : (P n).eval 2 = n + 1 ∧ (P (n + 1)).eval 2 = n + 2 := by
+  induction n with
+  | zero => simp [P]
+  | succ n ih =>
+    refine ⟨by rw [ih.2]; push_cast; ring, ?_⟩
+    rw [show n + 1 + 1 = n + 2 by ring, P_succ_succ, eval_sub, eval_mul, eval_X, ih.1, ih.2]
+    push_cast; ring
+
+lemma P_ne (n : ℕ) : P n ≠ 0 := by
+  intro h
+  have := (P_eval n).1
+  rw [h, eval_zero] at this
+  omega
+
+end P2017A2
+
+open P2017A2 in
+theorem putnam_2017_a2
+    (Q : ℕ → RatFunc ℚ)
+    (hQbase : Q 0 = 1 ∧ Q 1 = (X : ℚ[X]))
+    (hQn : ∀ n, Q (n + 2) = (Q (n + 1) ^ 2 - 1) / Q n)
+    (n : ℕ) (hn : 0 < n) :
+    ∃ P : ℤ[X], Q n = P.map (Int.castRingHom ℚ) := by
+  let R : ℕ → RatFunc ℚ := fun n => algebraMap ℚ[X] (RatFunc ℚ) ((P n).map (Int.castRingHom ℚ))
+  have hRinv : ∀ n, R (n + 1) ^ 2 - R n * R (n + 2) = 1 := by
+    intro n
+    have := congrArg (fun p : ℤ[X] => algebraMap ℚ[X] (RatFunc ℚ) (p.map (Int.castRingHom ℚ))) (P_inv n)
+    simpa [R, Polynomial.map_sub, Polynomial.map_mul, Polynomial.map_pow] using this
+  have hRne : ∀ n, R n ≠ 0 := by
+    intro n
+    simp only [R, ne_eq, map_eq_zero_iff _ (RatFunc.algebraMap_injective ℚ)]
+    rw [Polynomial.map_eq_zero_iff (RingHom.injective_int (Int.castRingHom ℚ))]
+    exact P_ne n
+  have claim : ∀ n, Q n = R n ∧ Q (n + 1) = R (n + 1) := by
+    intro n
+    induction n with
+    | zero =>
+      refine ⟨by simp [R, P, hQbase.1], ?_⟩
+      rw [hQbase.2, RatFunc.coePolynomial_eq_algebraMap]
+      simp [R, P]
+    | succ n ih =>
+      refine ⟨ih.2, ?_⟩
+      rw [show n + 1 + 1 = n + 2 by ring, hQn, ih.1, ih.2, div_eq_iff (hRne n)]
+      linear_combination hRinv n
+  exact ⟨P n, by rw [RatFunc.coePolynomial_eq_algebraMap]; exact (claim n).1⟩
+

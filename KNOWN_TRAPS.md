@@ -226,3 +226,7 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
   table and an "ALL-AGREE" that meant nothing). Compare verification outputs in Python, never with `diff`.
 - **Value iteration at 2^28 states thrashes cache**: gvid for (9,2) D=24 ran 0.33 s/iteration, D=26 3.5 s,
   D=28 ~20 s (60× for 16× the states). D=26 was the practical ceiling for a session.
+- **PutnamBench `open` lines shadow names in YOUR proof** (checked by `verify_scalps --kernel`, not by a bare
+  `repl.py check`): under `open Nat`, `φ` is totient notation (`let φ := …` fails with "Invalid pattern
+  variable"); under `open Set`, `card_univ` resolves to `Set.card_univ`. Always test the file WITH the
+  PutnamBench open line (the `save.py` flow does) and qualify `Finset.` names.
