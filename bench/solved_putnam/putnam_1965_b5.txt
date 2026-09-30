@@ -1,0 +1,102 @@
+import Mathlib
+
+open EuclideanGeometry Topology Filter Complex SimpleGraph.Walk
+open EuclideanGeometry Topology Filter Complex SimpleGraph.Walk
+
+/-!
+Putnam 1965 B5.  Split K into halves of sizes ⌊V/2⌋ and ⌈V/2⌉ (via `Fintype.equivFin`).  The cross pairs
+give ⌊V/2⌋⌈V/2⌉ ≥ E distinct non-diagonal edges; take any E of them as the edge set.  Every edge switches
+sides, so along any walk side(a) = side(b) ↔ the length is even; a closed walk of length 3 is impossible.
+-/
+
+namespace P1965B5
+
+lemma walk_parity {K : Type*} {G : SimpleGraph K} (side : K → Bool)
+    (hG : ∀ x y, G.Adj x y → side x ≠ side y) :
+    ∀ {a b : K} (w : G.Walk a b), (side a = side b ↔ Even w.length) := by
+  intro a b w
+  induction w with
+  | nil => simp
+  | @cons x y z h p ih =>
+    have hxy := hG x y h
+    rw [SimpleGraph.Walk.length_cons, Nat.even_add_one, ← ih]
+    cases hx : side x <;> cases hy : side y <;> cases hz : side z <;> simp_all
+
+end P1965B5
+
+theorem putnam_1965_b5
+{K : Type*}
+[Fintype K]
+(V E : ℕ)
+(hV : V = Nat.card K)
+(hE: 4*E ≤ V^2)
+: ∃ G : SimpleGraph K, G.edgeSet.ncard = E ∧ ∀ a : K, ∀ w : G.Walk a a, w.length ≠ 3 := by
+  classical
+  have hVc : V = Fintype.card K := by rw [hV, Nat.card_eq_fintype_card]
+  let e := Fintype.equivFin K
+  let side : K → Bool := fun x => decide ((e x).val < V / 2)
+  set A := Finset.univ.filter (fun x : K => side x = true) with hA
+  set B := Finset.univ.filter (fun x : K => side x = false) with hB
+  have hAc : A.card = V / 2 := by
+    have : A = (Finset.univ.filter (fun i : Fin (Fintype.card K) => i.val < V / 2)).map e.symm.toEmbedding := by
+      ext x; simp [hA, side]
+    rw [this, Finset.card_map]
+    have : (Finset.univ.filter (fun i : Fin (Fintype.card K) => i.val < V / 2)) =
+        (Finset.range (V / 2)).attachFin (fun i hi => by rw [Finset.mem_range] at hi; omega) := by
+      ext i; simp
+    rw [this, Finset.card_attachFin, Finset.card_range]
+  have hBc : B.card = V - V / 2 := by
+    have hsum : A.card + B.card = V := by
+      rw [hVc, hA, hB, ← Finset.card_union_of_disjoint (Finset.disjoint_filter.mpr (by intro x _ h1 h2; simp_all))]
+      congr 1; ext x; cases side x <;> simp
+    omega
+  let f : K × K → Sym2 K := fun p => s(p.1, p.2)
+  set Cr := (A ×ˢ B).image f with hCr
+  have hinj : Set.InjOn f ↑(A ×ˢ B) := by
+    rintro ⟨x, y⟩ hxy ⟨x', y'⟩ hxy' h
+    simp only [Finset.coe_product, Set.mem_prod, Finset.mem_coe, hA, hB, Finset.mem_filter,
+      Finset.mem_univ, true_and] at hxy hxy'
+    simp only [f, Sym2.eq_iff] at h
+    rcases h with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+    · rfl
+    · simp_all
+  have hCrc : Cr.card = V / 2 * (V - V / 2) := by
+    rw [hCr, Finset.card_image_of_injOn hinj, Finset.card_product, hAc, hBc]
+  have hEle : E ≤ Cr.card := by
+    rw [hCrc]
+    obtain ⟨q, hq | hq⟩ := Nat.even_or_odd' V
+    · subst hq
+      have : 2 * q / 2 = q := by omega
+      rw [this, show 2 * q - q = q by omega]
+      nlinarith
+    · subst hq
+      have : (2 * q + 1) / 2 = q := by omega
+      rw [this, show 2 * q + 1 - q = q + 1 by omega]
+      nlinarith
+  obtain ⟨Es, hEsCr, hEsc⟩ := Finset.exists_subset_card_eq hEle
+  have hcross : ∀ z ∈ Es, ∃ x y, side x = true ∧ side y = false ∧ z = s(x, y) := by
+    intro z hz
+    obtain ⟨⟨x, y⟩, hxy, rfl⟩ := Finset.mem_image.mp (hEsCr hz)
+    simp only [Finset.mem_product, hA, hB, Finset.mem_filter, Finset.mem_univ, true_and] at hxy
+    exact ⟨x, y, hxy.1, hxy.2, rfl⟩
+  refine ⟨SimpleGraph.fromEdgeSet (Es : Set (Sym2 K)), ?_, ?_⟩
+  · rw [SimpleGraph.edgeSet_fromEdgeSet]
+    rw [Sym2.diagSet_eq_setOf_isDiag]
+    have : (Es : Set (Sym2 K)) \ {z | z.IsDiag} = Es := by
+      ext z
+      simp only [Set.mem_diff, Finset.mem_coe, Set.mem_setOf_eq, and_iff_left_iff_imp]
+      intro hz hd
+      obtain ⟨x, y, hx, hy, rfl⟩ := hcross z hz
+      rw [Sym2.mk_isDiag_iff] at hd
+      subst hd; simp_all
+    rw [this, Set.ncard_coe_finset, hEsc]
+  · intro a w hw
+    have hG : ∀ x y, (SimpleGraph.fromEdgeSet (Es : Set (Sym2 K))).Adj x y → side x ≠ side y := by
+      intro x y h
+      rw [SimpleGraph.fromEdgeSet_adj] at h
+      obtain ⟨x', y', hx', hy', he⟩ := hcross _ h.1
+      rw [Sym2.eq_iff] at he
+      rcases he with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;> simp_all
+    have := (P1965B5.walk_parity side hG w).mp rfl
+    rw [hw] at this
+    exact absurd this (by decide)

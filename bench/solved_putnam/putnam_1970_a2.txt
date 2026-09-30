@@ -1,0 +1,90 @@
+import Mathlib
+
+open Metric Set EuclideanGeometry
+
+/-!
+Putnam 1970 A2.  B² < 4AC forces AC > 0; WLOG A, C > 0 (negate all coefficients).  With Δ = 4AC − B²,
+4A·Q = (2Ax + By)² + Δy² and 4C·Q = (2Cy + Bx)² + Δx², so Q ≥ m(x² + y²) with m = Δ/(4(A + C)).
+The cubic is x²(Dx + Ey) + y²(Fx + Gy), at most Kδ(x² + y²) when |x|, |y| < δ (K = |D|+|E|+|F|+|G|).
+δ = m/(K + 1) makes Kδ < m, so Q + cubic = 0 has no solution with 0 < x² + y² < δ².
+-/
+
+namespace P1970A2
+
+lemma pos_case (A B C D E F G : ℝ) (hA : 0 < A) (hC : 0 < C) (hle : B^2 - 4*A*C < 0) :
+    ∃ δ > 0, ¬∃ x y : ℝ, x^2 + y^2 ∈ Set.Ioo 0 (δ^2) ∧
+      A*x^2 + B*x*y + C*y^2 + D*x^3 + E*x^2*y + F*x*y^2 + G*y^3 = 0 := by
+  set Δ := 4 * A * C - B ^ 2 with hΔ
+  have hΔ0 : 0 < Δ := by linarith
+  set m := Δ / (4 * (A + C)) with hm
+  have hm0 : 0 < m := div_pos hΔ0 (by linarith)
+  set K := |D| + |E| + |F| + |G| with hK
+  have hK0 : 0 ≤ K := by positivity
+  refine ⟨m / (K + 1), div_pos hm0 (by linarith), ?_⟩
+  rintro ⟨x, y, ⟨hs0, hsδ⟩, heq⟩
+  set δ := m / (K + 1) with hδ
+  have hδ0 : 0 < δ := div_pos hm0 (by linarith)
+  set s := x ^ 2 + y ^ 2 with hs
+  -- quadratic part ≥ m s
+  have hQ : m * s ≤ A*x^2 + B*x*y + C*y^2 := by
+    have h1 : 4 * A * (A*x^2 + B*x*y + C*y^2) = (2*A*x + B*y)^2 + Δ * y^2 := by rw [hΔ]; ring
+    have h2 : 4 * C * (A*x^2 + B*x*y + C*y^2) = (2*C*y + B*x)^2 + Δ * x^2 := by rw [hΔ]; ring
+    have h3 : Δ * s ≤ 4 * (A + C) * (A*x^2 + B*x*y + C*y^2) := by
+      rw [hs]; nlinarith [sq_nonneg (2*A*x + B*y), sq_nonneg (2*C*y + B*x)]
+    rw [hm, div_mul_eq_mul_div, div_le_iff₀ (by linarith)]
+    linarith
+  -- |x|, |y| < δ
+  have hx : |x| < δ := abs_lt_of_sq_lt_sq (by nlinarith [sq_nonneg y]) hδ0.le
+  have hy : |y| < δ := abs_lt_of_sq_lt_sq (by nlinarith [sq_nonneg x]) hδ0.le
+  -- cubic part ≤ K δ s
+  have hl1 : |D*x + E*y| ≤ (|D| + |E|) * δ := by
+    calc |D*x + E*y| ≤ |D*x| + |E*y| := abs_add_le _ _
+      _ = |D| * |x| + |E| * |y| := by rw [abs_mul, abs_mul]
+      _ ≤ |D| * δ + |E| * δ := by gcongr
+      _ = _ := by ring
+  have hl2 : |F*x + G*y| ≤ (|F| + |G|) * δ := by
+    calc |F*x + G*y| ≤ |F*x| + |G*y| := abs_add_le _ _
+      _ = |F| * |x| + |G| * |y| := by rw [abs_mul, abs_mul]
+      _ ≤ |F| * δ + |G| * δ := by gcongr
+      _ = _ := by ring
+  have hcub : |D*x^3 + E*x^2*y + F*x*y^2 + G*y^3| ≤ K * δ * s := by
+    have e : D*x^3 + E*x^2*y + F*x*y^2 + G*y^3 = x^2 * (D*x + E*y) + y^2 * (F*x + G*y) := by ring
+    rw [e]
+    calc |x^2 * (D*x + E*y) + y^2 * (F*x + G*y)| ≤ |x^2 * (D*x + E*y)| + |y^2 * (F*x + G*y)| := abs_add_le _ _
+      _ = x^2 * |D*x + E*y| + y^2 * |F*x + G*y| := by
+          rw [abs_mul, abs_mul, abs_of_nonneg (sq_nonneg x), abs_of_nonneg (sq_nonneg y)]
+      _ ≤ x^2 * ((|D| + |E|) * δ) + y^2 * ((|F| + |G|) * δ) := by gcongr
+      _ ≤ K * δ * s := by
+          rw [hK, hs]
+          have h1 : 0 ≤ x ^ 2 * ((|F| + |G|) * δ) := by positivity
+          have h2 : 0 ≤ y ^ 2 * ((|D| + |E|) * δ) := by positivity
+          nlinarith
+  have hneg : A*x^2 + B*x*y + C*y^2 = -(D*x^3 + E*x^2*y + F*x*y^2 + G*y^3) := by linarith
+  have h4 : m * s ≤ K * δ * s := by
+    calc m * s ≤ _ := hQ
+      _ = _ := hneg
+      _ ≤ |D*x^3 + E*x^2*y + F*x*y^2 + G*y^3| := neg_le_abs _
+      _ ≤ _ := hcub
+  have h5 : m ≤ K * δ := le_of_mul_le_mul_right h4 hs0
+  have h6 : K * δ < m := by
+    rw [hδ, mul_div_assoc', div_lt_iff₀ (by linarith)]
+    nlinarith
+  linarith
+
+end P1970A2
+
+theorem putnam_1970_a2
+(A B C D E F G : ℝ)
+(hle : B^2 - 4*A*C < 0)
+: ∃ δ > 0, ¬∃ x y : ℝ, x^2 + y^2 ∈ Set.Ioo 0 (δ^2) ∧
+A*x^2 + B*x*y + C*y^2 + D*x^3 + E*x^2*y + F*x*y^2 + G*y^3 = 0 := by
+  have hAC : 0 < A * C := by nlinarith [sq_nonneg B]
+  rcases lt_or_gt_of_ne (show A ≠ 0 by rintro rfl; simp at hAC) with hA | hA
+  · have hC : C < 0 := by
+      by_contra h; push Not at h; nlinarith
+    obtain ⟨δ, hδ, h⟩ := P1970A2.pos_case (-A) (-B) (-C) (-D) (-E) (-F) (-G) (by linarith) (by linarith)
+      (by nlinarith)
+    refine ⟨δ, hδ, fun ⟨x, y, hs, heq⟩ => h ⟨x, y, hs, by linarith⟩⟩
+  · have hC : 0 < C := by
+      by_contra h; push Not at h; nlinarith
+    exact P1970A2.pos_case A B C D E F G hA hC hle

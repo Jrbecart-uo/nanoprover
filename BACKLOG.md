@@ -13,8 +13,8 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   Certificates exact-checked by `verifyd` + independent Python probe (404/404 states agree). Tables in
   `erdos/1110/data_pow/` (gitignored). Not posted anywhere (user's call); not expert-reviewed. Exponent is near the
   practical ceiling of the method (ratio improves ~0.005 per extra digit of window; D=28 is ~90 min/run).
-- **2026-09-30 (evening): +7 Putnam scalps → 107 + 1 vacuous**: 2005_a1 (Erdős–Lewin {2,3}), 2025_a1, 2017_a2,
-  1973_b1, 1966_b4 (Mirsky), 2007_b5, 2003_a4; all `verify_scalps.py --kernel` ok. PE: #1012 not out until Oct 3.
+- **2026-09-30 (evening): +11 Putnam scalps → 111 + 1 vacuous**: 2005_a1 (Erdős–Lewin {2,3}), 2025_a1, 2017_a2,
+  1973_b1, 1966_b4 (Mirsky), 2007_b5, 2003_a4, 2017_b1, 1970_a2, 1995_a4 (cyclic lemma), 1965_b5 (bipartite); all `verify_scalps.py --kernel` ok. PE: #1012 not out until Oct 3.
 - **Project Euler #1008, #1009, #1010, #1011 SOLVED 2026-09-29** (all published Sep 5-26, after the model's
   training cutoff; #1011 within its publication week). Code in `euler/` (`p1008.c` + `p1008_ref.py`, `p1009.py` +
   `p1009_check.py`, `p1010.py`, `p1011.c` + `p1011_check.py` + `p1011_brute.py`); each answer cross-checked by an
@@ -68,7 +68,7 @@ and propose next tasks. Ranked by leverage within each track. Last updated
 ---
 
 ## Track A — Putnam scalps (theorem-mode; where we are strongest)
-Current: **107 scalps + 1 vacuous** (2026-09-30: +7 — 2005_a1, 2025_a1, 2017_a2, 1973_b1, 1966_b4, 2007_b5, 2003_a4; 2026-09-28: +47 real — 22 cost-1–2 then 25 of the cost-3 wave; 1991_a6 vacuous — the whole cost-1–2 tier of `bench/putnam_retriage_notes.md`, plus 2012_a1/1982_a5/1983_b4/2008_b4/1970_b3/1968_b6 from the NEXT list). 2026-09-25: +30. Reachable wins live here.
+Current: **111 scalps + 1 vacuous** (2026-09-30: +11 — 2005_a1, 2025_a1, 2017_a2, 1973_b1, 1966_b4, 2007_b5, 2003_a4, 2017_b1, 1970_a2, 1995_a4, 1965_b5; 2026-09-28: +47 real — 22 cost-1–2 then 25 of the cost-3 wave; 1991_a6 vacuous — the whole cost-1–2 tier of `bench/putnam_retriage_notes.md`, plus 2012_a1/1982_a5/1983_b4/2008_b4/1970_b3/1968_b6 from the NEXT list). 2026-09-25: +30. Reachable wins live here.
 - ✅ **Scoped-out list cleared** (4/4 fell when re-examined: 1996_a5, 2001_a5, 1974_b3,
       2007_a5). 1974_b3 needed no algebraic integers (denominators 3^(2^k) grow under
       angle doubling); 2007_a5 passed first try via `card_fixedPoints_modEq` on the

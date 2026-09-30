@@ -1,0 +1,91 @@
+import Mathlib
+
+open Filter Topology Real
+open Finset
+
+/-!
+Putnam 1995 A4 (cyclic lemma).  Extend the necklace periodically (b_t) and let T(j) = Σ_{t<j} (b_t − 1), so
+T(n) = −1 and T(j + n) = T(j) − 1.  Cut at c = the LAST index in [0,n) where T attains its maximum M ≥ T(0) = 0.
+For 1 ≤ L ≤ n, T(c + L) ≤ M − 1 (strictly below M before n, −1 at n, T(j) − 1 ≤ M − 1 after), so the first
+L beads from the cut sum to T(c + L) − T(c) + L ≤ L − 1; take L = min(k + 1, n).
+-/
+
+theorem putnam_1995_a4
+(n : ℕ)
+(hn : n > 0)
+(necklace : Fin n → ℤ)
+(hnecklacesum : ∑ i : Fin n, necklace i = n - 1)
+: ∃ cut, ∀ k, ∑ i : {j : Fin n | j.1 ≤ k}, necklace (cut + i) ≤ k := by
+  set b : ℕ → ℤ := fun t => necklace ⟨t % n, Nat.mod_lt _ hn⟩ with hb
+  set T : ℕ → ℤ := fun j => ∑ t ∈ range j, (b t - 1) with hT
+  have hbn : ∀ t, b (n + t) = b t := by
+    intro t; simp only [hb, Nat.add_mod_left]
+  have hsumb : ∑ t ∈ range n, b t = n - 1 := by
+    rw [← hnecklacesum, ← Fin.sum_univ_eq_sum_range]
+    refine sum_congr rfl (fun i _ => ?_)
+    simp only [hb, Nat.mod_eq_of_lt i.2]
+  have hTn : T n = -1 := by
+    simp only [hT, sum_sub_distrib, hsumb, sum_const, card_range, nsmul_eq_mul, mul_one]; ring
+  have hTadd : ∀ j L, T (j + L) = T j + ∑ t ∈ range L, (b (j + t) - 1) := by
+    intro j L; simp only [hT, sum_range_add]
+  have hTper : ∀ j, T (n + j) = T j - 1 := by
+    intro j
+    rw [hTadd, hTn]
+    simp only [hbn]
+    simp only [hT]; ring
+  have hne : (range n).Nonempty := nonempty_range_iff.mpr (by omega)
+  set M := (range n).sup' hne T with hM
+  have hle : ∀ j < n, T j ≤ M := fun j hj => le_sup' T (mem_range.mpr hj)
+  set S := (range n).filter (fun j => T j = M) with hS
+  have hSne : S.Nonempty := by
+    obtain ⟨j, hj, hjM⟩ := exists_mem_eq_sup' hne T
+    exact ⟨j, mem_filter.mpr ⟨hj, hjM.symm⟩⟩
+  set c := S.max' hSne with hc
+  have hcS : c ∈ S := S.max'_mem hSne
+  have hcn : c < n := mem_range.mp (mem_filter.mp hcS).1
+  have hTc : T c = M := (mem_filter.mp hcS).2
+  have hM0 : 0 ≤ M := by have := hle 0 hn; simp [hT] at this; exact this
+  have key : ∀ L, 1 ≤ L → L ≤ n → T (c + L) ≤ M - 1 := by
+    intro L hL1 hLn
+    rcases lt_trichotomy (c + L) n with h | h | h
+    · have hlt : T (c + L) < M := by
+        rcases lt_or_eq_of_le (hle (c + L) h) with h' | h'
+        · exact h'
+        · have : c + L ∈ S := mem_filter.mpr ⟨mem_range.mpr h, h'⟩
+          have := S.le_max' _ this
+          omega
+      omega
+    · rw [h, hTn]; omega
+    · have e : c + L = n + (c + L - n) := by omega
+      rw [e, hTper]
+      have := hle (c + L - n) (by omega)
+      omega
+  refine ⟨⟨c, hcn⟩, fun k => ?_⟩
+  -- rewrite the subtype sum as a sum over a range
+  have hconv : ∑ i : {j : Fin n | j.1 ≤ k}, necklace (⟨c, hcn⟩ + i)
+      = ∑ t ∈ range (min (k + 1) n), b (c + t) := by
+    have hsub : ∑ i : {j : Fin n | j.1 ≤ k}, necklace (⟨c, hcn⟩ + i)
+        = ∑ j ∈ univ.filter (fun j : Fin n => j.1 ≤ k), necklace (⟨c, hcn⟩ + j) :=
+      (Finset.sum_subtype _ (fun x => by simp) (fun j => necklace (⟨c, hcn⟩ + j))).symm
+    rw [hsub, sum_filter]
+    have h2 : ∀ j : Fin n, (if j.1 ≤ k then necklace (⟨c, hcn⟩ + j) else 0)
+        = (fun t : ℕ => if t ≤ k then b (c + t) else 0) j.1 := by
+      intro j
+      simp only [hb]
+      split_ifs
+      · congr 1
+      · rfl
+    rw [sum_congr rfl (fun j _ => h2 j), Fin.sum_univ_eq_sum_range (fun t : ℕ => if t ≤ k then b (c + t) else 0) n,
+      ← sum_filter]
+    congr 1
+    ext t; simp only [mem_filter, mem_range]; omega
+  rw [hconv]
+  set L := min (k + 1) n with hL
+  have hL1 : 1 ≤ L := by omega
+  have hLn : L ≤ n := min_le_right _ _
+  have hsum : ∑ t ∈ range L, b (c + t) = T (c + L) - T c + L := by
+    rw [hTadd]; simp only [sum_sub_distrib, sum_const, card_range, nsmul_eq_mul, mul_one]; ring
+  rw [hsum, hTc]
+  have := key L hL1 hLn
+  have hLk : (L : ℤ) ≤ k + 1 := by exact_mod_cast min_le_left _ _
+  omega
