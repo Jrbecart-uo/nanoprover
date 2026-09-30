@@ -114,3 +114,41 @@ Conclusions.
    of cheap staircases; the plain second moment diverges exponentially because of the strong disorder.
 5. Side note: for (9,2), n = 3, 6 (mod 9) is never representable (at most one summand has a = 0, and 2^b is a
    unit mod 9) and 9m is representable iff m is, so non-representables have density >= 1/4.
+
+## 2026-09-30: reachable sets, the carry mechanism, and an EXACT integer reformulation ((9,2), (5,3))
+Goal: think past single-path online certificates.  Tools: `rolloutg.c` (online rollout, any base, dead residues),
+`viterbi.c` (forward reachable set on W-bit windows, "window model"), `exactset.c`/`exactsp.c` (exact integer
+process below), `check_ek.py` (validation).
+1. **Other orientations do not help online**: rollout ratio at ~25-29 bits of look-ahead: (9,2) base 9 W=7
+   digits 1.178; (5,3) base 5 W=11 1.132, base 3 W=18 1.124 (same slow convergence as base 2).
+2. **What the offline optimum does differently** (beam N=1e5, 3000 bits): same mean increment as online
+   (1.247 vs 1.244 per term; d=1 in 80%, d=2 in 16%) but longer gaps between terms (3.98 vs 3.46 bits).
+3. **Existence is a FORWARD question**: a bounded-excess staircase exists iff the forward reachable set never
+   empties (Koenig); no look-ahead needed.  In the "window model" (all candidates merged by their W-bit
+   window and fed the same fresh bit, equivalent to truncating each term's 2-adic value to W bits) the
+   reachable-set rate is supercritical already at W=12 and reaches 0.964 mu at W=20 for (9,2).
+4. **The window model is universal but fake**: at W=16 its rate is 0.306-0.307 per bit for p = 5, 7, 9, 11, 13,
+   25 (0.312 for p=3), close to the counting rate 0.294, i.e. it only sees 2-adic combinatorics.  The true
+   process adds a p-dependent **carry penalty**: (5,2) ~0.35, (7,2) ~0.333, (9,2) ~0.312.  In the true process,
+   one-candidate-per-window selection gives 0.991-0.997 mu at 2^14 candidates (seeds), 0.994 at 2^16.
+5. **Exact integer reformulation (new).**  Fix a reference line of rate rho < mu (levels G_ref(t) = floor(rho t))
+   and let z_ref be the (uniform) target; its bits r_t are iid.  Every candidate staircase has normalized
+   residual  z = R^e z_ref + k  with e = excess over the line (>= 0 after padding) and k an INTEGER, bounded
+   by C(rho) R^e (geometric decay since rho < mu; C ~ 75 at rho=5/16, ~750 at rho=0.315).  Transitions:
+     (r+k) even: e' = e - lam, pad if negative (k' = (r + R k)/2), else k' = (R^e' r + k)/2;
+     (r+k) odd, increment d: e' = e + d - lam, k' = (R^e' r + R^d k - 1)/2.
+   Equal (e,k) means identical candidates, so merging is lossless: the offline problem is EXACTLY a branching
+   process on integer pairs in an iid random environment (one bit per step).  The "carries" are the R^e twist
+   between candidates at different excess levels (the window model ignores it).  `check_ek.py`: transitions
+   agree with direct big-integer 2-adic arithmetic on 60,000 steps (40 paths, random choices, padding), 0 errors.
+6. **Exact numerics for (9,2)**: rho = 5/16 = 0.9906 mu: the front (min excess) drifts up, extinct with caps
+   D=4,6,8.  rho = 0.315 = 0.9985 mu, D=8-9: 3 of 5 targets survive with the front at 0-2 and the population
+   growing (27K -> 954K over 2000 steps); 2 die in the early phase.  So the offline rate is in (0.3125, 0.315)
+   and the process is barely supercritical: survival probability small but positive, matching the flat ~6%
+   density.  **Pruning to candidates within 1, 2 or 3 levels of the front kills every run**: the offline
+   advantage lives in a deep population, so no small "front configuration" certificate exists.
+7. **Status**: positive density for (9,2) is strongly supported (exact model, not heuristics), but a proof
+   needs front tightness for an explicit near-critical branching process in random environment with a deep
+   relevant population.  Out of reach of finite-state certificates (single-path needs ~300 bits of look-ahead;
+   set-based needs >= 4 levels of depth with |k| ~ C 9^e).  The exact reformulation is the clean target for
+   a probabilistic proof.

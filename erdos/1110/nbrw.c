@@ -85,6 +85,9 @@ int main(int argc, char **argv) {
     memset(Q, 0, 8 * NL);
     for (int i = 0; i < L + 2; i++) { mulsmall(Q, Bb); u64 t = rnd() % Bb; u64 c = t; for (int k = 0; k < NL && c; k++) { u128 s2 = (u128)Q[k] + c; Q[k] = (u64)s2; c = (u64)(s2 >> 64); } }
   }
+  int winsel = getenv("WINSEL") ? atoi(getenv("WINSEL")) : 0;
+  long *Wbest = NULL;
+  if (winsel > 0) { if (N < (1L << winsel)) { fprintf(stderr, "need N >= 2^WINSEL\n"); return 1; } Wbest = malloc(sizeof(long) << winsel); for (long i = 0; i < (1L << winsel); i++) Wbest[i] = -1; }
   long ccap = N * (long)K + 16; Cand *C = malloc(sizeof(Cand) * ccap);
   int *hist = calloc(Gmax + 2, sizeof(int));
   int *minG = malloc(sizeof(int) * L);
@@ -106,6 +109,27 @@ int main(int argc, char **argv) {
           C[nc].g = g; C[nc].par = (int)i; C[nc].d = d; nc++;
         }
       }
+    }
+    // optional diversity selection: keep the cheapest child per W-bit window of its NEW residual (base 2)
+    if (winsel > 0 && Bb == 2) {
+      u64 wmask = (1ULL << winsel) - 1; long w = 0;
+      for (long c = 0; c < nc; c++) {            // compute child's window: ((q - t) >> 1) & wmask, needs 2 limbs
+        u64 *src = Q + (size_t)C[c].par * NL; u64 lo = src[0], hi = src[1];
+        if (C[c].d) { u64 *t = T + (size_t)C[c].g * NL; u64 b0 = lo < t[0]; lo -= t[0]; hi = hi - t[1] - b0; }
+        u64 win = ((lo >> 1) | (hi << 63)) & wmask;
+        long slot = (long)win;
+        if (Wbest[slot] < 0 || C[c].g < C[Wbest[slot]].g || (C[c].g == C[Wbest[slot]].g && (rnd() & 1))) Wbest[slot] = c;
+      }
+      for (long slot = 0; slot < (1L << winsel); slot++) {
+        long c = Wbest[slot]; if (c < 0) continue; Wbest[slot] = -1;
+        u64 *dst = Q2 + (size_t)w * NL, *src = Q + (size_t)C[c].par * NL;
+        memcpy(dst, src, 8 * NL);
+        if (C[c].d) subin(dst, T + (size_t)C[c].g * NL);
+        shr1(dst); G2[w] = C[c].g; w++;
+      }
+      np = w; { int *tg = G; G = G2; G2 = tg; u64 *tq = Q; Q = Q2; Q2 = tq; }
+      int mg = 1 << 30; for (long i = 0; i < np; i++) if (G[i] < mg) mg = G[i];
+      minG[b] = mg; continue;
     }
     // select up to N smallest g
     long take = nc < N ? nc : N; int thr = 1 << 30; long below = 0, needeq = 0;

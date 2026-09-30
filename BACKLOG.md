@@ -108,8 +108,10 @@ essential here — a digon must be a cycle).
   and FC issues before attacking anything.
 - ✅ 2026-09-25: 357/44/184/80/319 reported on FC tracking issue #6448 (comment
       5832484464); 261 already filed as #6538 by an automated LM audit (`ai-audit` label —
-      such audits now sweep FC continuously; search before filing). Follow-up: a PR
-      re-tagging them needs the Google CLA signed.
+      such audits now sweep FC continuously; search before filing).
+      ✅ 2026-09-30: maintainer mo271 opened PRs for all five (357 → #6744, 44 → #6750,
+      184 → #6745, 80 → #6751, 319 → #6747), each marking the variant `research solved` with
+      the literature reference we gave. No CLA/PR needed from us anymore; just watch them merge.
 - [~] #1110 density: (7,2) ✅ posted; (4,3) ✅ verified + public on GitHub, forum claim held; (9,2), (5,3) open —
       out of reach of finite certificates (quenched-rate analysis 2026-09-29, `erdos/1110/FINDINGS.md`).
       Earlier (5,2): Ding–Li–Liu–Zhang claim.
