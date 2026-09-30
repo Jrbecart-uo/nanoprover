@@ -1,0 +1,142 @@
+import Mathlib
+
+open Filter Topology Metric
+open Finset
+
+/-!
+Putnam 1999 A6.  The ratios b_n = a_n/a_{n−1} satisfy b_n = 6b_{n−1} − 8b_{n−2}, so b_n = 4^{n−1} − 2^{n−1} and
+a_n = ∏_{k=2}^{n} 2^{k−1}(2^{k−1} − 1) (strong induction; the recurrence's division is by positive products).
+For n = 2^e m with m odd: m ∣ 2^{φ(m)} − 1, a factor since φ(m) + 1 ≤ n; 2^e ∣ 2^{n−1}, part of the last
+factor (e < n); the two are coprime, so n ∣ a_n.
+-/
+
+namespace P1999A6
+
+/-- factor at step `k + 2`: `4^(k+1) − 2^(k+1)` -/
+def f (k : ℕ) : ℕ := 4 ^ (k + 1) - 2 ^ (k + 1)
+
+def PN : ℕ → ℕ
+  | 0 => 1
+  | 1 => 1
+  | k + 2 => PN (k + 1) * f k
+
+lemma f_eq (k : ℕ) : f k = 2 ^ (k + 1) * (2 ^ (k + 1) - 1) := by
+  unfold f
+  rw [show (4 : ℕ) = 2 ^ 2 by norm_num, ← pow_mul, show 2 * (k + 1) = (k + 1) + (k + 1) by ring, pow_add,
+    Nat.mul_sub_one]
+
+lemma f_real (k : ℕ) : (f k : ℝ) = 4 ^ (k + 1) - 2 ^ (k + 1) := by
+  unfold f
+  rw [Nat.cast_sub (Nat.pow_le_pow_left (by norm_num) _)]
+  push_cast; ring
+
+lemma f_pos (k : ℕ) : 0 < (f k : ℝ) := by
+  rw [f_real]
+  have : (2 : ℝ) ^ (k + 1) < 4 ^ (k + 1) := pow_lt_pow_left₀ (by norm_num) (by norm_num) (by omega)
+  linarith
+
+lemma PN_pos (k : ℕ) : 0 < (PN k : ℝ) := by
+  induction k using Nat.strong_induction_on with
+  | _ k ih =>
+    match k, ih with
+    | 0, _ => simp [PN]
+    | 1, _ => simp [PN]
+    | k + 2, ih =>
+      simp only [PN, Nat.cast_mul]
+      exact mul_pos (ih (k + 1) (by omega)) (f_pos k)
+
+lemma dvd_PN (j n : ℕ) (hjn : j + 2 ≤ n) : f j ∣ PN n := by
+  induction n with
+  | zero => omega
+  | succ n ih =>
+    rcases Nat.lt_or_ge (j + 2) (n + 1) with h | h
+    · obtain ⟨n', rfl⟩ : ∃ n', n = n' + 1 := ⟨n - 1, by omega⟩
+      simp only [PN]
+      exact dvd_mul_of_dvd_left (ih (by omega)) _
+    · obtain rfl : n = j + 1 := by omega
+      simp only [PN]
+      exact dvd_mul_left _ _
+
+lemma n_dvd (n : ℕ) (hn : 1 ≤ n) : n ∣ PN n := by
+  obtain ⟨e, m, hm, hnm⟩ := Nat.exists_eq_two_pow_mul_odd (show n ≠ 0 by omega)
+  have hm0 : 0 < m := hm.pos
+  have hcop : Nat.Coprime (2 ^ e) m := (hm.coprime_two_right.symm).pow_left e
+  suffices hsuff : 2 ^ e * m ∣ PN n by rwa [← hnm] at hsuff
+  apply hcop.mul_dvd_of_dvd_of_dvd
+  · -- 2^e divides the last factor
+    rcases Nat.lt_or_ge n 2 with h | h
+    · have : n = 1 := by omega
+      subst this
+      have : 2 ^ e ∣ 1 := by rw [hnm]; exact dvd_mul_right _ _
+      exact dvd_trans this (one_dvd _)
+    · obtain ⟨k, rfl⟩ : ∃ k, n = k + 2 := ⟨n - 2, by omega⟩
+      have hek : e ≤ k + 1 := by
+        have h1 : 2 ^ e ≤ k + 2 := by
+          have := Nat.le_of_dvd (by omega) (show 2 ^ e ∣ k + 2 from ⟨m, hnm⟩)
+          exact this
+        have h2 : k + 2 < 2 ^ (k + 2) := Nat.lt_two_pow_self
+        have := (Nat.pow_lt_pow_iff_right (by norm_num : 1 < 2)).mp (lt_of_le_of_lt h1 h2)
+        omega
+      refine dvd_trans ?_ (dvd_PN k (k + 2) le_rfl)
+      rw [f_eq]
+      exact dvd_mul_of_dvd_left (Nat.pow_dvd_pow 2 hek) _
+  · -- m divides 2^φ(m) − 1, a factor
+    rcases Nat.lt_or_ge m 2 with h | h
+    · have : m = 1 := by omega
+      subst this; exact one_dvd _
+    · have ht := Nat.totient_lt m (by omega)
+      have ht0 : 0 < m.totient := Nat.totient_pos.mpr hm0
+      obtain ⟨k, hk⟩ : ∃ k, m.totient = k + 1 := ⟨m.totient - 1, by omega⟩
+      have hmn : m ≤ n := by rw [hnm]; exact Nat.le_mul_of_pos_left _ (by positivity)
+      have hdvd : m ∣ 2 ^ (k + 1) - 1 := by
+        have := Nat.ModEq.pow_totient (x := 2) (n := m) hm.coprime_two_right.symm
+        rw [hk] at this
+        exact (Nat.modEq_iff_dvd' (Nat.one_le_two_pow)).mp this.symm
+      refine dvd_trans ?_ (dvd_PN k n (by omega))
+      rw [f_eq]
+      exact dvd_mul_of_dvd_right hdvd _
+
+end P1999A6
+
+open P1999A6 in
+theorem putnam_1999_a6
+(a : ℤ → ℝ)
+(ha1 : a 1 = 1)
+(ha2 : a 2 = 2)
+(ha3 : a 3 = 24)
+(hange4 : ∀ n : ℕ, n ≥ 4 → a n = (6 * (a (n - 1))^2 * (a (n - 3)) - 8 * (a (n - 1)) * (a (n - 2))^2)/(a (n - 2) * a (n - 3)))
+: ∀ n, n ≥ 1 → (∃ k : ℤ, a n = k * n) := by
+  have hclosed : ∀ k : ℕ, 1 ≤ k → a k = PN k := by
+    intro k
+    induction k using Nat.strong_induction_on with
+    | _ k ih =>
+      intro hk
+      match k, ih, hk with
+      | 1, _, _ => simp [ha1, PN]
+      | 2, _, _ => simp [ha2, PN, f]
+      | 3, _, _ => simp [ha3, PN, f]
+      | m + 4, ih, _ =>
+        have h := hange4 (m + 4) (by omega)
+        have e1 : ((m + 4 : ℕ) : ℤ) - 1 = ((m + 3 : ℕ) : ℤ) := by push_cast; ring
+        have e2 : ((m + 4 : ℕ) : ℤ) - 2 = ((m + 2 : ℕ) : ℤ) := by push_cast; ring
+        have e3 : ((m + 4 : ℕ) : ℤ) - 3 = ((m + 1 : ℕ) : ℤ) := by push_cast; ring
+        rw [e1, e2, e3, ih (m + 3) (by omega) (by omega), ih (m + 2) (by omega) (by omega),
+          ih (m + 1) (by omega) (by omega)] at h
+        rw [h]
+        -- PN (m+3) = PN (m+1) * f m * f (m+1),  PN (m+2) = PN (m+1) * f m
+        have q1 : (PN (m + 3) : ℝ) = PN (m + 1) * f m * f (m + 1) := by simp only [PN, Nat.cast_mul]
+        have q2 : (PN (m + 2) : ℝ) = PN (m + 1) * f m := by simp only [PN, Nat.cast_mul]
+        have q4 : (PN (m + 4) : ℝ) = PN (m + 1) * f m * f (m + 1) * f (m + 2) := by simp only [PN, Nat.cast_mul]
+        have hrec : (f (m + 2) : ℝ) = 6 * f (m + 1) - 8 * f m := by
+          rw [f_real, f_real, f_real]; ring
+        have hQ := PN_pos (m + 1)
+        have hu := f_pos m
+        rw [q1, q2, q4, hrec]
+        field_simp
+  intro n hn
+  obtain ⟨N, rfl⟩ : ∃ N : ℕ, n = N := ⟨n.toNat, by omega⟩
+  have hN : 1 ≤ N := by exact_mod_cast hn
+  obtain ⟨q, hq⟩ := n_dvd N hN
+  refine ⟨q, ?_⟩
+  rw [hclosed N hN, hq]
+  push_cast; ring

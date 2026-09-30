@@ -32,7 +32,9 @@ Also solved the same day, from the older NEXT list: 2000_b5.
 1985_b6, 2010_b6, 2018_b6, 2019_b3, 1967_b4, 1971_a3, 2000_a5, 2004_b1, 1973_b3, 1994_b5,
 1975_b6, 2006_b2, 1977_b6, 1978_a2, 1967_b5, 1987_b2 (+ 1973_b2 from the older NEXT list).
 ✅ 2026-09-30: 2007_b5, 2003_a4, 1966_b4, 1973_b1 (+ 2017_a2, 2005_a1, 2025_a1 from the older list).
-✅ also 2026-09-30: 2017_b1, 1970_a2; from the analysis-tier list: 1995_a4, 1965_b5.
+✅ also 2026-09-30: 2017_b1, 1970_a2; from the analysis-tier list: 1995_a4, 1965_b5, 1976_b6, 1999_a6.
+Triaged hard/skip (2026-09-30): 2012_b6 (Zolotarev sign), 2010_a5, 1992_a5 (Thue–Morse), 2015_a5, 2018_b4, 2017_a4,
+1969_a2 (det), 2014_b3 (cycle in bipartite graph), 1985_b3 (needs D(K) > 8K, K ~ 2^17), 1981_b3, 1995_b1 (medium).
 Remaining: 2012_b5 (sSup; needs ℝ ≃ ℝ×ℝ indexing), 1998_a5, 2002_a2 (hemisphere; cross product + encard bookkeeping),
 1987_b6, 1964_b6 (needs isometry surjectivity), 1973_a6, 2023_a4, 1996_a4.
 
