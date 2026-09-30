@@ -5,18 +5,25 @@ Durable handoff. A new session can read this + the auto-memory (`nanoprover-proj
 and propose next tasks. Ranked by leverage within each track. Last updated
 2026-09-29 (second session of the day).
 
-## Where the last session (2026-09-29, later) left off — START HERE
+## Where the last session (2026-09-29/30) left off — START HERE
 - **Project Euler #1008, #1009, #1010, #1011 SOLVED 2026-09-29** (all published Sep 5-26, after the model's
   training cutoff; #1011 within its publication week). Code in `euler/` (`p1008.c` + `p1008_ref.py`, `p1009.py` +
   `p1009_check.py`, `p1010.py`, `p1011.c` + `p1011_check.py` + `p1011_brute.py`); each answer cross-checked by an
   independent implementation and brute force at small sizes. Answers were given to the user in chat (not
   committed: PE asks not to publish); **the user submits them** — record site confirmations when reported.
-- **#1110 (9,2)/(5,3): investigated, NOT solvable with the certificate method** (`erdos/1110/FINDINGS.md`, section
-  "quenched vs annealed"). Quenched (offline) encoding rates are ~1-4% below mu (positive density plausible;
-  constructive beams on 4000-digit targets), but online/finite-window encodings approach them only like
-  W^-0.6..-0.7 ((9,2): 1.117 mu at W=31) -> a certificate would need ~300+ digits of look-ahead. Needs a
-  non-causal proof idea (e.g. truncated second moment under strong disorder). New tools: `nbrw.c` (beam, any
-  base), `exactmin.c` (IDA*), `hmean.c` (exact mean min-cost over all k-digit targets), `rollout.c`.
+- **#1110 (9,2)/(5,3): positive density very likely TRUE but unproven** (`erdos/1110/FINDINGS.md`, last two
+  sections). Finite-window (online) certificates are dead: they would need ~300 bits of look-ahead in every
+  base. KEY NEW RESULT (2026-09-30): an **exact integer reformulation** of the offline problem. Relative to a
+  reference line of rate rho < mu, each candidate staircase is an integer pair (e,k) with z = 9^e z_ref + k,
+  |k| <= C 9^e; transitions in `exactsp.c`, validated vs big ints (`check_ek.py`, 60k steps, 0 errors). So the
+  problem is exactly a branching process on integer pairs in an iid random environment. Exact runs: dies at
+  rho = 0.3125 (0.9906 mu), 3/5 targets survive at rho = 0.315 (0.9985 mu) -> margin <= ~1%. The relevant
+  population is DEEP (pruning to 3 levels behind the front kills it), so no small certificate either.
+  Also: carry-free "window model" is p-universal (~0.307/bit); all p-dependence = carries (real term sizes).
+  Next options offered to the user: (1) write the exact reformulation as a short note for a probabilist
+  (user's call on posting); (2) rigorous partial result #R(X) >= X^0.88 for (9,2),(5,3) via existing VI
+  certificates + a Lean variant for lambda > s*mu; (3) other tracks. Tools: `rolloutg.c`, `viterbi.c`,
+  `exactsp.c`, `nbrw.c` (WINSEL env = one-per-window selection), `exactmin.c`, `hmean.c`, `rollout.c`.
 - Forum (erdosproblems.com/forum/thread/1110): no comments yet on the (7,2) claim (checked 2026-09-29 afternoon).
 - Work is on `main`; REPL daemon stopped. nanoprover repo still PRIVATE. Public results repo:
   https://github.com/Jrbecart-uo/erdos-1110-72 (root = (7,2); `4-3/` = (4,3); release `v43-certificate` = 410 MB table).
