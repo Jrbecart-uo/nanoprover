@@ -213,3 +213,16 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
 - Harness: `sleep N; cmd` is blocked; wait with a background `until …; do sleep; done` script instead. The rtk
   hook mangled a bash `case … ;;` (became `; ;`) → do /proc scans in Python.
 - Python `-c` prints are block-buffered when redirected (background task output looked empty): use `-u`.
+
+## Added 2026-09-30 (Erdős #1110 power lower bounds, `E1110G.pow_lower_bound`)
+- **`norm_num` / `rfl` refuse large power comparisons**: `(5:ℕ)^595 ≤ 3^874` is left unsolved by `norm_num`
+  (in ℕ and ℝ), and `Nat.le_of_ble_eq_true rfl` hits `maximum recursion depth`. Don't fight it: choose a
+  rational with SMALL numerator/denominator (e.g. `λα = 15/22` from `5^15 ≤ 3^22` instead of `595/874`);
+  continued-fraction convergents of `log b / log r` give the best small pairs.
+- **`rw [← Real.rpow_natCast, ← Real.rpow_mul …]` unfolds a `set` variable** (`ℓ := r^λ` became `r^λ` and the
+  rewrite produced `r ^ (λ * (α * N))`). State the identity as a helper over a fresh variable
+  (`∀ z ≥ 0, (z^N)^α = (z^α)^N`) and rewrite with it.
+- **rtk also rewrites `diff`/`sort`/`wc` output** (a line-by-line diff came back as a summarised "~ modified"
+  table and an "ALL-AGREE" that meant nothing). Compare verification outputs in Python, never with `diff`.
+- **Value iteration at 2^28 states thrashes cache**: gvid for (9,2) D=24 ran 0.33 s/iteration, D=26 3.5 s,
+  D=28 ~20 s (60× for 16× the states). D=26 was the practical ceiling for a session.

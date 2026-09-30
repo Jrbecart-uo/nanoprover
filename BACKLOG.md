@@ -3,9 +3,16 @@
 Durable handoff. A new session can read this + the auto-memory (`nanoprover-project`,
 `nanoprover-env`, `nanoprover-roadmap`, `cdc-formalization`, `naskrecki-problem`)
 and propose next tasks. Ranked by leverage within each track. Last updated
-2026-09-29 (second session of the day).
+2026-09-30.
 
 ## Where the last session (2026-09-29/30) left off — START HERE
+- **2026-09-30 (afternoon): RIGOROUS POWER LOWER BOUNDS for the two open pairs** (`erdos/1110/NOTEPOW.md`):
+  #{n <= x representable} >> x^{851/949} (0.8967) for (9,2) and >> x^{69/77} (0.8961) for (5,3). New general Lean
+  theorem `E1110G.pow_lower_bound` (certificate with drift ABOVE threshold -> x^alpha) + instances
+  `erdos1110_92_pow`, `erdos1110_53_pow` in `erdos/1110/lean/E1110G.lean` (clean axioms, `lake env lean` exit 0).
+  Certificates exact-checked by `verifyd` + independent Python probe (404/404 states agree). Tables in
+  `erdos/1110/data_pow/` (gitignored). Not posted anywhere (user's call); not expert-reviewed. Exponent is near the
+  practical ceiling of the method (ratio improves ~0.005 per extra digit of window; D=28 is ~90 min/run).
 - **Project Euler #1008, #1009, #1010, #1011 SOLVED 2026-09-29** (all published Sep 5-26, after the model's
   training cutoff; #1011 within its publication week). Code in `euler/` (`p1008.c` + `p1008_ref.py`, `p1009.py` +
   `p1009_check.py`, `p1010.py`, `p1011.c` + `p1011_check.py` + `p1011_brute.py`); each answer cross-checked by an

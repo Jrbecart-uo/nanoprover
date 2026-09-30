@@ -14,6 +14,11 @@ residues cannot be the value of any chain, as for `(4,3)`: `n ≢ 2 (mod 3)`, `n
 * `E1110G.erdos1110_43_density`: the `(p,q) = (4,3)` instance (`b = 4`, `r = 3`, `s = 2`, `D = 14`,
   `H = 18`, `λ = 58/23`); its only hypothesis is the existence of the certificate that `verifyd.c`
   checks (`g = 42192162 / (16 · 2^20)`). The certificate itself (2^28 states) is not checked in Lean.
+* `E1110G.pow_lower_bound`: if instead the drift is above the threshold (`K.g < λ` with `b^s < r^λ`), the
+  same encoding still gives `#{n ≤ x : Representable r b n} ≫ x^α` for every `α ≥ 0` with `r^{λα} ≤ b^s`.
+* `E1110G.erdos1110_53_pow`, `E1110G.erdos1110_92_pow`: `(5,3)` and `(9,2)` have `≫ x^{69/77}` resp.
+  `≫ x^{851/949}` representable integers up to `x` (exponents `0.896…`, `0.896…`), conditional on the
+  certificates that `verifyd.c` checks (`b = 3, r = 5, s = 1, D = 17` resp. `b = 2, r = 9, s = 1, D = 26`).
 * `E1110G.toyCert`: the structure is inhabited.
 
 Proof structure: the process runs in `ZMod (b^m)` with `m = sN + D + s`, so every look-ahead window
@@ -1194,6 +1199,256 @@ theorem pos_lower_density {b r s D H : ℕ} [NeZero b] (hb : 2 ≤ b) (hr2 : 2 �
   rw [pow_succ] at hNx
   nlinarith
 
+/-! ## Power lower bound when `r^λ > b^s` (drift above the density threshold)
+
+If the drift `g` of a certificate exceeds `s log_r b`, the same encoding still produces `≫ b^{sN}` distinct
+representable integers, now below `C (r^λ)^N`; hence `#{n ≤ x representable} ≫ x^α` whenever `r^{λα} ≤ b^s`. -/
+
+lemma geom_rev (ℓ q : ℝ) (hq : 0 ≤ q) (hqℓ : q < ℓ) (N : ℕ) :
+    ∑ t ∈ range N, q ^ t * ℓ ^ (N - t) ≤ ℓ ^ N * ℓ / (ℓ - q) := by
+  have hpos : 0 < ℓ - q := sub_pos.mpr hqℓ
+  have key : ∀ N : ℕ, (∑ t ∈ range N, q ^ t * ℓ ^ (N - t)) * (ℓ - q) = ℓ ^ (N + 1) - ℓ * q ^ N := by
+    intro N
+    induction N with
+    | zero => simp
+    | succ N ih =>
+      rw [sum_range_succ, show N + 1 - N = 1 by omega, pow_one]
+      have hs : ∑ t ∈ range N, q ^ t * ℓ ^ (N + 1 - t) = ℓ * ∑ t ∈ range N, q ^ t * ℓ ^ (N - t) := by
+        rw [mul_sum]
+        refine sum_congr rfl (fun t ht => ?_)
+        rw [show N + 1 - t = (N - t) + 1 by have := mem_range.mp ht; omega, pow_succ]
+        ring
+      rw [hs, add_mul, mul_assoc, ih]
+      ring
+  rw [le_div_iff₀ hpos, key]
+  have : 0 ≤ ℓ * q ^ N := mul_nonneg (hq.trans hqℓ.le) (pow_nonneg hq N)
+  rw [pow_succ]
+  linarith
+
+noncomputable section sizes_pow
+variable {b r s D H : ℕ} [NeZero b] (K : Cert b r s D H) (lam : ℝ) {m : ℕ} (y : ZMod (b ^ m))
+
+/-- `n(y) ≤ b^s r^Dc ℓ^N ℓ / (ℓ - b^s)` with `ℓ = r^λ > b^s`, for admissible `y`. -/
+lemma nval_le_real_pow (hb : 2 ≤ b) (hr2 : 2 ≤ r) {N A : ℕ} (hA : GG K lam y N ≤ A)
+    (hlam : (b : ℝ) ^ s < (r : ℝ) ^ lam) (Dc : ℝ) (hAD : (A : ℝ) ≤ N * lam + Dc) :
+    (nval K lam y A N : ℝ) ≤ (b : ℝ) ^ s * (r : ℝ) ^ Dc * (((r : ℝ) ^ lam) ^ N * (r : ℝ) ^ lam / ((r : ℝ) ^ lam - (b : ℝ) ^ s)) := by
+  have hr1 : (1 : ℝ) ≤ r := by exact_mod_cast (show 1 ≤ r by omega)
+  have hr0 : (0 : ℝ) < r := by linarith
+  set ℓ : ℝ := (r : ℝ) ^ lam with hℓ
+  have hrA : (r : ℝ) ^ A ≤ (r : ℝ) ^ Dc * ℓ ^ N := by
+    rw [← Real.rpow_natCast, hℓ, ← Real.rpow_natCast, ← Real.rpow_mul hr0.le, ← Real.rpow_add hr0]
+    apply Real.rpow_le_rpow_of_exponent_le hr1
+    linarith
+  have hterm : ∀ t ∈ range N, (r : ℝ) ^ (A - GG K lam y t) ≤ (r : ℝ) ^ Dc * ℓ ^ (N - t) := by
+    intro t ht
+    have htN := mem_range.mp ht
+    have hGA : GG K lam y t ≤ A := le_trans (GG_mono K lam y htN.le) hA
+    have hrG : (0 : ℝ) < (r : ℝ) ^ GG K lam y t := by positivity
+    refine le_of_mul_le_mul_right ?_ hrG
+    rw [← pow_add, Nat.sub_add_cancel hGA]
+    calc (r : ℝ) ^ A ≤ (r : ℝ) ^ Dc * ℓ ^ N := hrA
+      _ = (r : ℝ) ^ Dc * ℓ ^ (N - t) * ℓ ^ t := by rw [mul_assoc, ← pow_add, Nat.sub_add_cancel htN.le]
+      _ ≤ (r : ℝ) ^ Dc * ℓ ^ (N - t) * (r : ℝ) ^ GG K lam y t := by
+          gcongr
+          exact rpow_GG_ge K lam y hr1 t
+  have h1 : (nval K lam y A N : ℝ) ≤ ∑ t ∈ range N, (b : ℝ) ^ s * (b : ℝ) ^ (s * t) * (r : ℝ) ^ (A - GG K lam y t) := by
+    exact_mod_cast nval_le_nat K lam y hb (by omega) A N
+  refine h1.trans ?_
+  calc ∑ t ∈ range N, (b : ℝ) ^ s * (b : ℝ) ^ (s * t) * (r : ℝ) ^ (A - GG K lam y t)
+      ≤ ∑ t ∈ range N, (b : ℝ) ^ s * (r : ℝ) ^ Dc * (((b : ℝ) ^ s) ^ t * ℓ ^ (N - t)) := by
+        refine sum_le_sum (fun t ht => ?_)
+        rw [pow_mul]
+        have := hterm t ht
+        have : (0 : ℝ) ≤ (b : ℝ) ^ s * ((b : ℝ) ^ s) ^ t := by positivity
+        nlinarith
+    _ = (b : ℝ) ^ s * (r : ℝ) ^ Dc * ∑ t ∈ range N, ((b : ℝ) ^ s) ^ t * ℓ ^ (N - t) := by rw [mul_sum]
+    _ ≤ _ := by
+        gcongr
+        exact geom_rev ℓ ((b : ℝ) ^ s) (by positivity) hlam N
+
+end sizes_pow
+
+/-- `n(y) ≤ CstP · (r^λ)^N`. -/
+noncomputable def CstP (b r s : ℕ) (lam c₀ : ℝ) : ℝ :=
+  (b : ℝ) ^ s * (r : ℝ) ^ ((1 + (⌈c₀⌉₊ : ℝ))) * ((r : ℝ) ^ lam / ((r : ℝ) ^ lam - (b : ℝ) ^ s))
+
+open Classical in
+lemma count_N_pow {b r s D H : ℕ} [NeZero b] (hb : 2 ≤ b) (hr2 : 2 ≤ r) (hcop : Nat.Coprime r b)
+    (K : Cert b r s D H) (hWne : K.W.Nonempty) (lam : ℝ) (hlam0 : 0 ≤ lam) (hlam : (b : ℝ) ^ s < (r : ℝ) ^ lam)
+    (θ B c₀ : ℝ) (hθ : 0 < θ) (hB : ∀ x, |K.V x| ≤ B) (hθR : θ * ((H : ℝ) + 2 * B + |K.g|) ≤ 1)
+    (hρ : Real.exp (θ * (K.g - lam) + θ ^ 2 * ((H : ℝ) + 2 * B + |K.g|) ^ 2) < 1)
+    (hc₀ : 2 * (Real.exp (θ * B) + Real.exp (θ * (1 + B)) /
+        (1 - Real.exp (θ * (K.g - lam) + θ ^ 2 * ((H : ℝ) + 2 * B + |K.g|) ^ 2))) ≤ Real.exp (θ * (c₀ - B)))
+    (N : ℕ) :
+    b ^ (s * N) ≤ 2 * b ^ D *
+      ((range (⌊CstP b r s lam c₀ * ((r : ℝ) ^ lam) ^ N⌋₊ + 1)).filter (Representable r b)).card := by
+  set m := s * N + (D + s) with hmdef
+  have hm : s * N + (D + s) ≤ m := le_rfl
+  have hgood := good_half K lam (m := m) hcop hm hlam0 θ B c₀ hθ hB hθR hρ hc₀
+  have hY := card_viable_ge K lam (m := m) hWne (by omega)
+  set Y := univ.filter (fun y : ZMod (b ^ m) => XX K lam y 0 ∈ K.W)
+  set good := univ.filter (fun y : ZMod (b ^ m) => XX K lam y 0 ∈ K.W ∧ (GG K lam y N : ℝ) ≤ N * lam + c₀)
+  set A : ℕ := ⌈(N : ℝ) * lam⌉₊ + ⌈c₀⌉₊ with hAdef
+  have hA : ∀ y ∈ good, GG K lam y N ≤ A := by
+    intro y hy
+    simp only [good, mem_filter, mem_univ, true_and] at hy
+    have h1 := Nat.le_ceil ((N : ℝ) * lam)
+    have h2 := Nat.le_ceil c₀
+    have : (GG K lam y N : ℝ) ≤ (A : ℝ) := by rw [hAdef]; push_cast; linarith
+    exact_mod_cast this
+  have hAD : (A : ℝ) ≤ N * lam + (1 + (⌈c₀⌉₊ : ℝ)) := by
+    have := Nat.ceil_lt_add_one (show 0 ≤ (N : ℝ) * lam by positivity)
+    rw [hAdef]; push_cast; linarith
+  set T := (range (⌊CstP b r s lam c₀ * ((r : ℝ) ^ lam) ^ N⌋₊ + 1)).filter (Representable r b)
+  set f : ZMod (b ^ m) → ℕ := fun y => nval K lam y A N
+  have hmaps : ∀ y ∈ good, f y ∈ T := by
+    intro y hy
+    simp only [T, mem_filter, mem_range]
+    refine ⟨Nat.lt_succ_of_le (Nat.le_floor ?_), nval_representable K lam y hb hr2 hcop.symm (hA y hy)⟩
+    have := nval_le_real_pow K lam y hb hr2 (hA y hy) hlam _ hAD
+    refine this.trans (le_of_eq ?_)
+    rw [CstP]; ring
+  have hsN : s * N ≤ m := by omega
+  have hfib : ∀ n ∈ good.image f, (good.filter (fun y => f y = n)).card ≤ b ^ (m - s * N) := by
+    intro n hn
+    obtain ⟨y0, hy0, rfl⟩ := mem_image.mp hn
+    refine card_fiber_red_le (j := s * N) hsN _ (red (s * N) hsN y0) (fun y hy => ?_)
+    simp only [mem_filter] at hy
+    have hy0' := hy0; have hy' := hy.1
+    simp only [good, mem_filter, mem_univ, true_and] at hy0' hy'
+    exact nval_inj K lam hcop hm hy'.1 hy0'.1 (hA y hy.1) (hA y0 hy0) hy.2
+  have h1 := card_le_mul_card_image good (b ^ (m - s * N)) hfib
+  have h2 : (good.image f).card ≤ T.card := card_le_card (fun n hn => by
+    obtain ⟨y, hy, rfl⟩ := mem_image.mp hn; exact hmaps y hy)
+  have hgood' : Y.card ≤ 2 * good.card := by exact_mod_cast hgood
+  have hc : b ^ (m - D) ≤ 2 * b ^ (m - s * N) * T.card := by
+    calc b ^ (m - D) ≤ Y.card := hY
+      _ ≤ 2 * good.card := hgood'
+      _ ≤ 2 * (b ^ (m - s * N) * (good.image f).card) := by omega
+      _ ≤ 2 * b ^ (m - s * N) * T.card := by rw [mul_assoc]; exact Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ h2)
+  have e1 : m - D = s * N + s := by omega
+  have e2 : m - s * N = D + s := by omega
+  rw [e1, e2, pow_add, pow_add] at hc
+  have hbs : 0 < b ^ s := pow_pos (by omega) s
+  have : b ^ (s * N) * b ^ s ≤ (2 * b ^ D * T.card) * b ^ s := by
+    calc b ^ (s * N) * b ^ s ≤ 2 * (b ^ D * b ^ s) * T.card := hc
+      _ = (2 * b ^ D * T.card) * b ^ s := by ring
+  exact Nat.le_of_mul_le_mul_right this hbs
+
+open Classical in
+/-- **Power lower bound (general bases, conditional on a certificate).** If a look-ahead potential
+certificate with a nonempty viable set has drift `g < λ`, where now `b^s < r^λ` (the drift is above the
+density threshold `s log_r b`), then for every `α ≥ 0` with `r^{λα} ≤ b^s` the number of integers
+`n ≤ x` that are sums of numbers `r^k b^l`, none dividing another, is `≫ x^α`. -/
+theorem pow_lower_bound {b r s D H : ℕ} [NeZero b] (hb : 2 ≤ b) (hr2 : 2 ≤ r) (hcop : Nat.Coprime r b)
+    (K : Cert b r s D H) (hWne : K.W.Nonempty) (lam : ℝ) (hlam0 : 0 ≤ lam) (hg : K.g < lam)
+    (hlam : (b : ℝ) ^ s < (r : ℝ) ^ lam) (α : ℝ) (hα0 : 0 ≤ α) (hα : (r : ℝ) ^ (lam * α) ≤ (b : ℝ) ^ s) :
+    ∃ c : ℝ, 0 < c ∧ ∃ x₀ : ℕ, ∀ x : ℕ, x₀ ≤ x →
+      c * (x : ℝ) ^ α ≤ (((range (x + 1)).filter (Representable r b)).card : ℝ) := by
+  set B : ℝ := ∑ x, |K.V x| + 1 with hBdef
+  have hB : ∀ x, |K.V x| ≤ B := by
+    intro x
+    have := single_le_sum (f := fun x => |K.V x|) (fun x _ => abs_nonneg _) (mem_univ x)
+    linarith
+  have hB1 : 1 ≤ B := by
+    have : 0 ≤ ∑ x, |K.V x| := sum_nonneg (fun x _ => abs_nonneg _)
+    linarith
+  set R : ℝ := (H : ℝ) + 2 * B + |K.g| with hRdef
+  have hR : 2 ≤ R := by have := abs_nonneg K.g; have : (0 : ℝ) ≤ H := Nat.cast_nonneg _; linarith
+  set d : ℝ := lam - K.g with hd
+  have hd0 : 0 < d := by linarith
+  set θ : ℝ := min (1 / R) (d / (2 * R ^ 2)) with hθdef
+  have hθ : 0 < θ := lt_min (by positivity) (by positivity)
+  have hθR : θ * R ≤ 1 := by
+    have : θ ≤ 1 / R := min_le_left _ _
+    calc θ * R ≤ 1 / R * R := by gcongr
+      _ = 1 := by field_simp
+  have hθd : θ * R ^ 2 ≤ d / 2 := by
+    have : θ ≤ d / (2 * R ^ 2) := min_le_right _ _
+    calc θ * R ^ 2 ≤ d / (2 * R ^ 2) * R ^ 2 := by gcongr
+      _ = d / 2 := by field_simp
+  have hρ : Real.exp (θ * (K.g - lam) + θ ^ 2 * R ^ 2) < 1 := by
+    apply Real.exp_lt_one_iff.mpr
+    have : θ ^ 2 * R ^ 2 ≤ θ * (d / 2) := by
+      rw [pow_two, mul_assoc]; exact mul_le_mul_of_nonneg_left hθd hθ.le
+    have : θ * (K.g - lam) = -(θ * d) := by rw [hd]; ring
+    nlinarith
+  set M₀ : ℝ := Real.exp (θ * B) + Real.exp (θ * (1 + B)) / (1 - Real.exp (θ * (K.g - lam) + θ ^ 2 * R ^ 2))
+  have hM₀ : 0 < M₀ := by
+    have : 0 < 1 - Real.exp (θ * (K.g - lam) + θ ^ 2 * R ^ 2) := by linarith
+    positivity
+  set c₀ : ℝ := B + Real.log (2 * M₀) / θ
+  have hc₀ : 2 * M₀ ≤ Real.exp (θ * (c₀ - B)) := by
+    have : θ * (c₀ - B) = Real.log (2 * M₀) := by simp only [c₀]; field_simp; ring
+    rw [this, Real.exp_log (by positivity)]
+  have hr1 : (1 : ℝ) ≤ r := by exact_mod_cast (show 1 ≤ r by omega)
+  have hr0 : (0 : ℝ) < r := by linarith
+  set ℓ : ℝ := (r : ℝ) ^ lam with hℓ
+  have hbs1 : (1 : ℝ) ≤ (b : ℝ) ^ s := one_le_pow₀ (by exact_mod_cast (show 1 ≤ b by omega))
+  have hℓ1 : 1 < ℓ := lt_of_le_of_lt hbs1 hlam
+  have hC : 0 < CstP b r s lam c₀ := by
+    rw [CstP]; have : 0 < ℓ - (b : ℝ) ^ s := by linarith
+    have : (0 : ℝ) < ℓ := by linarith
+    positivity
+  set C := CstP b r s lam c₀
+  have hcount := count_N_pow hb hr2 hcop K hWne lam hlam0 hlam θ B c₀ hθ hB hθR hρ hc₀
+  have hb0 : (0 : ℝ) < b := by exact_mod_cast (show 0 < b by omega)
+  have hbD : (0 : ℝ) < (b : ℝ) ^ D := by positivity
+  have hCℓ : 0 < C * ℓ := by positivity
+  -- `(ℓ^α)^N ≤ (b^s)^N`
+  have hℓα : ℓ ^ α ≤ (b : ℝ) ^ s := by
+    rw [hℓ, ← Real.rpow_mul hr0.le]; exact hα
+  refine ⟨1 / (2 * (b : ℝ) ^ D * (C * ℓ) ^ α), by positivity, ⌈C * ℓ⌉₊, fun x hx => ?_⟩
+  have hx' : C * ℓ ≤ (x : ℝ) := le_trans (Nat.le_ceil _) (by exact_mod_cast hx)
+  have hex : ∃ n, (x : ℝ) < C * ℓ ^ (n + 1) := by
+    obtain ⟨n, hn⟩ := pow_unbounded_of_one_lt ((x : ℝ) / C) hℓ1
+    refine ⟨n, ?_⟩
+    have : ℓ ^ n ≤ ℓ ^ (n + 1) := pow_le_pow_right₀ hℓ1.le (Nat.le_succ n)
+    rw [div_lt_iff₀ hC] at hn
+    nlinarith
+  classical
+  set N := Nat.find hex
+  have hNx : (x : ℝ) < C * ℓ ^ (N + 1) := Nat.find_spec hex
+  have hN1 : 1 ≤ N := by
+    by_contra hlt
+    push Not at hlt
+    have : N = 0 := by omega
+    rw [this, zero_add, pow_one] at hNx
+    linarith
+  have hxN : C * ℓ ^ N ≤ (x : ℝ) := by
+    have := Nat.find_min hex (show N - 1 < N by omega)
+    push Not at this
+    rwa [show N - 1 + 1 = N by omega] at this
+  have hcN := hcount N
+  have hmono : ((range (⌊C * ℓ ^ N⌋₊ + 1)).filter (Representable r b)).card ≤
+      ((range (x + 1)).filter (Representable r b)).card := by
+    have hfl : ⌊C * ℓ ^ N⌋₊ ≤ x := Nat.floor_le_of_le hxN
+    exact card_le_card (filter_subset_filter _ (range_subset_range.mpr (Nat.succ_le_succ hfl)))
+  have hcN' : ((b : ℝ) ^ s) ^ N ≤ 2 * (b : ℝ) ^ D * (((range (x + 1)).filter (Representable r b)).card : ℝ) := by
+    have h1 : ((b ^ (s * N) : ℕ) : ℝ) ≤ ((2 * b ^ D * ((range (x + 1)).filter (Representable r b)).card : ℕ) : ℝ) := by
+      exact_mod_cast le_trans hcN (Nat.mul_le_mul_left _ hmono)
+    push_cast at h1
+    rwa [pow_mul] at h1
+  -- `x^α ≤ (Cℓ)^α (ℓ^N)^α = (Cℓ)^α (ℓ^α)^N ≤ (Cℓ)^α (b^s)^N`
+  have hxα : (x : ℝ) ^ α ≤ (C * ℓ) ^ α * ((b : ℝ) ^ s) ^ N := by
+    have hx0 : (0 : ℝ) ≤ x := Nat.cast_nonneg _
+    have h1 : (x : ℝ) ≤ (C * ℓ) * ℓ ^ N := by rw [pow_succ] at hNx; nlinarith
+    calc (x : ℝ) ^ α ≤ ((C * ℓ) * ℓ ^ N) ^ α := Real.rpow_le_rpow hx0 h1 hα0
+      _ = (C * ℓ) ^ α * (ℓ ^ α) ^ N := by
+          have key : ∀ z : ℝ, 0 ≤ z → (z ^ N) ^ α = (z ^ α) ^ N := fun z hz => by
+            rw [← Real.rpow_natCast, ← Real.rpow_natCast, ← Real.rpow_mul hz, ← Real.rpow_mul hz, mul_comm]
+          rw [Real.mul_rpow hCℓ.le (by positivity), key ℓ (by linarith)]
+      _ ≤ (C * ℓ) ^ α * ((b : ℝ) ^ s) ^ N := by
+          gcongr
+  have hpos : (0 : ℝ) < 2 * (b : ℝ) ^ D * (C * ℓ) ^ α := by positivity
+  rw [div_mul_eq_mul_div, one_mul, div_le_iff₀ hpos]
+  have hCα : (0 : ℝ) < (C * ℓ) ^ α := by positivity
+  calc (x : ℝ) ^ α ≤ (C * ℓ) ^ α * ((b : ℝ) ^ s) ^ N := hxα
+    _ ≤ (C * ℓ) ^ α * (2 * (b : ℝ) ^ D * (((range (x + 1)).filter (Representable r b)).card : ℝ)) := by
+        gcongr
+    _ = _ := by ring
+
+
 /-! ## The (4,3) instance: the only external input is the certificate checked by `verifyd.c` -/
 
 lemma three_rpow_lt : (3 : ℝ) ^ ((58 : ℝ) / 23) < (4 : ℝ) ^ 2 := by
@@ -1228,6 +1483,69 @@ theorem erdos1110_43_density (h : ∃ K : Cert 4 3 2 14 18, K.W.Nonempty ∧ K.g
     ext n; simp only [mem_filter, representable_comm]
   rwa [e] at this
 
+/-! ## Power lower bounds for `(5,3)` and `(9,2)`: the only external input is a certificate checked by `verifyd.c` -/
+
+/-- `r^(p/q) ≤ b` from the integer inequality `r^p ≤ b^q`. -/
+lemma rpow_div_le_of_pow_le {r b : ℝ} (hr : 0 ≤ r) (hb : 0 ≤ b) {p q : ℕ} (hq : 0 < q)
+    (h : r ^ p ≤ b ^ q) : r ^ ((p : ℝ) / q) ≤ b := by
+  have e : r ^ ((p : ℝ) / q) = (r ^ p) ^ ((q : ℝ)⁻¹) := by
+    rw [← Real.rpow_natCast r p, ← Real.rpow_mul hr, div_eq_mul_inv]
+  rw [e]
+  calc (r ^ p) ^ ((q : ℝ)⁻¹) ≤ (b ^ q) ^ ((q : ℝ)⁻¹) :=
+        Real.rpow_le_rpow (by positivity) h (by positivity)
+    _ = b := Real.pow_rpow_inv_natCast hb hq.ne'
+
+/-- `b < r^(p/q)` from the integer inequality `b^q < r^p`. -/
+lemma lt_rpow_div_of_pow_lt {r b : ℝ} (hr : 0 ≤ r) (hb : 0 ≤ b) {p q : ℕ} (hq : 0 < q)
+    (h : b ^ q < r ^ p) : b < r ^ ((p : ℝ) / q) := by
+  have e : r ^ ((p : ℝ) / q) = (r ^ p) ^ ((q : ℝ)⁻¹) := by
+    rw [← Real.rpow_natCast r p, ← Real.rpow_mul hr, div_eq_mul_inv]
+  rw [e]
+  calc b = (b ^ q) ^ ((q : ℝ)⁻¹) := (Real.pow_rpow_inv_natCast hb hq.ne').symm
+    _ < (r ^ p) ^ ((q : ℝ)⁻¹) :=
+        Real.rpow_lt_rpow (by positivity) h (by positivity)
+
+open Classical in
+/-- **Erdős #1110, (5,3): the representable integers up to `x` number `≫ x^{69/77}` (`69/77 = 0.896…`)**, conditional on the
+certificate that `verifyd.c` checks (base-3 digits, blocks of one digit, `D = 17`-digit states, heights `≤ 12`,
+drift `g = 2390897 / (3 · 2^20) = 0.76004…`). Here `λ = 35/46` (`3^46 < 5^35`) and `α = 69/77`
+(`λα = 15/22`, `5^{15} ≤ 3^{22}`). -/
+theorem erdos1110_53_pow (h : ∃ K : Cert 3 5 1 17 12, K.W.Nonempty ∧ K.g = 2390897 / (3 * 2 ^ 20)) :
+    ∃ c : ℝ, 0 < c ∧ ∃ x₀ : ℕ, ∀ x : ℕ, x₀ ≤ x →
+      c * (x : ℝ) ^ ((69 : ℝ) / 77) ≤ (((range (x + 1)).filter (Representable 5 3)).card : ℝ) := by
+  obtain ⟨K, hW, hK⟩ := h
+  refine pow_lower_bound (by norm_num) (by norm_num) (by norm_num) K hW ((35 : ℝ) / 46) (by norm_num)
+    (by rw [hK]; norm_num) ?_ ((69 : ℝ) / 77) (by norm_num) ?_
+  · rw [show (35 : ℝ) / 46 = ((35 : ℕ) : ℝ) / ((46 : ℕ) : ℝ) by norm_num]
+    push_cast
+    rw [pow_one]
+    exact lt_rpow_div_of_pow_lt (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+  · rw [show (35 : ℝ) / 46 * (69 / 77) = ((15 : ℕ) : ℝ) / ((22 : ℕ) : ℝ) by norm_num]
+    push_cast
+    rw [pow_one]
+    exact rpow_div_le_of_pow_le (by norm_num) (by norm_num) (by norm_num)
+      (by norm_num)
+
+open Classical in
+/-- **Erdős #1110, (9,2): the representable integers up to `x` number `≫ x^{851/949}`** (`851/949 = 0.8967…`),
+conditional on the certificate that `verifyd.c` checks (binary digits, blocks of one digit, `D = 26`-digit
+states, heights `≤ 12`, drift `g = 736074 / (2 · 2^20) = 0.35098…`). Here `λ = 13/37` (`2^37 < 9^13`) and
+`α = 851/949` (`λα = 23/73`, `9^{23} ≤ 2^{73}`). -/
+theorem erdos1110_92_pow (h : ∃ K : Cert 2 9 1 26 12, K.W.Nonempty ∧ K.g = 736074 / (2 * 2 ^ 20)) :
+    ∃ c : ℝ, 0 < c ∧ ∃ x₀ : ℕ, ∀ x : ℕ, x₀ ≤ x →
+      c * (x : ℝ) ^ ((851 : ℝ) / 949) ≤ (((range (x + 1)).filter (Representable 9 2)).card : ℝ) := by
+  obtain ⟨K, hW, hK⟩ := h
+  refine pow_lower_bound (by norm_num) (by norm_num) (by norm_num) K hW ((13 : ℝ) / 37) (by norm_num)
+    (by rw [hK]; norm_num) ?_ ((851 : ℝ) / 949) (by norm_num) ?_
+  · rw [show (13 : ℝ) / 37 = ((13 : ℕ) : ℝ) / ((37 : ℕ) : ℝ) by norm_num]
+    push_cast
+    rw [pow_one]
+    exact lt_rpow_div_of_pow_lt (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+  · rw [show (13 : ℝ) / 37 * (851 / 949) = ((23 : ℕ) : ℝ) / ((73 : ℕ) : ℝ) by norm_num]
+    push_cast
+    rw [pow_one]
+    exact rpow_div_le_of_pow_le (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+
 /-- Sanity check: the general `Cert` structure is inhabited (toy certificate with a useless drift). -/
 def toyCert : Cert 2 3 1 1 1 where
   W := univ
@@ -1257,3 +1575,6 @@ end E1110G
 
 #print axioms E1110G.pos_lower_density
 #print axioms E1110G.erdos1110_43_density
+#print axioms E1110G.pow_lower_bound
+#print axioms E1110G.erdos1110_53_pow
+#print axioms E1110G.erdos1110_92_pow

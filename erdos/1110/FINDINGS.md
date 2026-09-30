@@ -152,3 +152,13 @@ process below), `check_ek.py` (validation).
    relevant population.  Out of reach of finite-state certificates (single-path needs ~300 bits of look-ahead;
    set-based needs >= 4 levels of depth with |k| ~ C 9^e).  The exact reformulation is the clean target for
    a probabilistic proof.
+
+## 2026-09-30 (later): rigorous power lower bounds for (9,2) and (5,3) — `NOTEPOW.md`
+The certificate encoding still works above the threshold: with drift g < lambda and b^s < r^lambda, the
+>= b^{sN}/(2b^D) encoded representables lie below C (r^lambda)^N, so R(x) >> x^alpha for r^{lambda alpha} <= b^s.
+Lean: `E1110G.pow_lower_bound` (general), `erdos1110_92_pow` (x^{851/949}, 0.8967), `erdos1110_53_pow`
+(x^{69/77}, 0.8961); all `[propext, Classical.choice, Quot.sound]`, `lake env lean` exit 0.
+Certificates (s=1, H=12, slack 7): (9,2) base 2 D=26 GNUM=736074 (g=0.3509874, ratio 1.1126);
+(5,3) base 3 D=17 GNUM=2390897 (g=0.7600457, ratio 1.1134). `verifyd` bad=0 on all states; independent
+Python probe agrees exactly on 404 states each (incl. argmax). Tables in `data_pow/` (gitignored, SHA256SUMS).
+For (5,3), height slack matters (residues force the parity of h in base 3): slack 3 -> 1.147, 7 -> 1.1416 at D=13-14.
