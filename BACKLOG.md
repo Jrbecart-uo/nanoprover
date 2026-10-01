@@ -3,9 +3,26 @@
 Durable handoff. A new session can read this + the auto-memory (`nanoprover-project`,
 `nanoprover-env`, `nanoprover-roadmap`, `cdc-formalization`, `naskrecki-problem`)
 and propose next tasks. Ranked by leverage within each track. Last updated
-2026-09-30.
+2026-09-30 (end of session).
 
 ## Where the last session (2026-09-29/30) left off — START HERE
+- **NEXT (proposed to the user 2026-09-30, ranked; user had not picked yet):**
+  1. Project Euler #1012 (publishes Sat 2026-10-03; post-cutoff, solve week-of-publication).
+  2. #1110 ASSEMBLY theorems in Lean on top of `E1110G.lean` (cheap, checkable):
+     (a) (4,3): representables have positive lower density AND non-representables density >= 1/2
+         (n ≢ 2 mod 3, n ≢ 2 mod 4: 1/3 + 1/4 - 1/12); (b) (9,2): representables >> x^0.8967 AND
+         non-representables density >= 1/4 (n ≡ 3,6 mod 9 never representable; 9m rep iff m rep);
+     (c) bridge `putnam_2005_a1` to `Representable 3 2` = the {2,3} direction of Erdős–Lewin.
+  3. Harvest reusable lemmas from today's scalps into `lemmas.lean` (divisor-sum parity via involution in
+     ZMod 2, cyclic lemma, bipartite walk parity, quad_nonneg / discrim bounds, rpow-from-integer-power helpers
+     `rpow_div_le_of_pow_le` / `lt_rpow_div_of_pow_lt` in E1110G.lean).
+  4. Medium Putnam leftovers: 1995_b1 (Finpartition block sizes: |S1|,|S2| <= 3, s ∣ fiber size), 1997_b4
+     (generating function 1/((1-y)(1+y^2))). Harder ones listed in `bench/putnam_retriage_notes.md`.
+  5. Probabilist note on the exact (e,k) reformulation for (9,2)/(5,3) (user's call on posting).
+  6. Expert review of (7,2)/(4,3) — only the user can arrange.
+  Not worth it: pushing the (9,2)/(5,3) exponent (~0.005 ratio per extra window digit, D=28 ~90 min).
+  Helper used this session: a `save.py` that splices PutnamBench's `open` line + doc comment into
+  `bench/solved_putnam/NAME.txt` (keep `open X in` lines in place); rebuild it if needed (it lived in scratch).
 - **2026-09-30 (afternoon): RIGOROUS POWER LOWER BOUNDS for the two open pairs** (`erdos/1110/NOTEPOW.md`):
   #{n <= x representable} >> x^{851/949} (0.8967) for (9,2) and >> x^{69/77} (0.8961) for (5,3). New general Lean
   theorem `E1110G.pow_lower_bound` (certificate with drift ABOVE threshold -> x^alpha) + instances
