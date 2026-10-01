@@ -3,9 +3,17 @@
 Durable handoff. A new session can read this + the auto-memory (`nanoprover-project`,
 `nanoprover-env`, `nanoprover-roadmap`, `cdc-formalization`, `naskrecki-problem`)
 and propose next tasks. Ranked by leverage within each track. Last updated
-2026-09-30 (end of session).
+2026-10-01.
 
 ## Where the last session (2026-09-29/30) left off — START HERE
+- **2026-10-01: item 2 below DONE** (appended to `erdos/1110/lean/E1110G.lean`, `lake env lean` exit 0, clean axioms).
+  Unconditional upper densities of representables, each with an explicit O(log² x) error: (4,3) <= 1/3
+  (`erdos1110_43_upper`: bad classes 2,5,10,11 mod 12, closed under x3 and x4 — sharper than the 1/2 planned),
+  (9,2) <= 3/4 (`erdos1110_92_upper`), (7,2) <= 1/2 (`erdos1110_72_upper`); general lemmas `rep_mod`
+  (q | n or n ≡ p^k mod q) and `rep_of_mul` (qm rep => m rep). Paired with the conditional lower bounds in
+  `erdos1110_43_both`, `erdos1110_92_both`. (c) done: `rep23_all`/`rep32_all` (every n representable for {2,3},
+  via the copied Putnam 2005 A1 development). Brute force to 3000 agrees (reps: (4,3) 0.23, (9,2) 0.20, (7,2) 0.29).
+  These obstructions are elementary and very likely known (Yu–Chen?) — do not present them as new.
 - **NEXT (proposed to the user 2026-09-30, ranked; user had not picked yet):**
   1. Project Euler #1012 (publishes Sat 2026-10-03; post-cutoff, solve week-of-publication).
   2. #1110 ASSEMBLY theorems in Lean on top of `E1110G.lean` (cheap, checkable):

@@ -20,6 +20,13 @@ residues cannot be the value of any chain, as for `(4,3)`: `n ≢ 2 (mod 3)`, `n
   `≫ x^{851/949}` representable integers up to `x` (exponents `0.896…`, `0.896…`), conditional on the
   certificates that `verifyd.c` checks (`b = 3, r = 5, s = 1, D = 17` resp. `b = 2, r = 9, s = 1, D = 26`).
 * `E1110G.toyCert`: the structure is inhabited.
+* Elementary upper bounds (unconditional; `rep_mod`: `q ∣ n` or `n ≡ p^k (mod q)`; `rep_of_mul`: `q m`
+  representable ⇒ `m` representable): the representable integers have upper density `≤ 1/3` for `(4,3)`
+  (`erdos1110_43_upper`; bad classes `2, 5, 10, 11 mod 12`, closed under `×3`, `×4`), `≤ 3/4` for `(9,2)`
+  (`erdos1110_92_upper`; `3, 6 mod 9`, `×9`), `≤ 1/2` for `(7,2)` (`erdos1110_72_upper`; `3, 5, 6 mod 7`, `×7`),
+  each with an explicit `O(log² x)` error.  These are the exact densities of the residue obstructions.
+* `E1110G.erdos1110_43_both`, `E1110G.erdos1110_92_both`: the conditional lower bounds paired with these.
+* `E1110G.rep23_all`: every `n` is representable for `{2,3}` (Erdős–Lewin; our Putnam 2005 A1 proof).
 
 Proof structure: the process runs in `ZMod (b^m)` with `m = sN + D + s`, so every look-ahead window
 is exact; the viable set is invariant (including padded steps, via closure under `x ↦ r x`);
@@ -1571,6 +1578,556 @@ def toyCert : Cert 2 3 1 1 1 where
     calc _ ≤ ∑ _u : ZMod (2 ^ 1), (1 : ℝ) := sum_le_sum (fun u _ => this u)
       _ = ((2 : ℕ) : ℝ) ^ 1 * 1 := by simp [ZMod.card]
 
+/-! ## Elementary obstructions: congruences and scaling -/
+
+/-- In an antichain of `Gamma p q`, at most one term is not divisible by `q`, and it is a power of `p`. -/
+lemma rep_core {p q n : ℕ} (h : Representable p q n) :
+    ∃ S : Finset ℕ, (S : Set ℕ) ⊆ Gamma p q ∧ IsAntichain (· ∣ ·) (S : Set ℕ) ∧ (∀ x ∈ S, q ∣ x) ∧
+      (n = S.sum id ∨ ∃ k, n = S.sum id + p ^ k) := by
+  obtain ⟨S, hG, hA, rfl⟩ := h
+  have hpow : ∀ x ∈ S, ¬ q ∣ x → ∃ k, x = p ^ k := by
+    intro x hx hq
+    obtain ⟨k, l, rfl⟩ := hG hx
+    rcases Nat.eq_zero_or_pos l with hl | hl
+    · exact ⟨k, by rw [hl, pow_zero, mul_one]⟩
+    · exact absurd (Dvd.dvd.mul_left (dvd_pow_self q hl.ne') _) hq
+  set T := S.filter (fun x => ¬ q ∣ x)
+  set S' := S.filter (fun x => q ∣ x)
+  have hsplit : S.sum id = S'.sum id + T.sum id := (sum_filter_add_sum_filter_not S _ _).symm
+  have hS'G : (S' : Set ℕ) ⊆ Gamma p q := fun x hx => hG (mem_filter.mp hx).1
+  have hS'A : IsAntichain (· ∣ ·) (S' : Set ℕ) :=
+    hA.subset (fun x hx => (mem_filter.mp hx).1)
+  have hS'q : ∀ x ∈ S', q ∣ x := fun x hx => (mem_filter.mp hx).2
+  refine ⟨S', hS'G, hS'A, hS'q, ?_⟩
+  rcases T.eq_empty_or_nonempty with hT | ⟨x, hx⟩
+  · left; rw [hsplit, hT, sum_empty, add_zero]
+  · right
+    have hxS := (mem_filter.mp hx).1
+    obtain ⟨k, hk⟩ := hpow x hxS (mem_filter.mp hx).2
+    have hT1 : T = {x} := by
+      refine eq_singleton_iff_unique_mem.mpr ⟨hx, fun y hy => ?_⟩
+      have hyS := (mem_filter.mp hy).1
+      obtain ⟨k', hk'⟩ := hpow y hyS (mem_filter.mp hy).2
+      by_contra hne
+      rcases le_total k k' with hkk | hkk
+      · exact hA (mem_coe.mpr hxS) (mem_coe.mpr hyS) (Ne.symm hne)
+          (by rw [hk, hk']; exact pow_dvd_pow p hkk)
+      · exact hA (mem_coe.mpr hyS) (mem_coe.mpr hxS) hne
+          (by rw [hk, hk']; exact pow_dvd_pow p hkk)
+    exact ⟨k, by rw [hsplit, hT1, sum_singleton, id, hk]⟩
+
+/-- `n` representable implies `q ∣ n` or `n ≡ p^k (mod q)`. -/
+lemma rep_mod {p q n : ℕ} (h : Representable p q n) : q ∣ n ∨ ∃ k, n ≡ p ^ k [MOD q] := by
+  obtain ⟨S, -, -, hq, hn⟩ := rep_core h
+  have hd : q ∣ S.sum id := dvd_sum (fun x hx => hq x hx)
+  rcases hn with rfl | ⟨k, rfl⟩
+  · exact Or.inl hd
+  · right; refine ⟨k, ?_⟩
+    have := (Nat.modEq_zero_iff_dvd.mpr hd).add_right (p ^ k)
+    rwa [zero_add] at this
+
+/-- Scaling: if `q ∤ p^k` for all `k` (e.g. `p, q` coprime, `q ≥ 2`), then `q m` representable implies `m`
+representable. -/
+lemma rep_of_mul {p q m : ℕ} (hq : 2 ≤ q) (hcop : Nat.Coprime p q) (h : Representable p q (q * m)) :
+    Representable p q m := by
+  obtain ⟨S, hG, hA, hqS, hn⟩ := rep_core h
+  have hd : q ∣ S.sum id := dvd_sum (fun x hx => hqS x hx)
+  have hn' : q * m = S.sum id := by
+    rcases hn with hn | ⟨k, hk⟩
+    · exact hn
+    · exfalso
+      have h1 : q ∣ p ^ k := (Nat.dvd_add_right hd).mp (hk ▸ dvd_mul_right q m)
+      have := Nat.Coprime.eq_one_of_dvd (Nat.Coprime.pow_left k hcop).symm h1
+      omega
+  have hq0 : 0 < q := by omega
+  -- divide every term by `q`
+  have hinj : Set.InjOn (fun x => x / q) (S : Set ℕ) := by
+    intro x hx y hy hxy
+    have := Nat.div_mul_cancel (hqS x hx); have := Nat.div_mul_cancel (hqS y hy)
+    simp only at hxy
+    calc x = x / q * q := (Nat.div_mul_cancel (hqS x hx)).symm
+      _ = y / q * q := by rw [hxy]
+      _ = y := Nat.div_mul_cancel (hqS y hy)
+  refine ⟨S.image (fun x => x / q), ?_, ?_, ?_⟩
+  · intro z hz
+    rw [coe_image] at hz
+    obtain ⟨x, hx, rfl⟩ := hz
+    obtain ⟨k, l, rfl⟩ := hG hx
+    rcases Nat.eq_zero_or_pos l with hl | hl
+    · exfalso
+      have h1 := hqS _ hx
+      rw [hl, pow_zero, mul_one] at h1
+      have := Nat.Coprime.eq_one_of_dvd (Nat.Coprime.pow_left k hcop).symm h1
+      omega
+    · refine ⟨k, l - 1, ?_⟩
+      obtain ⟨l', rfl⟩ : ∃ l', l = l' + 1 := ⟨l - 1, by omega⟩
+      simp only [Nat.add_sub_cancel, pow_succ, ← mul_assoc]
+      exact Nat.mul_div_cancel _ hq0
+  · intro u hu v hv huv hdiv
+    rw [coe_image] at hu hv
+    obtain ⟨x, hx, rfl⟩ := hu
+    obtain ⟨y, hy, rfl⟩ := hv
+    have hxy : x ≠ y := fun e => huv (by rw [e])
+    refine hA hx hy hxy ?_
+    have := Nat.mul_dvd_mul_left q hdiv
+    rwa [Nat.mul_div_cancel' (hqS x hx), Nat.mul_div_cancel' (hqS y hy)] at this
+  · rw [sum_image (fun x hx y hy e => hinj hx hy e)]
+    have : S.sum id = q * ∑ x ∈ S, x / q := by
+      rw [mul_sum]; exact sum_congr rfl (fun x hx => (Nat.mul_div_cancel' (hqS x hx)).symm)
+    rw [this] at hn'
+    exact (Nat.eq_of_mul_eq_mul_left hq0 hn').symm
+
+/-! ## Counting non-representables -/
+
+/-- At least `⌊x/M⌋ · |R|` integers `n < x` have `n mod M ∈ R`. -/
+lemma card_residues_ge {M x : ℕ} (R : Finset ℕ) (hR : ∀ c ∈ R, c < M) :
+    x / M * R.card ≤ ((range x).filter (fun n => n % M ∈ R)).card := by
+  rw [← card_range (x / M), ← card_product]
+  refine card_le_card_of_injOn (fun p => M * p.1 + p.2) ?_ ?_
+  · intro p hp
+    simp only [coe_product, coe_range, Set.mem_prod, Set.mem_Iio, mem_coe] at hp
+    have hM := hR _ hp.2
+    simp only [coe_filter, mem_range, Set.mem_setOf_eq]
+    refine ⟨?_, ?_⟩
+    · have h1 : M * (p.1 + 1) ≤ M * (x / M) := Nat.mul_le_mul_left M hp.1
+      have h2 := Nat.mul_div_le x M
+      rw [mul_add, mul_one] at h1
+      omega
+    · rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hM]; exact hp.2
+  · intro p hp q hq hpq
+    simp only [coe_product, coe_range, Set.mem_prod, Set.mem_Iio, mem_coe] at hp hq
+    simp only at hpq
+    have hp2 := hR _ hp.2; have hq2 := hR _ hq.2
+    have e2 : p.2 = q.2 := by
+      have := congrArg (· % M) hpq
+      simpa [Nat.mul_add_mod, Nat.mod_eq_of_lt hp2, Nat.mod_eq_of_lt hq2] using this
+    have hM : 0 < M := by omega
+    have e1 : p.1 = q.1 := by
+      rw [e2] at hpq
+      exact Nat.eq_of_mul_eq_mul_left hM (by omega)
+    exact Prod.ext e1 e2
+
+/-! ### `(9,2)`: `n ≡ 3, 6 (mod 9)` is never representable, and `9m` representable implies `m` is -/
+
+lemma not_rep92_of_mod {n : ℕ} (h : n % 9 = 3 ∨ n % 9 = 6) : ¬ Representable 9 2 n := by
+  intro hr
+  rcases rep_mod ((representable_comm _ _ _).mp hr) with h9 | ⟨k, hk⟩
+  · omega
+  · have h3 : 3 ∣ n % 9 := by omega
+    rw [hk] at h3
+    have : 3 ∣ 2 ^ k := (Nat.dvd_mod_iff (by norm_num)).mp h3
+    have := Nat.Prime.dvd_of_dvd_pow Nat.prime_three this
+    omega
+
+lemma rep92_of_mul {m : ℕ} (h : Representable 9 2 (9 * m)) : Representable 9 2 m :=
+  (representable_comm _ _ _).mpr (rep_of_mul (by norm_num) (by norm_num) ((representable_comm _ _ _).mp h))
+
+open Classical in
+lemma nr92_step (x : ℕ) :
+    2 * (x / 9) + ((range (x / 9)).filter (fun n => ¬ Representable 9 2 n)).card ≤
+      ((range x).filter (fun n => ¬ Representable 9 2 n)).card := by
+  set A := (range x).filter (fun n => n % 9 ∈ ({3, 6} : Finset ℕ))
+  set B := ((range (x / 9)).filter (fun n => ¬ Representable 9 2 n)).image (9 * ·)
+  have hA : 2 * (x / 9) ≤ A.card := by
+    have := card_residues_ge (M := 9) (x := x) ({3, 6} : Finset ℕ) (by decide)
+    rw [show ({3, 6} : Finset ℕ).card = 2 by decide] at this
+    refine le_trans (by omega) (le_trans this (card_le_card fun n hn => ?_))
+    simp only [A, mem_filter, mem_insert, mem_singleton] at hn ⊢
+    exact hn
+  have hB : B.card = ((range (x / 9)).filter (fun n => ¬ Representable 9 2 n)).card :=
+    card_image_of_injective _ (fun a b h => Nat.eq_of_mul_eq_mul_left (by norm_num : 0 < 9) h)
+  have hdisj : Disjoint A B := by
+    rw [disjoint_left]
+    intro n hnA hnB
+    simp only [A, B, mem_filter, mem_image, mem_insert, mem_singleton] at hnA hnB
+    obtain ⟨m, -, rfl⟩ := hnB
+    omega
+  have hsub : A ∪ B ⊆ (range x).filter (fun n => ¬ Representable 9 2 n) := by
+    intro n hn
+    rcases mem_union.mp hn with hnA | hnB
+    · simp only [A, mem_filter, mem_insert, mem_singleton] at hnA
+      exact mem_filter.mpr ⟨hnA.1, not_rep92_of_mod hnA.2⟩
+    · simp only [B, mem_filter, mem_image, mem_range] at hnB
+      obtain ⟨m, ⟨hm, hmr⟩, rfl⟩ := hnB
+      exact mem_filter.mpr ⟨mem_range.mpr (by omega), fun h => hmr (rep92_of_mul h)⟩
+  have := card_le_card hsub
+  rw [card_union_of_disjoint hdisj, hB] at this
+  omega
+
+open Classical in
+lemma nr92_bound (k : ℕ) : ∀ x, x < 9 ^ k →
+    x ≤ 4 * ((range x).filter (fun n => ¬ Representable 9 2 n)).card + 8 * k := by
+  induction k with
+  | zero => intro x hx; simp at hx; omega
+  | succ k ih =>
+    intro x hx
+    have hy : x / 9 < 9 ^ k := by rw [pow_succ] at hx; omega
+    have h1 := ih (x / 9) hy
+    have h2 := nr92_step x
+    omega
+
+open Classical in
+/-- **`(9,2)`: the non-representable integers have lower density `≥ 1/4`.** Quantitatively, for every `x`,
+`#{n < x : n not representable} ≥ (x - 8 (⌊log₉ x⌋ + 1)) / 4`. -/
+theorem erdos1110_92_nonrep (x : ℕ) :
+    x ≤ 4 * ((range x).filter (fun n => ¬ Representable 9 2 n)).card + 8 * (Nat.log 9 x + 1) :=
+  nr92_bound _ x (Nat.lt_pow_succ_log_self (by norm_num) x)
+
+/-! ### `(4,3)`: `n ≡ 2 (mod 3)` and `n ≡ 2 (mod 4)` are never representable; `3m`, `4m` representable imply
+`m` is.  Every `n` is `4^j 3^i c` with `3 ∤ c`, `4 ∤ c`, and 4 of the 6 classes of such `c` mod 12 are bad. -/
+
+lemma not_rep43_of_mod {n : ℕ} (h : n % 3 = 2 ∨ n % 4 = 2) : ¬ Representable 4 3 n := by
+  intro hr
+  rcases h with h | h
+  · rcases rep_mod hr with h3 | ⟨k, hk⟩
+    · omega
+    · have : 4 ^ k % 3 = 1 := by rw [Nat.pow_mod]; norm_num
+      unfold Nat.ModEq at hk
+      omega
+  · rcases rep_mod ((representable_comm _ _ _).mp hr) with h4 | ⟨k, hk⟩
+    · omega
+    · have : 3 ^ k % 2 = 1 := Nat.odd_iff.mp (Odd.pow (by decide))
+      unfold Nat.ModEq at hk
+      omega
+
+lemma rep43_of_mul3 {m : ℕ} (h : Representable 4 3 (3 * m)) : Representable 4 3 m :=
+  rep_of_mul (by norm_num) (by norm_num) h
+
+lemma rep43_of_mul4 {m : ℕ} (h : Representable 4 3 (4 * m)) : Representable 4 3 m :=
+  (representable_comm _ _ _).mpr (rep_of_mul (by norm_num) (by norm_num) ((representable_comm _ _ _).mp h))
+
+open Classical in
+/-- Non-representables not divisible by 4: the bad classes `2, 5, 10, 11 (mod 12)`, plus `3 ×` (smaller ones). -/
+lemma nr43_step1 (x : ℕ) :
+    4 * (x / 12) + ((range (x / 3)).filter (fun n => ¬ Representable 4 3 n ∧ ¬ 4 ∣ n)).card ≤
+      ((range x).filter (fun n => ¬ Representable 4 3 n ∧ ¬ 4 ∣ n)).card := by
+  set A := (range x).filter (fun n => n % 12 ∈ ({2, 5, 10, 11} : Finset ℕ))
+  set B := ((range (x / 3)).filter (fun n => ¬ Representable 4 3 n ∧ ¬ 4 ∣ n)).image (3 * ·)
+  have hA : 4 * (x / 12) ≤ A.card := by
+    have := card_residues_ge (M := 12) (x := x) ({2, 5, 10, 11} : Finset ℕ) (by decide)
+    rw [show ({2, 5, 10, 11} : Finset ℕ).card = 4 by decide] at this
+    refine le_trans (by omega) (le_trans this (card_le_card fun n hn => ?_))
+    simp only [A, mem_filter, mem_insert, mem_singleton] at hn ⊢
+    exact hn
+  have hB : B.card = ((range (x / 3)).filter (fun n => ¬ Representable 4 3 n ∧ ¬ 4 ∣ n)).card :=
+    card_image_of_injective _ (fun a b h => Nat.eq_of_mul_eq_mul_left (by norm_num : 0 < 3) h)
+  have hdisj : Disjoint A B := by
+    rw [disjoint_left]
+    intro n hnA hnB
+    simp only [A, B, mem_filter, mem_image, mem_insert, mem_singleton] at hnA hnB
+    obtain ⟨m, -, rfl⟩ := hnB
+    omega
+  have hsub : A ∪ B ⊆ (range x).filter (fun n => ¬ Representable 4 3 n ∧ ¬ 4 ∣ n) := by
+    intro n hn
+    rcases mem_union.mp hn with hnA | hnB
+    · simp only [A, mem_filter, mem_insert, mem_singleton] at hnA
+      exact mem_filter.mpr ⟨hnA.1, not_rep43_of_mod (by omega), by omega⟩
+    · simp only [B, mem_filter, mem_image, mem_range] at hnB
+      obtain ⟨m, ⟨hm, hmr, hm4⟩, rfl⟩ := hnB
+      exact mem_filter.mpr ⟨mem_range.mpr (by omega), fun h => hmr (rep43_of_mul3 h), by omega⟩
+  have := card_le_card hsub
+  rw [card_union_of_disjoint hdisj, hB] at this
+  omega
+
+open Classical in
+lemma nr43_step2 (x : ℕ) :
+    ((range x).filter (fun n => ¬ Representable 4 3 n ∧ ¬ 4 ∣ n)).card +
+      ((range (x / 4)).filter (fun n => ¬ Representable 4 3 n)).card ≤
+      ((range x).filter (fun n => ¬ Representable 4 3 n)).card := by
+  set A := (range x).filter (fun n => ¬ Representable 4 3 n ∧ ¬ 4 ∣ n)
+  set B := ((range (x / 4)).filter (fun n => ¬ Representable 4 3 n)).image (4 * ·)
+  have hB : B.card = ((range (x / 4)).filter (fun n => ¬ Representable 4 3 n)).card :=
+    card_image_of_injective _ (fun a b h => Nat.eq_of_mul_eq_mul_left (by norm_num : 0 < 4) h)
+  have hdisj : Disjoint A B := by
+    rw [disjoint_left]
+    intro n hnA hnB
+    simp only [A, B, mem_filter, mem_image] at hnA hnB
+    obtain ⟨m, -, rfl⟩ := hnB
+    exact hnA.2.2 (dvd_mul_right 4 m)
+  have hsub : A ∪ B ⊆ (range x).filter (fun n => ¬ Representable 4 3 n) := by
+    intro n hn
+    rcases mem_union.mp hn with hnA | hnB
+    · simp only [A, mem_filter] at hnA
+      exact mem_filter.mpr ⟨hnA.1, hnA.2.1⟩
+    · simp only [B, mem_filter, mem_image, mem_range] at hnB
+      obtain ⟨m, ⟨hm, hmr⟩, rfl⟩ := hnB
+      exact mem_filter.mpr ⟨mem_range.mpr (by omega), fun h => hmr (rep43_of_mul4 h)⟩
+  have := card_le_card hsub
+  rw [card_union_of_disjoint hdisj, hB] at this
+  omega
+
+open Classical in
+lemma nr43_bound1 (k : ℕ) : ∀ x, x < 3 ^ k →
+    x ≤ 2 * ((range x).filter (fun n => ¬ Representable 4 3 n ∧ ¬ 4 ∣ n)).card + 8 * k := by
+  induction k with
+  | zero => intro x hx; simp at hx; omega
+  | succ k ih =>
+    intro x hx
+    have hy : x / 3 < 3 ^ k := by rw [pow_succ] at hx; omega
+    have h1 := ih (x / 3) hy
+    have h2 := nr43_step1 x
+    omega
+
+open Classical in
+lemma nr43_bound2 (k j : ℕ) : ∀ x, x < 3 ^ k → x < 4 ^ j →
+    2 * x ≤ 3 * ((range x).filter (fun n => ¬ Representable 4 3 n)).card + j * (12 * k + 2) := by
+  induction j with
+  | zero => intro x _ hx; simp at hx; omega
+  | succ j ih =>
+    intro x hx3 hx4
+    have hy : x / 4 < 4 ^ j := by rw [pow_succ] at hx4; omega
+    have h1 := ih (x / 4) (by omega) hy
+    have h2 := nr43_bound1 k x hx3
+    have h3 := nr43_step2 x
+    rw [add_mul, one_mul]
+    omega
+
+open Classical in
+/-- **`(4,3)`: the non-representable integers have lower density `≥ 2/3`.** Quantitatively, for every `x`,
+`#{n < x : n not representable} ≥ (2x - (⌊log₄ x⌋ + 1)(12 ⌊log₃ x⌋ + 14)) / 3`. -/
+theorem erdos1110_43_nonrep (x : ℕ) :
+    2 * x ≤ 3 * ((range x).filter (fun n => ¬ Representable 4 3 n)).card +
+      (Nat.log 4 x + 1) * (12 * (Nat.log 3 x + 1) + 2) :=
+  nr43_bound2 _ _ x (Nat.lt_pow_succ_log_self (by norm_num) x) (Nat.lt_pow_succ_log_self (by norm_num) x)
+
+/-! ### `(7,2)`: `n ≡ 3, 5, 6 (mod 7)` is never representable, and `7m` representable implies `m` is -/
+
+lemma two_pow_mod_seven (k : ℕ) : 2 ^ k % 7 = 1 ∨ 2 ^ k % 7 = 2 ∨ 2 ^ k % 7 = 4 := by
+  rw [← Nat.div_add_mod k 3, pow_add, pow_mul, Nat.mul_mod, Nat.pow_mod]
+  have h : k % 3 < 3 := Nat.mod_lt _ (by norm_num)
+  interval_cases k % 3 <;> norm_num
+
+lemma not_rep72_of_mod {n : ℕ} (h : n % 7 = 3 ∨ n % 7 = 5 ∨ n % 7 = 6) : ¬ Representable 7 2 n := by
+  intro hr
+  rcases rep_mod ((representable_comm _ _ _).mp hr) with h7 | ⟨k, hk⟩
+  · omega
+  · unfold Nat.ModEq at hk
+    have := two_pow_mod_seven k
+    omega
+
+lemma rep72_of_mul {m : ℕ} (h : Representable 7 2 (7 * m)) : Representable 7 2 m :=
+  (representable_comm _ _ _).mpr (rep_of_mul (by norm_num) (by norm_num) ((representable_comm _ _ _).mp h))
+
+open Classical in
+lemma nr72_step (x : ℕ) :
+    3 * (x / 7) + ((range (x / 7)).filter (fun n => ¬ Representable 7 2 n)).card ≤
+      ((range x).filter (fun n => ¬ Representable 7 2 n)).card := by
+  set A := (range x).filter (fun n => n % 7 ∈ ({3, 5, 6} : Finset ℕ))
+  set B := ((range (x / 7)).filter (fun n => ¬ Representable 7 2 n)).image (7 * ·)
+  have hA : 3 * (x / 7) ≤ A.card := by
+    have := card_residues_ge (M := 7) (x := x) ({3, 5, 6} : Finset ℕ) (by decide)
+    rw [show ({3, 5, 6} : Finset ℕ).card = 3 by decide] at this
+    refine le_trans (by omega) (le_trans this (card_le_card fun n hn => ?_))
+    simp only [A, mem_filter, mem_insert, mem_singleton] at hn ⊢
+    exact hn
+  have hB : B.card = ((range (x / 7)).filter (fun n => ¬ Representable 7 2 n)).card :=
+    card_image_of_injective _ (fun a b h => Nat.eq_of_mul_eq_mul_left (by norm_num : 0 < 7) h)
+  have hdisj : Disjoint A B := by
+    rw [disjoint_left]
+    intro n hnA hnB
+    simp only [A, B, mem_filter, mem_image, mem_insert, mem_singleton] at hnA hnB
+    obtain ⟨m, -, rfl⟩ := hnB
+    omega
+  have hsub : A ∪ B ⊆ (range x).filter (fun n => ¬ Representable 7 2 n) := by
+    intro n hn
+    rcases mem_union.mp hn with hnA | hnB
+    · simp only [A, mem_filter, mem_insert, mem_singleton] at hnA
+      exact mem_filter.mpr ⟨hnA.1, not_rep72_of_mod hnA.2⟩
+    · simp only [B, mem_filter, mem_image, mem_range] at hnB
+      obtain ⟨m, ⟨hm, hmr⟩, rfl⟩ := hnB
+      exact mem_filter.mpr ⟨mem_range.mpr (by omega), fun h => hmr (rep72_of_mul h)⟩
+  have := card_le_card hsub
+  rw [card_union_of_disjoint hdisj, hB] at this
+  omega
+
+open Classical in
+lemma nr72_bound (k : ℕ) : ∀ x, x < 7 ^ k →
+    x ≤ 2 * ((range x).filter (fun n => ¬ Representable 7 2 n)).card + 6 * k := by
+  induction k with
+  | zero => intro x hx; simp at hx; omega
+  | succ k ih =>
+    intro x hx
+    have hy : x / 7 < 7 ^ k := by rw [pow_succ] at hx; omega
+    have h1 := ih (x / 7) hy
+    have h2 := nr72_step x
+    omega
+
+open Classical in
+/-- **`(7,2)`: the non-representable integers have lower density `≥ 1/2`.** Quantitatively, for every `x`,
+`#{n < x : n not representable} ≥ (x - 6 (⌊log₇ x⌋ + 1)) / 2`. -/
+theorem erdos1110_72_nonrep (x : ℕ) :
+    x ≤ 2 * ((range x).filter (fun n => ¬ Representable 7 2 n)).card + 6 * (Nat.log 7 x + 1) :=
+  nr72_bound _ x (Nat.lt_pow_succ_log_self (by norm_num) x)
+
+/-- `#{n < x : P n} = x - #{n < x : ¬ P n}`. -/
+lemma card_filter_range_add_not (x : ℕ) (P : ℕ → Prop) [DecidablePred P] :
+    ((range x).filter P).card + ((range x).filter (fun n => ¬ P n)).card = x := by
+  rw [card_filter_add_card_filter_not, card_range]
+
+open Classical in
+/-- `(4,3)`: the representable integers have upper density `≤ 1/3`. -/
+theorem erdos1110_43_upper (x : ℕ) :
+    3 * ((range x).filter (Representable 4 3)).card ≤ x + (Nat.log 4 x + 1) * (12 * (Nat.log 3 x + 1) + 2) := by
+  have h1 := erdos1110_43_nonrep x
+  have h2 := card_filter_range_add_not x (Representable 4 3)
+  omega
+
+open Classical in
+/-- `(9,2)`: the representable integers have upper density `≤ 3/4`. -/
+theorem erdos1110_92_upper (x : ℕ) :
+    4 * ((range x).filter (Representable 9 2)).card ≤ 3 * x + 8 * (Nat.log 9 x + 1) := by
+  have h1 := erdos1110_92_nonrep x
+  have h2 := card_filter_range_add_not x (Representable 9 2)
+  omega
+
+open Classical in
+/-- `(7,2)`: the representable integers have upper density `≤ 1/2`. -/
+theorem erdos1110_72_upper (x : ℕ) :
+    2 * ((range x).filter (Representable 7 2)).card ≤ x + 6 * (Nat.log 7 x + 1) := by
+  have h1 := erdos1110_72_nonrep x
+  have h2 := card_filter_range_add_not x (Representable 7 2)
+  omega
+
+/-! ## `(2,3)`: everything is representable (Erdős–Lewin; Putnam 2005 A1, `bench/solved_putnam/putnam_2005_a1.txt`)
+
+The development below is copied from our PutnamBench solution. -/
+
+namespace P2005A1
+
+def val (T : Finset (ℕ × ℕ)) : ℕ := ∑ p ∈ T, 2 ^ p.1 * 3 ^ p.2
+
+def AC (T : Finset (ℕ × ℕ)) : Prop := ∀ p ∈ T, ∀ q ∈ T, p ≠ q → ¬ (p.1 ≤ q.1 ∧ p.2 ≤ q.2)
+
+def shE : ℕ × ℕ ↪ ℕ × ℕ := ⟨fun p => (p.1 + 1, p.2), by
+  intro p q h; simp only [Prod.mk.injEq, add_left_inj] at h; exact Prod.ext h.1 h.2⟩
+
+def sh (T : Finset (ℕ × ℕ)) : Finset (ℕ × ℕ) := T.map shE
+
+lemma val_sh (T : Finset (ℕ × ℕ)) : val (sh T) = 2 * val T := by
+  simp only [val, sh, sum_map, shE, Function.Embedding.coeFn_mk, mul_sum]
+  refine sum_congr rfl (fun p _ => ?_)
+  ring
+
+lemma AC_sh {T : Finset (ℕ × ℕ)} (h : AC T) : AC (sh T) := by
+  intro p hp q hq hpq
+  simp only [sh, mem_map, shE, Function.Embedding.coeFn_mk] at hp hq
+  obtain ⟨p', hp', rfl⟩ := hp
+  obtain ⟨q', hq', rfl⟩ := hq
+  have hne : p' ≠ q' := by rintro rfl; exact hpq rfl
+  have := h p' hp' q' hq' hne
+  simp only [add_le_add_iff_right]
+  exact this
+
+lemma term_le {T : Finset (ℕ × ℕ)} {p : ℕ × ℕ} (hp : p ∈ T) : 2 ^ p.1 * 3 ^ p.2 ≤ val T :=
+  single_le_sum (f := fun p : ℕ × ℕ => 2 ^ p.1 * 3 ^ p.2) (fun _ _ => Nat.zero_le _) hp
+
+lemma key (n : ℕ) (hn : 0 < n) : ∃ T : Finset (ℕ × ℕ), AC T ∧ val T = n := by
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+  rcases Nat.even_or_odd n with ⟨m, hm⟩ | hodd
+  · -- n = m + m
+    obtain ⟨T, hT, hv⟩ := ih m (by omega) (by omega)
+    exact ⟨sh T, AC_sh hT, by rw [val_sh, hv]; omega⟩
+  · set b := Nat.log 3 n with hb
+    have h1 : 3 ^ b ≤ n := Nat.pow_log_le_self 3 hn.ne'
+    have h2 : n < 3 ^ (b + 1) := Nat.lt_pow_succ_log_self (by norm_num) n
+    have hodd3 : Odd (3 ^ b) := Odd.pow (by decide)
+    by_cases heq : n = 3 ^ b
+    · refine ⟨{(0, b)}, ?_, ?_⟩
+      · intro p hp q hq hpq; simp only [mem_singleton] at hp hq; subst hp; subst hq; exact absurd rfl hpq
+      · simp [val, heq]
+    · have hev : Even (n - 3 ^ b) := Nat.Odd.sub_odd hodd hodd3
+      obtain ⟨m, hm⟩ := hev
+      have hm0 : 0 < m := by omega
+      have hmlt : m < 3 ^ b := by rw [pow_succ] at h2; omega
+      obtain ⟨T, hT, hv⟩ := ih m (by omega) hm0
+      have hsmall : ∀ p ∈ T, p.2 < b := by
+        intro p hp
+        have := term_le hp
+        rw [hv] at this
+        have h3 : 3 ^ p.2 < 3 ^ b := by
+          have : 3 ^ p.2 ≤ 2 ^ p.1 * 3 ^ p.2 := Nat.le_mul_of_pos_left _ (by positivity)
+          omega
+        exact (Nat.pow_lt_pow_iff_right (by norm_num)).mp h3
+      have hnot : (0, b) ∉ sh T := by
+        simp only [sh, mem_map, shE, Function.Embedding.coeFn_mk, not_exists, not_and]
+        intro x _ h; simp only [Prod.mk.injEq] at h; omega
+      refine ⟨insert (0, b) (sh T), ?_, ?_⟩
+      · have hshT := AC_sh hT
+        have hs : ∀ q ∈ sh T, 1 ≤ q.1 ∧ q.2 < b := by
+          intro q hq
+          simp only [sh, mem_map, shE, Function.Embedding.coeFn_mk] at hq
+          obtain ⟨q', hq', rfl⟩ := hq
+          exact ⟨by simp, hsmall q' hq'⟩
+        intro p hp q hq hpq
+        rw [mem_insert] at hp hq
+        rcases hp with rfl | hp <;> rcases hq with rfl | hq
+        · exact absurd rfl hpq
+        · have := hs q hq; simp only; omega
+        · have := hs p hp; simp only; omega
+        · exact hshT p hp q hq hpq
+      · rw [val, sum_insert hnot, ← val, val_sh, hv]; simp; omega
+
+lemma dvd_imp {a b c d : ℕ} (h : 2 ^ a * 3 ^ b ∣ 2 ^ c * 3 ^ d) : a ≤ c ∧ b ≤ d := by
+  constructor
+  · have h1 : 2 ^ a ∣ 2 ^ c * 3 ^ d := dvd_trans (dvd_mul_right _ _) h
+    have hc : Nat.Coprime (2 ^ a) (3 ^ d) := Nat.Coprime.pow _ _ (by norm_num)
+    exact (Nat.pow_dvd_pow_iff_le_right (by norm_num)).mp (hc.dvd_of_dvd_mul_right h1)
+  · have h1 : 3 ^ b ∣ 2 ^ c * 3 ^ d := dvd_trans (dvd_mul_left _ _) h
+    have hc : Nat.Coprime (3 ^ b) (2 ^ c) := Nat.Coprime.pow _ _ (by norm_num)
+    exact (Nat.pow_dvd_pow_iff_le_right (by norm_num)).mp (hc.dvd_of_dvd_mul_left h1)
+
+end P2005A1
+
+open P2005A1 in
+/-- **Erdős–Lewin `{2,3}` (= Putnam 2005 A1): every `n` is representable for `(p, q) = (2, 3)`.** -/
+theorem rep23_all (n : ℕ) : Representable 2 3 n := by
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · exact ⟨∅, by simp, by simp, by simp⟩
+  obtain ⟨T, hT, hv⟩ := key n hn
+  have hinj : Set.InjOn (fun p : ℕ × ℕ => 2 ^ p.1 * 3 ^ p.2) (T : Set (ℕ × ℕ)) := by
+    intro p _ q _ hpq
+    simp only at hpq
+    have h1 := dvd_imp (dvd_of_eq hpq)
+    have h2 := dvd_imp (dvd_of_eq hpq.symm)
+    exact Prod.ext (by omega) (by omega)
+  refine ⟨T.image (fun p : ℕ × ℕ => 2 ^ p.1 * 3 ^ p.2), ?_, ?_, ?_⟩
+  · intro x hx
+    rw [coe_image] at hx
+    obtain ⟨p, -, rfl⟩ := hx
+    exact ⟨p.1, p.2, rfl⟩
+  · intro u hu v hv huv hdvd
+    rw [coe_image] at hu hv
+    obtain ⟨p, hp, rfl⟩ := hu
+    obtain ⟨q, hq, rfl⟩ := hv
+    have hpq : p ≠ q := fun e => huv (by rw [e])
+    exact hT p hp q hq hpq (dvd_imp hdvd)
+  · rw [sum_image (fun p hp q hq e => hinj hp hq e)]
+    exact hv
+
+theorem rep32_all (n : ℕ) : Representable 3 2 n := (representable_comm _ _ _).mp (rep23_all n)
+
+/-! ## Assembly: both sides of the density for the pairs with a certificate -/
+
+open Classical in
+/-- **Erdős #1110, (4,3), both sides** (conditional on the `verifyd.c` certificate, as in
+`erdos1110_43_density`): the representable integers have positive lower density and upper density `≤ 1/3`. -/
+theorem erdos1110_43_both (h : ∃ K : Cert 4 3 2 14 18, K.W.Nonempty ∧ K.g = 42192162 / (16 * 2 ^ 20)) :
+    (∃ c : ℝ, 0 < c ∧ ∃ x₀ : ℕ, ∀ x : ℕ, x₀ ≤ x →
+      c * x ≤ (((range (x + 1)).filter (Representable 4 3)).card : ℝ)) ∧
+    ∀ x : ℕ, 3 * ((range x).filter (Representable 4 3)).card ≤
+      x + (Nat.log 4 x + 1) * (12 * (Nat.log 3 x + 1) + 2) :=
+  ⟨erdos1110_43_density h, erdos1110_43_upper⟩
+
+open Classical in
+/-- **Erdős #1110, (9,2), both sides** (conditional on the `verifyd.c` certificate, as in `erdos1110_92_pow`):
+`x^{851/949} ≪ #{n ≤ x representable}`, and the representable integers have upper density `≤ 3/4`. -/
+theorem erdos1110_92_both (h : ∃ K : Cert 2 9 1 26 12, K.W.Nonempty ∧ K.g = 736074 / (2 * 2 ^ 20)) :
+    (∃ c : ℝ, 0 < c ∧ ∃ x₀ : ℕ, ∀ x : ℕ, x₀ ≤ x →
+      c * (x : ℝ) ^ ((851 : ℝ) / 949) ≤ (((range (x + 1)).filter (Representable 9 2)).card : ℝ)) ∧
+    ∀ x : ℕ, 4 * ((range x).filter (Representable 9 2)).card ≤ 3 * x + 8 * (Nat.log 9 x + 1) :=
+  ⟨erdos1110_92_pow h, erdos1110_92_upper⟩
+
 end E1110G
 
 #print axioms E1110G.pos_lower_density
@@ -1578,3 +2135,8 @@ end E1110G
 #print axioms E1110G.pow_lower_bound
 #print axioms E1110G.erdos1110_53_pow
 #print axioms E1110G.erdos1110_92_pow
+#print axioms E1110G.erdos1110_43_both
+#print axioms E1110G.erdos1110_92_both
+#print axioms E1110G.erdos1110_72_upper
+#print axioms E1110G.rep23_all
+#print axioms E1110G.rep32_all

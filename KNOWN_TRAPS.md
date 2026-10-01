@@ -230,3 +230,13 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
   `repl.py check`): under `open Nat`, `φ` is totient notation (`let φ := …` fails with "Invalid pattern
   variable"); under `open Set`, `card_univ` resolves to `Set.card_univ`. Always test the file WITH the
   PutnamBench open line (the `save.py` flow does) and qualify `Finset.` names.
+
+## Added 2026-10-01 (Erdős #1110 elementary density bounds, end of `E1110G.lean`)
+- **`open Classical in` + `set A := (range x).filter (fun n => n % 9 ∈ ({3, 6} : Finset ℕ))`** did not match the
+  same filter coming out of a lemma stated without `Classical` (different `Decidable` instances), so `omega`
+  saw two unrelated atoms. Escape: bridge with `card_le_card` + `simp only [A, mem_filter, mem_insert,
+  mem_singleton]` on both sides (simp normalises membership regardless of the instance).
+- `card_image_of_injective _ (fun a b h => by simp only at h; omega)` → "`simp` made no progress" (h is already
+  beta-reduced); use `Nat.eq_of_mul_eq_mul_left (by norm_num : 0 < 9) h`.
+- `Nat.mul_div_le x M : M * (x / M) ≤ x` (M on the LEFT); `omega` treats `M * (x/M)` and `x/M * M` as different atoms.
+- Rename: `Finset.filter_card_add_filter_neg_card_eq_card` → `Finset.card_filter_add_card_filter_not`.
