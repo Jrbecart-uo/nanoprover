@@ -1,0 +1,146 @@
+import Mathlib
+
+open Filter Topology Real Nat
+
+/-!
+Putnam 1995 B1.  Suppose the 9 pairs (π(x), π'(x)) were distinct.  The level sets of π' are unions of
+parts, so a value t of π' is taken at least t times; the distinct values of π' then have sum <= 9, hence
+there are at most 3 of them (n distinct positive integers sum to >= n(n+1)/2).  So each level set of π has
+<= 3 elements (π' is injective on it), which forces every part size s <= 3; the level set of size-2 parts
+has even size (it is a disjoint union of 2-blocks), so at most 2.  Total <= 3 + 2 + 3 = 8 < 9.
+-/
+
+namespace P1995B1
+
+/-- `n` distinct positive integers sum to at least `n(n+1)/2`. -/
+lemma two_mul_sum_ge (S : Finset ℕ) (hS : ∀ t ∈ S, 0 < t) :
+    S.card * (S.card + 1) ≤ 2 * S.sum id := by
+  induction S using Finset.induction_on_max with
+  | empty => simp
+  | insert a s hlt ih =>
+    have ha : a ∉ s := fun h => lt_irrefl a (hlt a h)
+    have hs := ih (fun t ht => hS t (Finset.mem_insert_of_mem ht))
+    have hsub : s ⊆ Finset.Ioo 0 a := fun t ht =>
+      Finset.mem_Ioo.mpr ⟨hS t (Finset.mem_insert_of_mem ht), hlt t ht⟩
+    have hc := Finset.card_le_card hsub
+    rw [Nat.card_Ioo] at hc
+    rw [Finset.card_insert_of_notMem ha, Finset.sum_insert ha]
+    have ha0 : 0 < a := hS a (Finset.mem_insert_self a s)
+    have hc' : s.card + 1 ≤ a := by omega
+    simp only [id] at hs ⊢
+    nlinarith [hc', hs]
+
+variable {U : Finset ℕ} (P : Finpartition U)
+
+lemma part_card_pos {x : ℕ} (hx : x ∈ U) : 0 < (P.part x).card :=
+  Finset.card_pos.mpr ⟨x, P.mem_part hx⟩
+
+lemma part_subset_fiber {x : ℕ} (hx : x ∈ U) :
+    P.part x ⊆ U.filter (fun y => (P.part y).card = (P.part x).card) := by
+  intro y hy
+  have hpx : P.part x ∈ P.parts := (P.part_mem).mpr hx
+  have hyU : y ∈ U := P.le hpx hy
+  simp only [Finset.mem_filter]
+  exact ⟨hyU, by rw [P.part_eq_of_mem hpx hy]⟩
+
+lemma fiber_dvd (s : ℕ) : s ∣ (U.filter (fun y => (P.part y).card = s)).card := by
+  have e : U.filter (fun y => (P.part y).card = s) = (P.parts.filter (fun q => q.card = s)).biUnion id := by
+    ext y
+    simp only [Finset.mem_filter, Finset.mem_biUnion, id]
+    constructor
+    · rintro ⟨hy, hs⟩
+      exact ⟨P.part y, ⟨(P.part_mem).mpr hy, hs⟩, P.mem_part hy⟩
+    · rintro ⟨q, ⟨hq, hs⟩, hyq⟩
+      exact ⟨P.le hq hyq, by rw [P.part_eq_of_mem hq hyq, hs]⟩
+  rw [e, Finset.card_biUnion]
+  · rw [Finset.sum_congr rfl (g := fun _ => s) (fun q hq => by simpa using (Finset.mem_filter.mp hq).2),
+      Finset.sum_const, smul_eq_mul]
+    exact Dvd.intro_left _ rfl
+  · intro q hq q' hq' hne
+    exact P.disjoint (Finset.mem_filter.mp hq).1 (Finset.mem_filter.mp hq').1 hne
+
+lemma card_le_of_part {s x : ℕ} (hx : x ∈ U) (hs : (P.part x).card = s) :
+    s ≤ (U.filter (fun y => (P.part y).card = s)).card := by
+  have := Finset.card_le_card (part_subset_fiber P hx)
+  rwa [hs] at this
+
+lemma part_card_le {x : ℕ} (hx : x ∈ U) : (P.part x).card ≤ U.card :=
+  Finset.card_le_card (P.le ((P.part_mem).mpr hx))
+
+end P1995B1
+
+open P1995B1 in
+theorem putnam_1995_b1
+  (Pi : Finpartition (Finset.range 9) → (Finset.range 9) → ℕ)
+  (Pi_def : ∀ partition k, Pi partition k = (Exists.choose (Finpartition.exists_mem partition k.2)).card) :
+  ∀ Pt1 Pt2,
+    ∃ x y : Finset.range 9,
+      x ≠ y ∧
+      Pi Pt1 x = Pi Pt1 y ∧
+      Pi Pt2 x = Pi Pt2 y := by
+  intro P1 P2
+  have hPi : ∀ (P : Finpartition (Finset.range 9)) (k : Finset.range 9), Pi P k = (P.part k.1).card := by
+    intro P k
+    rw [Pi_def]
+    have hs := Exists.choose_spec (Finpartition.exists_mem P k.2)
+    rw [P.part_eq_of_mem hs.1 hs.2]
+  by_contra hcon
+  push Not at hcon
+  -- the pairs `(f1, f2)` are injective on `U`
+  have hinj : ∀ x ∈ Finset.range 9, ∀ y ∈ Finset.range 9, (P1.part x).card = (P1.part y).card → (P2.part x).card = (P2.part y).card → x = y := by
+    intro x hx y hy h1 h2
+    by_contra hne
+    have := hcon ⟨x, hx⟩ ⟨y, hy⟩ (fun e => hne (congrArg Subtype.val e))
+      (by rw [hPi, hPi]; exact h1)
+    rw [hPi, hPi] at this
+    exact this h2
+  have hUc : (Finset.range 9).card = 9 := Finset.card_range 9
+  -- `f2` takes at most 3 values
+  set V := (Finset.range 9).image (fun x => (P2.part x).card)
+  have hV : V.card ≤ 3 := by
+    have hpos : ∀ t ∈ V, 0 < t := by
+      intro t ht
+      obtain ⟨x, hx, rfl⟩ := Finset.mem_image.mp ht
+      exact part_card_pos P2 hx
+    have hsum : V.sum id ≤ 9 := by
+      have := Finset.card_eq_sum_card_image (fun x => (P2.part x).card) (Finset.range 9)
+      rw [hUc] at this
+      rw [this]
+      refine Finset.sum_le_sum (fun t ht => ?_)
+      obtain ⟨x, hx, rfl⟩ := Finset.mem_image.mp ht
+      exact card_le_of_part P2 hx rfl
+    have := two_mul_sum_ge V hpos
+    nlinarith
+  -- each `f1`-fiber has at most 3 elements
+  have hfib : ∀ s, ((Finset.range 9).filter (fun y => (P1.part y).card = s)).card ≤ 3 := by
+    intro s
+    refine le_trans (Finset.card_le_card_of_injOn (fun x => (P2.part x).card) (fun y hy => ?_) (fun y hy z hz hyz => ?_)) hV
+    · exact Finset.mem_image.mpr ⟨y, (Finset.mem_filter.mp hy).1, rfl⟩
+    · have hy' := Finset.mem_filter.mp hy
+      have hz' := Finset.mem_filter.mp hz
+      exact hinj y hy'.1 z hz'.1 (by rw [hy'.2, hz'.2]) hyz
+  -- hence `f1 ≤ 3` on `U`
+  have hval : ∀ x ∈ Finset.range 9, (P1.part x).card ∈ ({1, 2, 3} : Finset ℕ) := by
+    intro x hx
+    have h1 := card_le_of_part P1 hx rfl
+    have h2 := hfib ((P1.part x).card)
+    have h3 := part_card_pos P1 hx
+    simp only [Finset.mem_insert, Finset.mem_singleton]
+    have : (P1.part x).card ≤ 3 := le_trans h1 h2
+    omega
+  -- count
+  have hsub : (Finset.range 9).image (fun x => (P1.part x).card) ⊆ {1, 2, 3} := fun s hs => by
+    obtain ⟨x, hx, rfl⟩ := Finset.mem_image.mp hs
+    exact hval x hx
+  have hcount := Finset.card_eq_sum_card_image (fun x => (P1.part x).card) (Finset.range 9)
+  rw [hUc] at hcount
+  have hle : ∑ s ∈ (Finset.range 9).image (fun x => (P1.part x).card), ((Finset.range 9).filter (fun y => (P1.part y).card = s)).card ≤
+      ∑ s ∈ ({1, 2, 3} : Finset ℕ), ((Finset.range 9).filter (fun y => (P1.part y).card = s)).card :=
+    Finset.sum_le_sum_of_subset hsub
+  rw [Finset.sum_insert (by decide), Finset.sum_insert (by decide), Finset.sum_singleton] at hle
+  have h2 := hfib 2
+  have hd := fiber_dvd P1 2
+  have h1 := hfib 1
+  have h3 := hfib 3
+  obtain ⟨m, hm⟩ := hd
+  omega

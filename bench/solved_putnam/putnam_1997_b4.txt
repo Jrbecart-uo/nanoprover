@@ -1,0 +1,108 @@
+import Mathlib
+
+open Filter Topology Bornology Set Polynomial
+
+/-!
+Putnam 1997 B4.  With c m n = [x^n](1+x+x^2)^m, the sum is T k = Σ_{i+j=k} (-1)^i c j i (terms with
+i > 2k/3 vanish by degree).  Pascal: c (j+1) i = c j i + c j (i-1) + c j (i-2), and re-indexing the
+antidiagonal sums gives T (k+3) = T (k+2) - T (k+1) + T k (the generating function is
+1/((1-y)(1+y^2))).  With T 0 = T 1 = 1, T 2 = 0 this gives T k = 1, 1, 0, 0, ... (period 4), so T k ∈ [0,1].
+-/
+
+namespace P1997B4
+
+noncomputable def c (m n : ℕ) : ℤ := coeff ((1 + X + X ^ 2 : ℤ[X]) ^ m) n
+
+lemma c_zero (n : ℕ) : c 0 n = if n = 0 then 1 else 0 := by
+  simp [c, coeff_one]
+
+lemma c_succ (m i : ℕ) :
+    c (m + 1) i = c m i + (if 1 ≤ i then c m (i - 1) else 0) + (if 2 ≤ i then c m (i - 2) else 0) := by
+  have e : (1 + X + X ^ 2 : ℤ[X]) ^ (m + 1) =
+      (1 + X + X ^ 2 : ℤ[X]) ^ m + (1 + X + X ^ 2 : ℤ[X]) ^ m * X + (1 + X + X ^ 2 : ℤ[X]) ^ m * X ^ 2 := by
+    ring
+  unfold c
+  rw [e, coeff_add, coeff_add]
+  rcases i with _ | _ | i
+  · simp
+  · rw [coeff_mul_X, coeff_mul_X_pow']
+    simp
+  · rw [show i + 1 + 1 = (i + 1) + 1 from rfl, coeff_mul_X, show i + 1 + 1 = i + 2 by ring, coeff_mul_X_pow]
+    simp
+
+lemma c_eq_zero {m n : ℕ} (h : 2 * m < n) : c m n = 0 := by
+  unfold c
+  apply coeff_eq_zero_of_natDegree_lt
+  have h1 : (1 + X + X ^ 2 : ℤ[X]).natDegree ≤ 2 := by
+    refine (natDegree_add_le _ _).trans (max_le ((natDegree_add_le _ _).trans (max_le ?_ ?_)) ?_)
+    · simp
+    · exact natDegree_X_le.trans (by norm_num)
+    · exact natDegree_X_pow_le 2
+  calc ((1 + X + X ^ 2 : ℤ[X]) ^ m).natDegree ≤ m * (1 + X + X ^ 2 : ℤ[X]).natDegree := natDegree_pow_le
+    _ ≤ m * 2 := Nat.mul_le_mul_left m h1
+    _ < n := by omega
+
+noncomputable def T (k : ℕ) : ℤ := ∑ p ∈ Finset.HasAntidiagonal.antidiagonal k, (-1) ^ p.1 * c p.2 p.1
+
+lemma T_succ (n : ℕ) : T (n + 1) = ∑ p ∈ Finset.HasAntidiagonal.antidiagonal n, (-1) ^ p.1 * c (p.2 + 1) p.1 := by
+  unfold T
+  rw [Finset.Nat.sum_antidiagonal_succ', c_zero]
+  simp
+
+lemma T_rec (k : ℕ) : T (k + 3) = T (k + 2) - T (k + 1) + T k := by
+  rw [T_succ]
+  simp only [c_succ, mul_add, Finset.sum_add_distrib]
+  have e1 : ∑ p ∈ Finset.HasAntidiagonal.antidiagonal (k + 2),
+      (-1 : ℤ) ^ p.1 * (if 1 ≤ p.1 then c p.2 (p.1 - 1) else 0) = - T (k + 1) := by
+    rw [Finset.Nat.sum_antidiagonal_succ]
+    simp only [Nat.one_le_iff_ne_zero, ne_eq, not_true_eq_false, if_false, mul_zero, zero_add,
+      Nat.add_one_ne_zero, not_false_eq_true, if_true, Nat.add_sub_cancel, T, ← Finset.sum_neg_distrib]
+    refine Finset.sum_congr rfl (fun p _ => ?_)
+    ring
+  have e2 : ∑ p ∈ Finset.HasAntidiagonal.antidiagonal (k + 2),
+      (-1 : ℤ) ^ p.1 * (if 2 ≤ p.1 then c p.2 (p.1 - 2) else 0) = T k := by
+    rw [Finset.Nat.sum_antidiagonal_succ, Finset.Nat.sum_antidiagonal_succ]
+    simp only [show ¬ (2 ≤ 0) by omega, show ¬ (2 ≤ 0 + 1) by omega, if_false, mul_zero, zero_add, T]
+    refine Finset.sum_congr rfl (fun p _ => ?_)
+    rw [if_pos (by omega), show p.1 + 1 + 1 - 2 = p.1 by omega]
+    ring
+  rw [e1, e2]
+  unfold T
+  ring
+
+lemma T_val (k : ℕ) : T k = if k % 4 < 2 then 1 else 0 := by
+  induction k using Nat.strong_induction_on with
+  | _ k ih =>
+    rcases k with _ | _ | _ | k
+    · simp [T, c_zero]
+    · simp [T, Finset.Nat.antidiagonal_succ, c_zero, c_succ]
+    · simp [T, Finset.Nat.antidiagonal_succ, c_zero, c_succ]
+    · rw [T_rec, ih (k + 2) (by omega), ih (k + 1) (by omega), ih k (by omega)]
+      have : k % 4 < 4 := Nat.mod_lt _ (by norm_num)
+      split_ifs <;> omega
+
+end P1997B4
+
+open P1997B4 in
+theorem putnam_1997_b4
+    (a : ℕ → ℕ → ℤ)
+    (ha : ∀ m n, a m n = coeff ((1 + X + X ^ 2) ^ m) n)
+    (k : ℕ) :
+    (∑ i ∈ Finset.Iic ⌊2 * (k : ℚ) / 3⌋₊, (-1) ^ i * a (k - i) i) ∈ Icc 0 1 := by
+  have hfl : ⌊2 * (k : ℚ) / 3⌋₊ = 2 * k / 3 := by
+    rw [show (2 * (k : ℚ)) = ((2 * k : ℕ) : ℚ) by push_cast; ring]
+    exact Nat.floor_div_eq_div _ _
+  have hsum : (∑ i ∈ Finset.Iic ⌊2 * (k : ℚ) / 3⌋₊, (-1) ^ i * a (k - i) i) = T k := by
+    rw [hfl, T, Finset.Nat.sum_antidiagonal_eq_sum_range_succ_mk]
+    have hsub : Finset.Iic (2 * k / 3) ⊆ Finset.range (k + 1) := by
+      intro i hi; simp only [Finset.mem_Iic] at hi; simp only [Finset.mem_range]; omega
+    rw [← Finset.sum_subset hsub]
+    · refine Finset.sum_congr rfl (fun i _ => ?_)
+      rw [ha]; rfl
+    · intro i hi hni
+      simp only [Finset.mem_range] at hi
+      simp only [Finset.mem_Iic, not_le] at hni
+      have : c (k - i) i = 0 := c_eq_zero (by omega)
+      simp [this]
+  rw [hsum, T_val]
+  split_ifs <;> simp

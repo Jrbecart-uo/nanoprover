@@ -32,8 +32,8 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   3. Harvest reusable lemmas from today's scalps into `lemmas.lean` (divisor-sum parity via involution in
      ZMod 2, cyclic lemma, bipartite walk parity, quad_nonneg / discrim bounds, rpow-from-integer-power helpers
      `rpow_div_le_of_pow_le` / `lt_rpow_div_of_pow_lt` in E1110G.lean).
-  4. Medium Putnam leftovers: 1995_b1 (Finpartition block sizes: |S1|,|S2| <= 3, s ∣ fiber size), 1997_b4
-     (generating function 1/((1-y)(1+y^2))). Harder ones listed in `bench/putnam_retriage_notes.md`.
+  4. ✅ 2026-10-02: 1995_b1 and 1997_b4 solved (Scalps 114-115). ✅ item 3 (lemma harvest, 9 lemmas) and the
+     (7,2) general-certificate instance also done 2026-10-02. Harder ones listed in `bench/putnam_retriage_notes.md`.
   5. Probabilist note on the exact (e,k) reformulation for (9,2)/(5,3) (user's call on posting).
   6. Expert review of (7,2)/(4,3) — only the user can arrange.
   Not worth it: pushing the (9,2)/(5,3) exponent (~0.005 ratio per extra window digit, D=28 ~90 min).
@@ -101,7 +101,7 @@ and propose next tasks. Ranked by leverage within each track. Last updated
 ---
 
 ## Track A — Putnam scalps (theorem-mode; where we are strongest)
-Current: **113 scalps + 1 vacuous** (2026-09-30: +13 — 2005_a1, 2025_a1, 2017_a2, 1973_b1, 1966_b4, 2007_b5, 2003_a4, 2017_b1, 1970_a2, 1995_a4, 1965_b5, 1976_b6, 1999_a6; 2026-09-28: +47 real — 22 cost-1–2 then 25 of the cost-3 wave; 1991_a6 vacuous — the whole cost-1–2 tier of `bench/putnam_retriage_notes.md`, plus 2012_a1/1982_a5/1983_b4/2008_b4/1970_b3/1968_b6 from the NEXT list). 2026-09-25: +30. Reachable wins live here.
+Current: **115 scalps + 1 vacuous** (2026-10-02: +1995_b1, 1997_b4) (2026-09-30: +13 — 2005_a1, 2025_a1, 2017_a2, 1973_b1, 1966_b4, 2007_b5, 2003_a4, 2017_b1, 1970_a2, 1995_a4, 1965_b5, 1976_b6, 1999_a6; 2026-09-28: +47 real — 22 cost-1–2 then 25 of the cost-3 wave; 1991_a6 vacuous — the whole cost-1–2 tier of `bench/putnam_retriage_notes.md`, plus 2012_a1/1982_a5/1983_b4/2008_b4/1970_b3/1968_b6 from the NEXT list). 2026-09-25: +30. Reachable wins live here.
 - ✅ **Scoped-out list cleared** (4/4 fell when re-examined: 1996_a5, 2001_a5, 1974_b3,
       2007_a5). 1974_b3 needed no algebraic integers (denominators 3^(2^k) grow under
       angle doubling); 2007_a5 passed first try via `card_fixedPoints_modEq` on the
