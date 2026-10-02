@@ -24,6 +24,7 @@ checked by computer programs and *not* in Lean.
 | file | main theorem | its only hypothesis |
 |---|---|---|
 | `lean/E1110.lean` | `E1110.erdos1110_72_density` | `∃ K : Cert 11 10, K.g = 8385274094 / 2^31` |
+| `lean/E1110G.lean` | `E1110G.erdos1110_72_density` (same table, general formulation) | `∃ K : Cert 2 7 11 22 10, K.W.Nonempty ∧ K.g = 8385274094 / (2^11 · 2^20)` |
 | `lean/E1110G.lean` | `E1110G.erdos1110_43_density` | `∃ K : Cert 4 3 2 14 18, K.W.Nonempty ∧ K.g = 42192162 / (16 · 2^20)` |
 | `lean/E1110G.lean` | `E1110G.erdos1110_92_pow`, `erdos1110_53_pow` | analogous (`Cert 2 9 1 26 12`, `Cert 3 5 1 17 12`) |
 
@@ -76,8 +77,8 @@ with a naive big-integer version on 100 small cases. It then ran the real tables
 
 The argmax states agree too: 80755765 for (4,3), and state (c,b) = (1835,623) for (7,2). The (7,2) table was
 checked in the general formulation (b = 2, r = 7, s = 11, D = 22: the conditions of `E1110G.Cert`), as well as the
-two-block one of `E1110.Cert` used by `verify.c`/`verify2.c`. A Lean instance of `E1110G` for (7,2) is not written
-(the posted result uses `E1110.erdos1110_72_density`). The
+two-block one of `E1110.Cert` used by `verify.c`/`verify2.c`. `E1110G.erdos1110_72_density` takes exactly this general
+certificate as its hypothesis, so all four pairs now rest on the same Lean structure `E1110G.Cert`. The
 (4,3) viable set has the same size as `verifyd`'s (2/3 of all states).
 
 Tables and hashes: `V_s11_it8.bin.xz` (7,2); `data_43/V43_final.bin.xz` (4,3; also GitHub release

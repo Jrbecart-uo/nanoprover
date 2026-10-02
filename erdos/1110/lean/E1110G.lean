@@ -19,6 +19,7 @@ residues cannot be the value of any chain, as for `(4,3)`: `n ≢ 2 (mod 3)`, `n
 * `E1110G.erdos1110_53_pow`, `E1110G.erdos1110_92_pow`: `(5,3)` and `(9,2)` have `≫ x^{69/77}` resp.
   `≫ x^{851/949}` representable integers up to `x` (exponents `0.896…`, `0.896…`), conditional on the
   certificates that `verifyd.c` checks (`b = 3, r = 5, s = 1, D = 17` resp. `b = 2, r = 9, s = 1, D = 26`).
+* `E1110G.erdos1110_72_density`: the `(7,2)` table as a general certificate (`b = 2, r = 7, s = 11, D = 22`).
 * `E1110G.toyCert`: the structure is inhabited.
 * Elementary upper bounds (unconditional; `rep_mod`: `q ∣ n` or `n ≡ p^k (mod q)`; `rep_of_mul`: `q m`
   representable ⇒ `m` representable): the representable integers have upper density `≤ 1/3` for `(4,3)`
@@ -1553,6 +1554,36 @@ theorem erdos1110_92_pow (h : ∃ K : Cert 2 9 1 26 12, K.W.Nonempty ∧ K.g = 7
     rw [pow_one]
     exact rpow_div_le_of_pow_le (by norm_num) (by norm_num) (by norm_num) (by norm_num)
 
+/-! ## The (7,2) certificate in the general formulation -/
+
+lemma seven_rpow_lt : (7 : ℝ) ^ ((286 : ℝ) / 73) < (2 : ℝ) ^ 11 := by
+  by_contra h
+  push Not at h
+  have h1 : ((2 : ℝ) ^ 11) ^ 73 ≤ ((7 : ℝ) ^ ((286 : ℝ) / 73)) ^ 73 :=
+    pow_le_pow_left₀ (by positivity) h 73
+  rw [← Real.rpow_natCast ((7 : ℝ) ^ ((286 : ℝ) / 73)), ← Real.rpow_mul (by norm_num),
+    show (286 : ℝ) / 73 * ((73 : ℕ) : ℝ) = ((286 : ℕ) : ℝ) by norm_num, Real.rpow_natCast] at h1
+  -- 7^286 = (7^26)^11 < (2^73)^11 = (2^11)^73, from 7^26 < 2^73
+  have h2 : (7 : ℝ) ^ 286 < ((2 : ℝ) ^ 11) ^ 73 := by
+    have e1 : (7 : ℝ) ^ 286 = ((7 : ℝ) ^ 26) ^ 11 := by rw [← pow_mul]
+    have e2 : ((2 : ℝ) ^ 11) ^ 73 = ((2 : ℝ) ^ 73) ^ 11 := by rw [← pow_mul, ← pow_mul]
+    rw [e1, e2]
+    exact pow_lt_pow_left₀ (by norm_num) (by positivity) (by norm_num)
+  exact absurd h1 (not_le.mpr h2)
+
+open Classical in
+/-- **Erdős #1110, (7,2), in the general formulation.** The table `V_s11_it8.bin` read as a `D = 22`-digit-state,
+`s = 11`-digit-block certificate (binary digits, other base 7, heights `≤ 10`, all states viable), which the
+clean-room checker `indep_rs` verifies with `GNUM = 8385274094`, i.e. `g = 8385274094 / (2^11 · 2^20)`: positive
+lower density of the representable integers. Same conclusion as `E1110.erdos1110_72_density`, now from the
+same `Cert` structure as the other three pairs. -/
+theorem erdos1110_72_density (h : ∃ K : Cert 2 7 11 22 10, K.W.Nonempty ∧ K.g = 8385274094 / (2 ^ 11 * 2 ^ 20)) :
+    ∃ c : ℝ, 0 < c ∧ ∃ x₀ : ℕ, ∀ x : ℕ, x₀ ≤ x →
+      c * x ≤ (((range (x + 1)).filter (Representable 7 2)).card : ℝ) := by
+  obtain ⟨K, hW, hK⟩ := h
+  exact pos_lower_density (by norm_num) (by norm_num) (by norm_num) K hW ((286 : ℝ) / 73)
+    (by norm_num) (by rw [hK]; norm_num) (by push_cast; exact seven_rpow_lt)
+
 /-- Sanity check: the general `Cert` structure is inhabited (toy certificate with a useless drift). -/
 def toyCert : Cert 2 3 1 1 1 where
   W := univ
@@ -2128,6 +2159,15 @@ theorem erdos1110_92_both (h : ∃ K : Cert 2 9 1 26 12, K.W.Nonempty ∧ K.g = 
     ∀ x : ℕ, 4 * ((range x).filter (Representable 9 2)).card ≤ 3 * x + 8 * (Nat.log 9 x + 1) :=
   ⟨erdos1110_92_pow h, erdos1110_92_upper⟩
 
+open Classical in
+/-- **Erdős #1110, (7,2), both sides** (conditional on the certificate, as in `erdos1110_72_density`): the
+representable integers have positive lower density and upper density `≤ 1/2`. -/
+theorem erdos1110_72_both (h : ∃ K : Cert 2 7 11 22 10, K.W.Nonempty ∧ K.g = 8385274094 / (2 ^ 11 * 2 ^ 20)) :
+    (∃ c : ℝ, 0 < c ∧ ∃ x₀ : ℕ, ∀ x : ℕ, x₀ ≤ x →
+      c * x ≤ (((range (x + 1)).filter (Representable 7 2)).card : ℝ)) ∧
+    ∀ x : ℕ, 2 * ((range x).filter (Representable 7 2)).card ≤ x + 6 * (Nat.log 7 x + 1) :=
+  ⟨erdos1110_72_density h, erdos1110_72_upper⟩
+
 end E1110G
 
 #print axioms E1110G.pos_lower_density
@@ -2135,8 +2175,10 @@ end E1110G
 #print axioms E1110G.pow_lower_bound
 #print axioms E1110G.erdos1110_53_pow
 #print axioms E1110G.erdos1110_92_pow
+#print axioms E1110G.erdos1110_72_density
 #print axioms E1110G.erdos1110_43_both
 #print axioms E1110G.erdos1110_92_both
+#print axioms E1110G.erdos1110_72_both
 #print axioms E1110G.erdos1110_72_upper
 #print axioms E1110G.rep23_all
 #print axioms E1110G.rep32_all
