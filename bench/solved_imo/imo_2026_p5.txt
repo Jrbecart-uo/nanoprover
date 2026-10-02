@@ -1,0 +1,277 @@
+import Mathlib
+set_option backward.isDefEq.respectTransparency false
+
+/-!
+IMO 2026 P5 (statement file `p5.lean` of github.com/junaid-hasan/2026_problems, verbatim).  Post-training-cutoff
+problem, solved blind (2026-10-02): only the official problem text and the statement file were read.
+Answer f(x) = x + c, c >= 0.  With g = f - id: (i) x = f(y) gives f(f(y)) = 2 f(y) - y, so g is constant
+along orbits y, y + g, y + 2g, ... and positivity forces g >= 0.  (ii) QM + GM <= 2 AM gives the key estimate
+|g x - g y| <= (sqrt x - sqrt f(y))^2.  (iii) Comparing far-out orbit points, all positive values of g are
+equal; a fixed point z and a point w with g w = c > 0 satisfy |w - z| >= c, so a walk in steps < c from a
+fixed point to w is impossible.  Hence g is constant.
+-/
+
+/-- The subtype of positive real numbers, representing `\mathbb{R}_{>0}`. -/
+abbrev PositiveReal : Type := {x : ℝ // 0 < x}
+
+/-- The two-sided inequality defining admissible functions on positive real numbers. -/
+def IsAdmissible (f : PositiveReal → PositiveReal) : Prop :=
+  ∀ x y : PositiveReal,
+    Real.sqrt (((x : ℝ) ^ 2 + (f y : ℝ) ^ 2) / 2) ≥
+        ((f x : ℝ) + (y : ℝ)) / 2 ∧
+      ((f x : ℝ) + (y : ℝ)) / 2 ≥
+        Real.sqrt ((x : ℝ) * (f y : ℝ))
+
+namespace IMO2026P5
+
+/-- `D x t = x + t - 2√(xt) = (√x - √t)²`. -/
+noncomputable def D (x t : ℝ) : ℝ := x + t - 2 * Real.sqrt (x * t)
+
+lemma D_eq {x t : ℝ} (hx : 0 ≤ x) (ht : 0 ≤ t) : D x t = (Real.sqrt x - Real.sqrt t) ^ 2 := by
+  unfold D
+  rw [Real.sqrt_mul hx]
+  have h1 := Real.sq_sqrt hx
+  have h2 := Real.sq_sqrt ht
+  nlinarith
+
+lemma D_le_abs {x t : ℝ} (hx : 0 ≤ x) (ht : 0 ≤ t) : D x t ≤ |x - t| := by
+  rw [D_eq hx ht]
+  have ha := Real.sqrt_nonneg x
+  have hb := Real.sqrt_nonneg t
+  have h1 := Real.sq_sqrt hx
+  have h2 := Real.sq_sqrt ht
+  have e : x - t = (Real.sqrt x - Real.sqrt t) * (Real.sqrt x + Real.sqrt t) := by nlinarith
+  rw [e, abs_mul, abs_of_nonneg (by positivity : 0 ≤ Real.sqrt x + Real.sqrt t)]
+  have hle : |Real.sqrt x - Real.sqrt t| ≤ Real.sqrt x + Real.sqrt t := by
+    calc |Real.sqrt x - Real.sqrt t| ≤ |Real.sqrt x| + |Real.sqrt t| := abs_sub _ _
+      _ = Real.sqrt x + Real.sqrt t := by rw [abs_of_nonneg ha, abs_of_nonneg hb]
+  calc (Real.sqrt x - Real.sqrt t) ^ 2 = |Real.sqrt x - Real.sqrt t| * |Real.sqrt x - Real.sqrt t| := by
+        rw [abs_mul_abs_self]; ring
+    _ ≤ |Real.sqrt x - Real.sqrt t| * (Real.sqrt x + Real.sqrt t) :=
+        mul_le_mul_of_nonneg_left hle (abs_nonneg _)
+
+lemma D_le_sq {x t : ℝ} (hx : 0 < x) (ht : 0 ≤ t) : D x t ≤ (x - t) ^ 2 / x := by
+  rw [D_eq hx.le ht, le_div_iff₀ hx]
+  have ha := Real.sqrt_nonneg x
+  have hb := Real.sqrt_nonneg t
+  have h1 := Real.sq_sqrt hx.le
+  have h2 := Real.sq_sqrt ht
+  have e : (x - t) ^ 2 = (Real.sqrt x - Real.sqrt t) ^ 2 * (Real.sqrt x + Real.sqrt t) ^ 2 := by
+    rw [← mul_pow]; congr 1; nlinarith
+  rw [e]
+  apply mul_le_mul_of_nonneg_left _ (sq_nonneg _)
+  nlinarith
+
+/-- `√((x²+t²)/2) + √(xt) ≤ x + t`. -/
+lemma qm_add_gm_le {x t : ℝ} (hx : 0 ≤ x) (ht : 0 ≤ t) :
+    Real.sqrt ((x ^ 2 + t ^ 2) / 2) + Real.sqrt (x * t) ≤ x + t := by
+  set u := Real.sqrt ((x ^ 2 + t ^ 2) / 2)
+  set v := Real.sqrt (x * t)
+  have hu : u ^ 2 = (x ^ 2 + t ^ 2) / 2 := Real.sq_sqrt (by positivity)
+  have hv : v ^ 2 = x * t := Real.sq_sqrt (by positivity)
+  have hu0 : 0 ≤ u := Real.sqrt_nonneg _
+  have hv0 : 0 ≤ v := Real.sqrt_nonneg _
+  nlinarith [sq_nonneg (u - v), sq_nonneg (u + v - (x + t))]
+
+section real
+
+variable (F : ℝ → ℝ) (hpos : ∀ x, 0 < x → 0 < F x)
+  (hU : ∀ x y, 0 < x → 0 < y → (F x + y) / 2 ≤ Real.sqrt ((x ^ 2 + F y ^ 2) / 2))
+  (hL : ∀ x y, 0 < x → 0 < y → Real.sqrt (x * F y) ≤ (F x + y) / 2)
+include hpos hU hL
+
+lemma ff {y : ℝ} (hy : 0 < y) : F (F y) = 2 * F y - y := by
+  have ht := hpos y hy
+  have h1 := hU (F y) y ht hy
+  have h2 := hL (F y) y ht hy
+  have e1 : Real.sqrt ((F y ^ 2 + F y ^ 2) / 2) = F y := by
+    rw [show (F y ^ 2 + F y ^ 2) / 2 = F y ^ 2 by ring, Real.sqrt_sq ht.le]
+  have e2 : Real.sqrt (F y * F y) = F y := Real.sqrt_mul_self ht.le
+  rw [e1] at h1; rw [e2] at h2
+  linarith
+
+lemma orbit {y : ℝ} (hy : 0 < y) (n : ℕ) :
+    0 < y + n * (F y - y) ∧ F (y + n * (F y - y)) = y + (n + 1) * (F y - y) := by
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    rcases n with _ | _ | n
+    · simp only [Nat.cast_zero, zero_mul, add_zero, zero_add, one_mul]; exact ⟨hy, by ring⟩
+    · simp only [Nat.cast_one, zero_add]
+      refine ⟨by have := hpos y hy; linarith, ?_⟩
+      rw [show y + 1 * (F y - y) = F y by ring, ff F hpos hU hL hy]; ring
+    · obtain ⟨h0, h0'⟩ := ih n (by omega)
+      obtain ⟨h1, h1'⟩ := ih (n + 1) (by omega)
+      push_cast at h0 h0' h1 h1' ⊢
+      have hpos2 : 0 < y + (n + 1 + 1) * (F y - y) := by
+        have := hpos _ h1; rw [h1'] at this; exact this
+      refine ⟨hpos2, ?_⟩
+      have := ff F hpos hU hL h1
+      rw [h1'] at this
+      linarith [this]
+
+lemma g_nonneg {y : ℝ} (hy : 0 < y) : 0 ≤ F y - y := by
+  by_contra h
+  push Not at h
+  obtain ⟨n, hn⟩ := exists_nat_gt (y / -(F y - y))
+  have := (orbit F hpos hU hL hy n).1
+  rw [div_lt_iff₀ (by linarith)] at hn
+  nlinarith
+
+/-- The key estimate `|g x - g y| ≤ D x (F y)` with `g = F - id`. -/
+lemma key {x y : ℝ} (hx : 0 < x) (hy : 0 < y) : |(F x - x) - (F y - y)| ≤ D x (F y) := by
+  have ht := hpos y hy
+  have h1 := hU x y hx hy
+  have h2 := hL x y hx hy
+  have h3 := qm_add_gm_le hx.le ht.le
+  unfold D
+  rw [abs_le]
+  constructor <;> nlinarith
+
+lemma pos_eq {y y' : ℝ} (hy : 0 < y) (hy' : 0 < y') (hc : 0 < F y - y) (hc' : 0 < F y' - y') :
+    F y - y = F y' - y' := by
+  set c := F y - y
+  set c' := F y' - y'
+  by_contra hne
+  have hδ : 0 < |c - c'| := abs_pos.mpr (sub_ne_zero.mpr hne)
+  -- a large orbit point `X` of `y`
+  obtain ⟨n, hn⟩ := exists_nat_gt ((c' ^ 2 / |c - c'| + y') / c)
+  rw [div_lt_iff₀ hc] at hn
+  set X := y + (n + 1 : ℕ) * c with hX
+  have hXo := orbit F hpos hU hL hy (n + 1)
+  have hX0 : 0 < X := hXo.1
+  have hgX : F X - X = c := by
+    rw [hXo.2, hX]; push_cast; ring
+  have hXbig : c' ^ 2 / |c - c'| + y' < X := by
+    rw [hX]; push_cast
+    have : 0 ≤ y := hy.le
+    nlinarith
+  have hdiv : 0 ≤ c' ^ 2 / |c - c'| := by positivity
+  -- the orbit point of `y'` just below `X`
+  set m := ⌊(X - y') / c'⌋₊
+  have hq : 0 ≤ (X - y') / c' := div_nonneg (by linarith) hc'.le
+  have hm1 : (m : ℝ) ≤ (X - y') / c' := Nat.floor_le hq
+  have hm2 : (X - y') / c' < m + 1 := Nat.lt_floor_add_one _
+  rw [le_div_iff₀ hc'] at hm1
+  rw [div_lt_iff₀ hc'] at hm2
+  have hwo := orbit F hpos hU hL hy' m
+  rw [show F y' - y' = c' from rfl] at hwo
+  have hgw : F (y' + m * c') - (y' + m * c') = c' := by rw [hwo.2]; ring
+  have hk := key F hpos hU hL hX0 hwo.1
+  rw [hgX, hgw, hwo.2] at hk
+  have hD := D_le_sq hX0 (show 0 ≤ y' + (m + 1) * c' by positivity)
+  have hdist : (X - (y' + (m + 1) * c')) ^ 2 ≤ c' ^ 2 := by
+    have h1 : 0 ≤ (y' + (m + 1) * c') - X := by linarith
+    have h2 : (y' + (m + 1) * c') - X ≤ c' := by linarith
+    nlinarith
+  have hfin : |c - c'| ≤ c' ^ 2 / X := by
+    calc |c - c'| ≤ _ := hk
+      _ ≤ _ := hD
+      _ ≤ c' ^ 2 / X := div_le_div_of_nonneg_right hdist hX0.le
+  -- but `X > c'^2/|c-c'|`
+  have : c' ^ 2 / X < |c - c'| := by
+    rw [div_lt_iff₀ hX0]
+    have := (div_lt_iff₀ hδ).mp (show c' ^ 2 / |c - c'| < X by linarith)
+    linarith
+  linarith
+
+/-- A fixed point and a point with positive `g = c` are at distance `≥ c`. -/
+lemma sep {z w : ℝ} (hz : 0 < z) (hw : 0 < w) (hgz : F z - z = 0) (hgw : 0 < F w - w) :
+    F w - w ≤ |w - z| := by
+  have hk := key F hpos hU hL hw hz
+  rw [hgz, sub_zero, abs_of_pos hgw, show F z = z by linarith] at hk
+  exact hk.trans (D_le_abs hw.le hz.le)
+
+theorem real_main : ∃ c : ℝ, 0 ≤ c ∧ ∀ x, 0 < x → F x = x + c := by
+  by_cases hex : ∃ y, 0 < y ∧ 0 < F y - y
+  · obtain ⟨y, hy, hc⟩ := hex
+    refine ⟨F y - y, hc.le, fun x hx => ?_⟩
+    rcases (g_nonneg F hpos hU hL hx).lt_or_eq with hx' | hx'
+    · have := pos_eq F hpos hU hL hx hy hx' hc; linarith
+    · -- `x` is a fixed point: walk from `x` to `y` in steps shorter than `c`
+      exfalso
+      set c := F y - y
+      obtain ⟨N, hN⟩ := exists_nat_gt (|y - x| / c)
+      have hN0 : (0 : ℝ) < N := lt_of_le_of_lt (by positivity) hN
+      set δ := (y - x) / N
+      have hδ : |δ| < c := by
+        rw [abs_div, abs_of_pos hN0, div_lt_iff₀ hN0]
+        rwa [div_lt_iff₀ hc, mul_comm] at hN
+      have hpt : ∀ k : ℕ, k ≤ N → 0 < x + k * δ := by
+        intro k hk
+        have hk' : (k : ℝ) ≤ N := by exact_mod_cast hk
+        have e : x + k * δ = (1 - k / N) * x + (k / N) * y := by
+          simp only [δ]; field_simp; ring
+        rw [e]
+        have h1 : 0 ≤ (k : ℝ) / N := by positivity
+        have h2 : (k : ℝ) / N ≤ 1 := (div_le_one hN0).mpr hk'
+        rcases h2.lt_or_eq with h2 | h2
+        · have : 0 < 1 - (k : ℝ) / N := by linarith
+          positivity
+        · rw [h2]; simpa using hy
+      have hwalk : ∀ k : ℕ, k ≤ N → F (x + k * δ) - (x + k * δ) = 0 := by
+        intro k
+        induction k with
+        | zero => intro _; simp only [Nat.cast_zero, zero_mul, add_zero]; linarith
+        | succ k ih =>
+          intro hk
+          have hprev := ih (by omega)
+          have hp0 := hpt k (by omega)
+          have hp1 := hpt (k + 1) hk
+          rcases (g_nonneg F hpos hU hL hp1).lt_or_eq with hlt | heq
+          · exfalso
+            have hs := sep F hpos hU hL hp0 hp1 hprev hlt
+            have hce := pos_eq F hpos hU hL hp1 hy hlt hc
+            rw [hce] at hs
+            have : |x + ((k + 1 : ℕ) : ℝ) * δ - (x + k * δ)| = |δ| := by
+              congr 1; push_cast; ring
+            rw [this] at hs
+            linarith
+          · exact heq.symm
+      have hy' := hwalk N le_rfl
+      have e : x + N * δ = y := by simp only [δ]; field_simp; ring
+      rw [e] at hy'
+      linarith
+  · push Not at hex
+    refine ⟨0, le_rfl, fun x hx => ?_⟩
+    have h1 := hex x hx
+    have h2 := g_nonneg F hpos hU hL hx
+    linarith
+
+end real
+
+end IMO2026P5
+
+open IMO2026P5 in
+theorem main_theorem (f : PositiveReal → PositiveReal) :
+    IsAdmissible f ↔
+      ∃ c : ℝ, 0 ≤ c ∧ ∀ x : PositiveReal, (f x : ℝ) = (x : ℝ) + c := by
+  constructor
+  · intro hf
+    set F : ℝ → ℝ := fun x => if h : 0 < x then (f ⟨x, h⟩ : ℝ) else 0 with hF
+    have hFx : ∀ x : PositiveReal, F x = (f x : ℝ) := by
+      intro x; simp only [hF, dif_pos x.2]
+    have hpos : ∀ x, 0 < x → 0 < F x := by
+      intro x hx; simp only [hF, dif_pos hx]; exact (f ⟨x, hx⟩).2
+    have hU : ∀ x y, 0 < x → 0 < y → (F x + y) / 2 ≤ Real.sqrt ((x ^ 2 + F y ^ 2) / 2) := by
+      intro x y hx hy
+      have := (hf ⟨x, hx⟩ ⟨y, hy⟩).1
+      simp only [hF, dif_pos hx, dif_pos hy]; exact this
+    have hL : ∀ x y, 0 < x → 0 < y → Real.sqrt (x * F y) ≤ (F x + y) / 2 := by
+      intro x y hx hy
+      have := (hf ⟨x, hx⟩ ⟨y, hy⟩).2
+      simp only [hF, dif_pos hx, dif_pos hy]; exact this
+    obtain ⟨c, hc, h⟩ := real_main F hpos hU hL
+    exact ⟨c, hc, fun x => by rw [← hFx]; exact h x x.2⟩
+  · rintro ⟨c, hc, h⟩ x y
+    rw [h x, h y]
+    have hx := x.2
+    have hy := y.2
+    set a : ℝ := (x : ℝ)
+    set t : ℝ := (y : ℝ) + c
+    have ht : 0 < t := by positivity
+    rw [show (a + c + (y : ℝ)) = a + t by ring]
+    constructor
+    · rw [ge_iff_le, Real.le_sqrt (by positivity) (by positivity)]
+      nlinarith [sq_nonneg (a - t)]
+    · rw [ge_iff_le, Real.sqrt_le_left (by positivity)]
+      nlinarith [sq_nonneg (a - t)]
