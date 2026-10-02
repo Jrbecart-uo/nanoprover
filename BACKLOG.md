@@ -6,6 +6,14 @@ and propose next tasks. Ranked by leverage within each track. Last updated
 2026-10-01.
 
 ## Where the last session (2026-09-29/30) left off — START HERE
+- **2026-10-02: (a) CLEAN-ROOM CERTIFICATE CHECK DONE.** A fresh agent wrote `erdos/1110/indep_rs/` (Rust) from
+  `indep_rs/SPEC.md` alone, without our code or the expected numbers. It reproduces GNUM exactly for (4,3) 42192162,
+  (9,2) 736074, (5,3) 2390897 and (7,2) 8385274094, all with bad = 0 and g < λ (`RESULTS.md`). Reviewer packet:
+  `erdos/1110/REVIEW.md` (claims, Lean `Cert` ↔ checker field map, where errors could hide, reproduction).
+  (b) **IMO 2026 blind**: P1 and P5 solved in Lean (`bench/solved_imo/imo_2026_p{1,5}.txt`, clean axioms,
+  statements verbatim from junaid-hasan/2026_problems). P2's statement file is unfaithful (inside-angle instead
+  of inside-triangle). P3/P4 not attempted. P6 unsolved: reduction plus conjecture (C) verified to a₁ < 1200, see
+  `bench/solved_imo/IMO2026_NOTES.md`. Do NOT look up P6 solutions if resuming blind.
 - **2026-10-01: item 2 below DONE** (appended to `erdos/1110/lean/E1110G.lean`, `lake env lean` exit 0, clean axioms).
   Unconditional upper densities of representables, each with an explicit O(log² x) error: (4,3) <= 1/3
   (`erdos1110_43_upper`: bad classes 2,5,10,11 mod 12, closed under x3 and x4 — sharper than the 1/2 planned),
