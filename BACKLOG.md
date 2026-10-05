@@ -91,6 +91,11 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   Tooling tip: sympy finds `linear_combination` multipliers (install with `pip --target` into scratch).
   2026-09-28 cleanup deleted ~58 GB of clones in `external/` (NS evidence kept in `verification/ns/`).
 
+- **USER PLAN (2026-10-05):** hypothesis-generation-and-falsification sessions on open problems. Started:
+  Erdős–Straus (`erdos_straus/`). **NEXT SESSION: Collatz (3n+1)** with the same loop (generate executable
+  hypotheses → test on growing families → literature filter → Lean for survivors). Be honest: zero expectation of
+  resolving it; the deliverables are kernel-checked partial results and recorded falsifications.
+
 ## Session-start ritual
 1. `export PATH="$HOME/.elan/bin:$PATH"`
 2. `cd ~/tmp/mathTest/nanoprover && python3 tools/repl.py start` (warm ~6s; cold
