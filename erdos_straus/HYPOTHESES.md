@@ -34,3 +34,23 @@ is 107, at p = 8 803 369.
 | H14 | a_min ≠ 15 | dead (p = 2689) |
 | H15 | a_min ≤ 6 √(ln p) ln ln p | dead (p = 118 801) |
 | H16 | p a QNR mod 7 ⇒ a_min ≤ 7 | survives (classical Mordell class, x' = 2) |
+
+## Round 2 (wilder; first 6000 primes p ≡ 1 mod 24, `hyp_round2.py`, `hyp_w11.py`)
+| # | hypothesis | verdict |
+|---|---|---|
+| W1 | a Type I solution (only x divisible by p) with x' ≤ 60 | dead (p = 167 521) |
+| W2 | a Type II solution (p divides y and z) with y', z' < 40 | dead (p = 241) |
+| W3 | a_min ≥ 23 ⇒ p is a QR mod 5, 7, 11, 13 | dead (p = 1201) |
+| W4 | a_min ≤ the first a with (p+a)/4 composite | dead (p = 193) |
+| W5 | #working a ≤ 400 is ≥ ln p | dead (p = 73) |
+| W6 | (a = 3 fails) a = 7 works ⇔ (p+7)/4 or p has a prime factor that is a QNR mod 7 | **survives** (exact a = 7 criterion) |
+| W7 | naive mod-11 analog of W6 | dead (p = 1201) |
+| W8 | a_min ≤ 3 + 4·#{prime factors of (p+3)/4 that are ≡ 1 mod 3} | dead (p = 1129) |
+| W9 | (p+3)/4 prime ⇒ a_min ≤ 7 | dead (p = 1129) |
+| W10 | a_min ≤ 7 unless p is a QR mod 7 | survives (= classical class) |
+| W11 | a works ⇔ −1 ∈ ⟨prime factors of p·(p+a)/4⟩ ≤ (Z/a)* | **half**: "⇒" never fails (37 500 pairs, a ≤ 99); "⇐" fails 8 088 times because divisors of (px)² have bounded exponents. A necessary condition: an obstruction tool, not an existence tool |
+
+Takeaways: the hard primes are those where, for every small a, the prime factors of p·(p+a)/4 sit in a subgroup avoiding −1
+(mod a), or exponent caps block the needed residue. Proving ES therefore needs a sieve-type statement: for some a ≤ A(p)
+the factorisation of (p+a)/4 is "rich enough" mod a. That is the open core (cf. arXiv 2608.24035, sieve dimension for
+n ≡ 1 mod 24). H4 (a_min ≤ (ln p)²) is the cleanest empirical form of it.
