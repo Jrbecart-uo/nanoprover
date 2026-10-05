@@ -162,3 +162,29 @@ Certificates (s=1, H=12, slack 7): (9,2) base 2 D=26 GNUM=736074 (g=0.3509874, r
 (5,3) base 3 D=17 GNUM=2390897 (g=0.7600457, ratio 1.1134). `verifyd` bad=0 on all states; independent
 Python probe agrees exactly on 404 states each (incl. argmax). Tables in `data_pow/` (gitignored, SHA256SUMS).
 For (5,3), height slack matters (residues force the parity of h in base 3): slack 3 -> 1.147, 7 -> 1.1416 at D=13-14.
+
+## 2026-10-02: (5,2) "almost all representable" — scouting
+**Data** (`repdfs 5 2 mc L N seed`, exact test, uniform n in [2^(L-1), 2^L)):
+
+| L | 24 | 32 | 40 | 48 | 56 | 64 |
+|---|---|---|---|---|---|---|
+| samples | 2e5 | 2e5 | 2e5 | 1e6 | 1e6 | 6e5 |
+| non-representable fraction | 0.1073 | 0.0242 | 0.00524 | 7.5e-4 | 2.1e-4 | inconclusive (0 confirmed, 704 hit the 2e7-node limit) |
+
+The fraction falls by about 0.2× per 8 bits from L = 32 on, so #{n ≤ X non-representable} ≈ X^(1-0.28): density 0,
+and plausibly a power saving. At L = 64 the DFS node limit makes the test inconclusive; a sharper decision procedure
+(memoised on (m, a)) is needed beyond L ≈ 56.
+**Structure of failures** (L = 32, 2435 non-representables out of 1e5): 80% have odd part ≡ 3 (mod 4).
+Every first step then gains exactly one bit, since 5^a ≡ 1 (mod 4) makes m - 5^a ≡ 2 (mod 4). Failures also cluster
+where the odd part sits just below a power of 5 (frac(log_5 m) in [0.6, 1): 77%) and at n ≡ 0, 1 (mod 5).
+So failures are local events at the start of the decoding (the bottom bits and the top exponent), consistent
+with a branching process whose initial offspring count (~0.43 L choices of the top exponent) grows with L.
+**Proof outlook.** The certificate method cannot give density 1. It lower-bounds the number of encodable residues
+mod 2^{sN} and maps them injectively to integers up to C·2^{sN}, with C ≈ 10^(10^6), so the density it yields is
+tiny by construction. A density-1 proof would have to decode n itself: show that the tree of decoding paths of a
+random n (bottom-up: subtract 5^a with a decreasing, strip 2s, end exactly at a power of 5) is nonempty with
+probability → 1. The natural tools are a second-moment bound on the number of complete paths, or a
+branching-process-in-random-environment argument; the 2-adic part is exactly uniform but the termination
+condition is archimedean. That is research-level, with no concrete handle yet. Not pursued further; the data is
+recorded here for a future attempt.
+

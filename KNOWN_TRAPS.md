@@ -240,3 +240,18 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
   beta-reduced); use `Nat.eq_of_mul_eq_mul_left (by norm_num : 0 < 9) h`.
 - `Nat.mul_div_le x M : M * (x / M) ≤ x` (M on the LEFT); `omega` treats `M * (x/M)` and `x/M * M` as different atoms.
 - Rename: `Finset.filter_card_add_filter_neg_card_eq_card` → `Finset.card_filter_add_card_filter_not`.
+
+## Added 2026-10-02 (IMO 2026 P1/P5, Putnam 1995_b1 / 1997_b4, E1110G (7,2) instance)
+- **`Finset.antidiagonal` is now the HahnSeries `IsPWO` construction** (`Finset.antidiagonal hs ht a`), not the
+  `HasAntidiagonal` one: writing `Finset.antidiagonal k` fails with "expected IsPWO". The `Finset.Nat.sum_antidiagonal_*`
+  lemmas are stated with `Finset.HasAntidiagonal.antidiagonal` — write that name explicitly (`_root_` does not help).
+- **`set U := Finset.range 9 with hU` silently created shadow copies of hypotheses whose types mention it**
+  (`P1✝ : Finpartition (range 9)` vs `P1 : Finpartition U`), and later `rw`/`exact` failed with type mismatches.
+  Escape: don't `set` a term that appears in the TYPES of earlier variables; write it out.
+- `Finset.induction_on_max` alternatives are named `empty` / `insert` (not `h0` / `step`).
+- `decide` on `∀ S ∈ (Finset.range 10).powerset, …` hits maxRecDepth; prove the counting fact by induction instead.
+- `one_le_padicValNat_of_dvd` needs `[Fact p.Prime]`: add `haveI := Fact.mk hp` locally.
+- Deprecations seen: `Finsupp.finset_sum_apply` → `Finsupp.finsetSum_apply`; `padicValNat.one` → `padicValNat_one_right`.
+- **Downloading "statement" repos blind**: math-ai-org/IMO2026's `IMO2026Pn.lean` files are full PROOFS (no `sorry`).
+  Check sizes and `sorry` presence BEFORE reading anything from a competition repo; delete proof files unread.
+
