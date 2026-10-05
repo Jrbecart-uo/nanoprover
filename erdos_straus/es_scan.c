@@ -3,7 +3,7 @@
 // structure of a witness.  Method: a/(p x) = 1/y + 1/z iff some divisor d of B^2 (B = p x), d < B, has
 // d ≡ -B (mod a); then y = (B+d)/a, z = (B+B^2/d)/a.  d = p^e * d', d' | x^2, e in {0,1,2}.
 // Output CSV: p, a_min, e, dprime, count_of_working_a(<=AMAX), first_four_working_a
-// usage: es_scan N AMAX
+// usage: es_scan N AMAX [records]   (records: print only new maxima of a_min, then a histogram)
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -19,7 +19,7 @@ static int divs_sq(u64 x, u64 *out) {  // all divisors of x^2
   return n;
 }
 int main(int argc, char **argv) {
-  u64 N = atoll(argv[1]); int AMAX = atoi(argv[2]);
+  u64 N = atoll(argv[1]); int AMAX = atoi(argv[2]); int REC = argc > 3; int recmax = 0; static u64 hist[4096];
   u64 XM = (N + AMAX) / 4 + 2;
   spf = malloc(sizeof(int) * (XM + 1));
   for (u64 i = 0; i <= XM; i++) spf[i] = 0;
@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
   char *comp = calloc(N + 1, 1);
   for (u64 i = 2; i * i <= N; i++) if (!comp[i]) for (u64 j = i * i; j <= N; j += i) comp[j] = 1;
   u64 *dv = malloc(sizeof(u64) * 200000);
-  printf("p,a_min,e,dprime,nwork,a1,a2,a3,a4\n");
+  if (!REC) printf("p,a_min,e,dprime,nwork,a1,a2,a3,a4\n");
   for (u64 p = 25; p < N; p += 24) {
     if (comp[p]) continue;
     int amin = -1, ebest = -1, nw = 0; u64 dbest = 0; int alist[4] = {0, 0, 0, 0};
@@ -46,7 +46,10 @@ int main(int argc, char **argv) {
       }
       if (ok) { if (amin < 0) { amin = a; ebest = eok; dbest = dok; } if (nw < 4) alist[nw] = a; nw++; }
     }
-    printf("%llu,%d,%d,%llu,%d,%d,%d,%d,%d\n", p, amin, ebest, dbest, nw, alist[0], alist[1], alist[2], alist[3]);
+    if (REC) { if (amin < 0) { printf("UNSOLVED p=%llu (a<=%d)\n", p, AMAX); fflush(stdout); }
+               else { hist[amin]++; if (amin > recmax) { recmax = amin; printf("record p=%llu a_min=%d nwork=%d\n", p, amin, nw); fflush(stdout); } } }
+    else printf("%llu,%d,%d,%llu,%d,%d,%d,%d,%d\n", p, amin, ebest, dbest, nw, alist[0], alist[1], alist[2], alist[3]);
   }
+  if (REC) { printf("histogram a_min:"); for (int a = 0; a < 4096; a++) if (hist[a]) printf(" %d:%llu", a, hist[a]); printf("\nDONE\n"); }
   return 0;
 }
