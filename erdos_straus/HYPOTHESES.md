@@ -9,6 +9,8 @@ classes mod 840 are all ≡ 1 (mod 24). Erdos242 forum lists one proof claim.
 - `es_of_not_one_mod_24`: ES n for n > 2, n ≢ 1 (mod 24), from five explicit identities.
 - `es_mul` + `es_of_prime_factor`: ES is closed under multiples, so ES holds unless every prime factor of n is ≡ 1 (mod 24).
 - `es_of_cert`: any certificate (a, d) with 4x = n + a, d | (nx)², d < nx, a | nx + d, a | nx + (nx)²/d gives ES n.
+- `es_mordell` (**Mordell's theorem**): ES n for every n > 2 outside n ≡ 1, 121, 169, 289, 361, 529 (mod 840), via five more
+  identities (mod 7: n ≡ 3, 5, 6; mod 15: n ≡ 7, 13) plus scaling from ES 5 and ES 7. Matches R3-6: least non-residue 5 or 7 ⇒ easy.
 - `es_of_divisor_two_mod_three`: n ≡ 1 (mod 12) and (n+3)/4 having a divisor ≡ 2 (mod 3) give ES n. This is a divisor
   criterion, not a congruence criterion, so it reaches inside the hard class.
 

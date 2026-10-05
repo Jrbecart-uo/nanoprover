@@ -255,3 +255,11 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
 - **Downloading "statement" repos blind**: math-ai-org/IMO2026's `IMO2026Pn.lean` files are full PROOFS (no `sorry`).
   Check sizes and `sorry` presence BEFORE reading anything from a competition repo; delete proof files unread.
 
+## Added 2026-10-05 (Erdős–Straus, `erdos_straus/ES24.lean`)
+- **`omega` is incomplete on CRT-style residue bookkeeping** (n % 24, n % 5, n % 7, n % 15 vs n % 840): it reports a
+  "possible counterexample" for a true goal, even after splitting into 6 residue cases. `interval_cases` over 840
+  residues timed out (heartbeats). Escape: write r = n % 840 = 24t + 1 (t < 35), transfer each hypothesis with
+  `Nat.mod_mod_of_dvd`, and close the 35 cases with ONE `decide` lemma.
+- `decide` could not synthesize `Decidable (∀ t < 35, …)` for a long implication chain; `∀ t ∈ Finset.range 35, …` works.
+- `omega` does not split a hypothesis that is a conjunction of `≠` facts; `obtain ⟨c1, …⟩ := h` first.
+

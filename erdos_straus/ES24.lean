@@ -184,9 +184,76 @@ theorem es_of_divisor_two_mod_three {n d : ℕ} (hn : n % 12 = 1) (hn1 : 1 < n) 
       simp
     exact Nat.dvd_of_mod_eq_zero this
 
+/-! ## Mordell's theorem: everything outside the six square classes mod 840 -/
+
+lemma es_7k3 {k : ℕ} (hk : 1 ≤ k) : ES (7 * k + 3) := by
+  refine ⟨2 * k + 1, 2 * (7 * k + 3), 2 * (7 * k + 3) * (2 * k + 1), by omega, by omega, by nlinarith, ?_⟩
+  push_cast; field_simp; ring
+
+lemma es_7k6 {k : ℕ} (hk : 1 ≤ k) : ES (7 * k + 6) := by
+  refine ⟨2 * k + 2, 2 * (7 * k + 6), 2 * (7 * k + 6) * (k + 1), by omega, by omega, by nlinarith, ?_⟩
+  push_cast; field_simp; ring
+
+lemma es_7k5 {k : ℕ} (hk : 2 ≤ k) : ES (7 * k + 5) := by
+  refine ⟨2 * k + 2, 2 * (7 * k + 5), (7 * k + 5) * (k + 1), by omega, by omega, by nlinarith, ?_⟩
+  push_cast; field_simp; ring
+
+lemma es_15k7 {k : ℕ} (hk : 1 ≤ k) : ES (15 * k + 7) := by
+  refine ⟨4 * k + 2, 4 * (15 * k + 7), 4 * (15 * k + 7) * (2 * k + 1), by omega, by omega, by nlinarith, ?_⟩
+  push_cast; field_simp; ring
+
+lemma es_15k13 {k : ℕ} (hk : 2 ≤ k) : ES (15 * k + 13) := by
+  refine ⟨4 * k + 4, 4 * (15 * k + 13), 2 * (15 * k + 13) * (k + 1), by omega, by omega, by nlinarith, ?_⟩
+  push_cast; field_simp; ring
+
+/-- The residue bookkeeping behind Mordell's theorem: the 35 classes `≡ 1 (mod 24)` mod 840. -/
+lemma mordell_residues : ∀ t ∈ Finset.range 35, (24 * t + 1) % 5 ≠ 0 → (24 * t + 1) % 7 ≠ 0 → (24 * t + 1) % 15 ≠ 7 →
+    (24 * t + 1) % 15 ≠ 13 → (24 * t + 1) % 7 ≠ 3 → (24 * t + 1) % 7 ≠ 6 → (24 * t + 1) % 7 ≠ 5 →
+    24 * t + 1 = 1 ∨ 24 * t + 1 = 121 ∨ 24 * t + 1 = 169 ∨ 24 * t + 1 = 289 ∨ 24 * t + 1 = 361 ∨ 24 * t + 1 = 529 := by
+  decide
+
+/-- **Mordell's theorem, kernel-checked.** Erdős–Straus holds for every `n > 2` outside the six classes
+`n ≡ 1, 121, 169, 289, 361, 529 (mod 840)` (the squares mod 840 that are `≡ 1 mod 24`, i.e. `n` a quadratic
+residue mod 3, 5, 7, 8). -/
+theorem es_mordell (n : ℕ) (hn : 2 < n)
+    (h840 : n % 840 ≠ 1 ∧ n % 840 ≠ 121 ∧ n % 840 ≠ 169 ∧ n % 840 ≠ 289 ∧ n % 840 ≠ 361 ∧ n % 840 ≠ 529) :
+    ES n := by
+  obtain ⟨c1, c2, c3, c4, c5, c6⟩ := h840
+  by_cases h24 : n % 24 = 1
+  · have hn25 : 25 ≤ n := by omega
+    by_cases h5 : n % 5 = 0
+    · obtain ⟨m, rfl⟩ : 5 ∣ n := Nat.dvd_of_mod_eq_zero h5
+      rw [mul_comm]; exact es_mul (by omega) (es_of_not_one_mod_24 5 (by norm_num) (by norm_num))
+    by_cases h7 : n % 7 = 0
+    · obtain ⟨m, rfl⟩ : 7 ∣ n := Nat.dvd_of_mod_eq_zero h7
+      rw [mul_comm]; exact es_mul (by omega) (es_of_not_one_mod_24 7 (by norm_num) (by norm_num))
+    by_cases h15a : n % 15 = 7
+    · rw [show n = 15 * (n / 15) + 7 by omega]; exact es_15k7 (by omega)
+    by_cases h15b : n % 15 = 13
+    · rw [show n = 15 * (n / 15) + 13 by omega]; exact es_15k13 (by omega)
+    by_cases h73 : n % 7 = 3
+    · rw [show n = 7 * (n / 7) + 3 by omega]; exact es_7k3 (by omega)
+    by_cases h76 : n % 7 = 6
+    · rw [show n = 7 * (n / 7) + 6 by omega]; exact es_7k6 (by omega)
+    by_cases h75 : n % 7 = 5
+    · rw [show n = 7 * (n / 7) + 5 by omega]; exact es_7k5 (by omega)
+    exfalso
+    have m5 : n % 5 = n % 840 % 5 := (Nat.mod_mod_of_dvd n (by norm_num)).symm
+    have m7 : n % 7 = n % 840 % 7 := (Nat.mod_mod_of_dvd n (by norm_num)).symm
+    have m15 : n % 15 = n % 840 % 15 := (Nat.mod_mod_of_dvd n (by norm_num)).symm
+    have m24 : n % 24 = n % 840 % 24 := (Nat.mod_mod_of_dvd n (by norm_num)).symm
+    have hr : n % 840 < 840 := Nat.mod_lt _ (by norm_num)
+    generalize n % 840 = r at *
+    obtain ⟨t, rfl⟩ : ∃ t, r = 24 * t + 1 := ⟨r / 24, by omega⟩
+    have ht : t < 35 := by omega
+    rw [m5] at h5; rw [m7] at h7 h73 h76 h75; rw [m15] at h15a h15b
+    rcases mordell_residues t (Finset.mem_range.mpr ht) h5 h7 h15a h15b h73 h76 h75 with h | h | h | h | h | h <;> omega
+  · exact es_of_not_one_mod_24 n hn h24
+
 end ErdosStraus
 
 #print axioms ErdosStraus.es_of_not_one_mod_24
 #print axioms ErdosStraus.es_of_prime_factor
 #print axioms ErdosStraus.es_of_cert
 #print axioms ErdosStraus.es_of_divisor_two_mod_three
+#print axioms ErdosStraus.es_mordell
