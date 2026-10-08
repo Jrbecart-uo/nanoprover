@@ -5,7 +5,7 @@ Durable handoff. A new session can read this + the auto-memory (`nanoprover-proj
 and propose next tasks. Ranked by leverage within each track. Last updated
 2026-10-08.
 
-## Where the last session (2026-09-29/30) left off — START HERE
+## Where the last session (2026-10-01 → 10-08) left off — START HERE (plan of 2026-10-08 first)
 - **2026-10-02: (a) CLEAN-ROOM CERTIFICATE CHECK DONE.** A fresh agent wrote `erdos/1110/indep_rs/` (Rust) from
   `indep_rs/SPEC.md` alone, without our code or the expected numbers. It reproduces GNUM exactly for (4,3) 42192162,
   (9,2) 736074, (5,3) 2390897 and (7,2) 8385274094, all with bad = 0 and g < λ (`RESULTS.md`). Reviewer packet:
