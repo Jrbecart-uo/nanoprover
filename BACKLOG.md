@@ -3,7 +3,7 @@
 Durable handoff. A new session can read this + the auto-memory (`nanoprover-project`,
 `nanoprover-env`, `nanoprover-roadmap`, `cdc-formalization`, `naskrecki-problem`)
 and propose next tasks. Ranked by leverage within each track. Last updated
-2026-10-01.
+2026-10-08.
 
 ## Where the last session (2026-09-29/30) left off — START HERE
 - **2026-10-02: (a) CLEAN-ROOM CERTIFICATE CHECK DONE.** A fresh agent wrote `erdos/1110/indep_rs/` (Rust) from
@@ -91,6 +91,20 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   Tooling tip: sympy finds `linear_combination` multipliers (install with `pip --target` into scratch).
   2026-09-28 cleanup deleted ~58 GB of clones in `external/` (NS evidence kept in `verification/ns/`).
 
+- **PLAN (2026-10-08), ranked:**
+  1. **Project Euler #1012** (published Oct 3; finish before Oct 10 to stay within its publication week), then **#1013** (Oct 10).
+  2. **Collatz session** (user-requested): same loop as Erdős–Straus. Goals: Lean-checked residue-class descent
+     certificates ("all n ≡ r mod 2^k drop below n within j steps"), a hypothesis log, honest framing.
+  3. **openai/math audit track** (new; 416 Comparator challenges, 719 manuscripts, ~42% formalized, 3 withdrawn Oct 7):
+     audit the faithfulness of number-theory / combinatorics challenge statements against their papers (a misformalized
+     statement is how a false claim passes), starting with ~10 (e.g. EgyptianFractions/Problem337, totient fibers,
+     Erdős–Pomerance #012). Any upstream report is the user's call. Checked 2026-10-08: none of their manuscripts
+     touches Erdős #1110 or Erdős–Straus.
+  User-only: arrange the expert review for #1110 (`erdos/1110/REVIEW.md` is ready); decide on the held (4,3) forum
+  claim; submit PE #1008–#1011 and report confirmations.
+  Parked: Erdős–Straus (open core = R3-8, documented); (9,2)/(5,3) density (finite certificates dead); (5,2) density 1
+  (research-level); IMO 2026 P6 conjecture (C) (blind; revisit only without lookups); RH via Robin (low value now that
+  quasi-RH is proved).
 - **USER PLAN (2026-10-05):** hypothesis-generation-and-falsification sessions on open problems. Started:
   Erdős–Straus (`erdos_straus/`). **NEXT SESSION: Collatz (3n+1)** with the same loop (generate executable
   hypotheses → test on growing families → literature filter → Lean for survivors). Be honest: zero expectation of
