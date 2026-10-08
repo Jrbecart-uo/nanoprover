@@ -92,7 +92,8 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   2026-09-28 cleanup deleted ~58 GB of clones in `external/` (NS evidence kept in `verification/ns/`).
 
 - **PLAN (2026-10-08), ranked:**
-  1. **Project Euler #1012** (published Oct 3; finish before Oct 10 to stay within its publication week), then **#1013** (Oct 10).
+  1. ✅ 2026-10-08: **PE #1012 SOLVED** (`euler/p1012*.py`; answer given in chat, user submits). **#1013** is already
+     live (25 divisors, sigma divisible by 25, sum below 1e15) — next.
   2. **Collatz session** (user-requested): same loop as Erdős–Straus. Goals: Lean-checked residue-class descent
      certificates ("all n ≡ r mod 2^k drop below n within j steps"), a hypothesis log, honest framing.
   3. **openai/math audit track** (new; 416 Comparator challenges, 719 manuscripts, ~42% formalized, 3 withdrawn Oct 7):
