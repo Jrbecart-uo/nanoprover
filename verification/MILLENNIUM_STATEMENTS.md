@@ -30,3 +30,20 @@ Plan:
    integral X is 1-dimensional; the class of X itself is nonzero; Lefschetz (1,1) shape.
 4. Report findings as brief issues/PRs upstream (their AGENT.md: ASD-STE100 English,
    one-sentence commits).
+
+## Update 2026-10-08: quasi-Riemann hypothesis (θ = 7/8) proved and formally verified
+- openai/math (repo created 2026-10-06; preprint "The Quasi-Riemann Hypothesis", Oct 5 2026, Re s > 11/12, plus the companion
+  7/8 paper) claims: ζ(s), every Dirichlet L-function and every finite-order Hecke L-function over Q(√−3) have no zeros
+  with Re s > 7/8, for every height and conductor. This rules out Landau–Siegel zeros.
+- Lean: `ComparatorChallenges/QuasiRiemannHypothesis.lean` states `riemannZeta s ≠ 0` for `7/8 < s.re`, using only Mathlib
+  (faithful: same `riemannZeta` we audited above; Mathlib's junk value at s = 1 is ≈ −0.98 ≠ 0, so it doesn't weaken the
+  claim). There is also a Dirichlet-L version (`DirichletSevenEighths`). The `lean/patches/` folder ports third-party
+  dependencies to Lean v4.34.1; Mathlib is pinned to an unmodified upstream commit (checked 2026-10-08).
+- Independently rebuilt and confirmed by github.com/tomoto0/quasi-riemann-hypothesis-7-8-verification (2924 modules, 0 errors,
+  standard axioms; core identities re-checked in exact arithmetic). That repo did NOT build the Hecke challenge (custom
+  definitions). We did not re-run it ourselves: no duplication, at the user's call.
+- RH itself (all zeros on Re s = 1/2) remains OPEN; the gap is now 7/8 → 1/2. Our own numerical check (2026-10-07: all
+  4520 zeros up to height 5000 on the line; |M(x)| ≤ 0.57√x for x ≤ 10^9) is consistent and adds nothing new.
+- For our Erdős–Straus work: the claimed consequence lqnr(p) ≪ (log p)^C (Vinogradov's conjecture) turns our empirical
+  R3-8 (a_min ≤ 5·lqnr) into a polylog bound, but R3-8 is itself the missing step. So it does not change what is open there.
+
