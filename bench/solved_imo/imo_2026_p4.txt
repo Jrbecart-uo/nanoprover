@@ -1,0 +1,233 @@
+import Mathlib
+set_option backward.isDefEq.respectTransparency false
+
+/-!
+IMO 2026 Problem 4 (triangle-cutting game), solved blind 2026-10-22. Statement verbatim from
+junaid-hasan/2026_problems `p4.lean` (checked against the official English text); answer θ = 180/n, n ≥ 2.
+
+Idea.
+* (⇐) θ = 180/n. A triangle with an angle (k+1)θ is winning: cut from that vertex so it splits into θ
+  (that child wins at once) and kθ (induction). From any triangle, cut from a largest angle α so the angle
+  at the cut point is jθ with j = ⌊γ/θ⌋+1; the children carry jθ and 180 − jθ = (n−j)θ. This is admissible
+  when α > θ; otherwise all angles are ≤ θ ≤ 90 and j = 1 works (or θ is already present).
+* (⇒) Shan-Yu's invariant: no angle is an integer multiple of θ. If both children of a cut broke it, the
+  four cases give 180 = mθ (so θ = 180/n), or γ, β or the apex angle = mθ. Start from (θ/2, θ/2, 180 − θ).
+Checked: `repl.py check` PASS, `#print axioms TriangleGame.main_theorem` = [propext, Classical.choice, Quot.sound].
+-/
+
+namespace TriangleGame
+
+/-- A triangle, viewed as the multiset of its three interior angles (in degrees):
+positive reals summing to `180`. -/
+def IsTriangle (s : Multiset ℝ) : Prop :=
+  s.card = 3 ∧ (∀ x ∈ s, 0 < x) ∧ s.sum = 180
+
+/-- A triangle `s` has an interior angle equal to `θ`. -/
+def HasAngle (θ : ℝ) (s : Multiset ℝ) : Prop := θ ∈ s
+
+/-- One admissible cut of the triangle `s`, producing children `L` and `R`.
+
+We pick an apex angle `α` and the two base angles `β, γ` (so `s = {α, β, γ}`), and a
+cut parameter `x` in the open interval `(γ, 180 - β)`. The resulting two triangles
+have angle multisets `L = {β, x, 180 - β - x}` and `R = {γ, 180 - x, x - γ}`.
+Ranging over all `α, β, γ` with `s = {α, β, γ}` captures all three apex choices and
+both assignments of the two base angles. -/
+def IsCut (s L R : Multiset ℝ) : Prop :=
+  ∃ α β γ x : ℝ,
+    s = {α, β, γ} ∧ γ < x ∧ x < 180 - β ∧
+      L = {β, x, 180 - β - x} ∧ R = {γ, 180 - x, x - γ}
+
+/-- The set of triangles from which Mulan can force, in finitely many steps, a
+triangle with an interior angle equal to `θ`, no matter how Shan-Yu discards.
+
+This is the least predicate closed under:
+* (`win`) if the current triangle already has an angle equal to `θ`, Mulan has won;
+* (`move`) if Mulan can make a cut producing children `L` and `R` from *both* of
+  which she wins (so whichever one Shan-Yu keeps, she still wins), then she wins
+  from the current triangle.
+
+Membership means Mulan wins in finitely many steps. -/
+inductive MulanWins (θ : ℝ) : Multiset ℝ → Prop
+  | win {s : Multiset ℝ} (h : HasAngle θ s) : MulanWins θ s
+  | move {s L R : Multiset ℝ} (hcut : IsCut s L R)
+      (hL : MulanWins θ L) (hR : MulanWins θ R) : MulanWins θ s
+
+/-- Mulan can guarantee victory for the value `θ`: from every valid starting
+triangle she wins in finitely many steps regardless of Shan-Yu's play. -/
+def MulanCanGuarantee (θ : ℝ) : Prop :=
+  ∀ s : Multiset ℝ, IsTriangle s → MulanWins θ s
+
+/-! ## Proof -/
+
+lemma mem3 {a b c y : ℝ} : y ∈ ({a, b, c} : Multiset ℝ) ↔ y = a ∨ y = b ∨ y = c := by simp
+
+lemma sum3 (a b c : ℝ) : ({a, b, c} : Multiset ℝ).sum = a + b + c := by simp; ring
+
+lemma swap12 (a b c : ℝ) : ({a, b, c} : Multiset ℝ) = {b, a, c} := by
+  simp only [Multiset.insert_eq_cons]; exact Multiset.cons_swap a b _
+
+lemma swap23 (a b c : ℝ) : ({a, b, c} : Multiset ℝ) = {a, c, b} := by
+  simp only [Multiset.insert_eq_cons, ← Multiset.cons_zero]; rw [Multiset.cons_swap b c]
+
+lemma rot3 (a b c : ℝ) : ({a, b, c} : Multiset ℝ) = {b, c, a} := by
+  rw [swap12, swap23]
+
+lemma rot3' (a b c : ℝ) : ({a, b, c} : Multiset ℝ) = {c, a, b} := by
+  rw [swap23, swap12]
+
+lemma swap13 (a b c : ℝ) : ({a, b, c} : Multiset ℝ) = {c, b, a} := by
+  rw [swap12, swap23, swap12]
+
+macro "perm3" : tactic => `(tactic| (first | rfl | exact swap12 _ _ _ | exact swap23 _ _ _ | exact rot3 _ _ _ | exact rot3' _ _ _ | exact swap13 _ _ _))
+
+/-- A triangle with an angle `(k+1)θ` is winning: split that angle into `θ` and `kθ`. -/
+lemma win_of_mult {θ : ℝ} (hθ : 0 < θ) : ∀ k : ℕ, ∀ α β γ : ℝ, 0 < β → 0 < γ →
+    α + β + γ = 180 → α = (k + 1) * θ → MulanWins θ {α, β, γ} := by
+  intro k
+  induction k with
+  | zero =>
+    intro α β γ _ _ _ h
+    exact MulanWins.win (by simp [HasAngle, h])
+  | succ k ih =>
+    intro α β γ hβ hγ hs hα
+    push_cast at hα
+    have hk : (0 : ℝ) ≤ k := Nat.cast_nonneg k
+    refine MulanWins.move (L := {β, 180 - β - θ, 180 - β - (180 - β - θ)})
+      (R := {γ, 180 - (180 - β - θ), (180 - β - θ) - γ})
+      ⟨α, β, γ, 180 - β - θ, rfl, by nlinarith, by linarith, rfl, rfl⟩ ?_ ?_
+    · exact MulanWins.win (by simp [HasAngle])
+    · have e1 : 180 - (180 - β - θ) = β + θ := by ring
+      have e2 : (180 - β - θ) - γ = α - θ := by linarith
+      rw [e1, e2]
+      have := ih (α - θ) γ (β + θ) hγ (by linarith) (by linarith) (by rw [hα]; ring)
+      convert this using 1; perm3
+
+/-- If `θ = 180/n` and the cut angle `jθ` is admissible, both children are winning. -/
+lemma cut_win {θ : ℝ} (hθ : 0 < θ) {n : ℕ} (hnθ : (n : ℝ) * θ = 180)
+    {α β γ : ℝ} (hβ : 0 < β) (hγ : 0 < γ) (hs : α + β + γ = 180)
+    {j : ℕ} (hj : 1 ≤ j) (hlo : γ < j * θ) (hhi : j * θ < 180 - β) :
+    MulanWins θ {α, β, γ} := by
+  have hjn : j < n := by
+    have : (j : ℝ) * θ < n * θ := by linarith
+    exact_mod_cast lt_of_mul_lt_mul_right this hθ.le
+  refine MulanWins.move ⟨α, β, γ, j * θ, rfl, hlo, hhi, rfl, rfl⟩ ?_ ?_
+  · have := win_of_mult hθ (j - 1) (j * θ) β (180 - β - j * θ) hβ (by linarith) (by ring)
+      (by rw [Nat.cast_sub hj]; push_cast; ring)
+    convert this using 1; perm3
+  · have := win_of_mult hθ (n - j - 1) (180 - j * θ) γ (j * θ - γ) hγ (by linarith) (by ring)
+      (by rw [Nat.cast_sub (by omega), Nat.cast_sub hjn.le]; push_cast; linarith)
+    convert this using 1; perm3
+
+/-- With `α` a largest angle, Mulan wins when `θ = 180/n`. -/
+lemma win_ordered {θ : ℝ} (hθ : 0 < θ) {n : ℕ} (hn : 2 ≤ n) (hnθ : (n : ℝ) * θ = 180)
+    {α β γ : ℝ} (hα : 0 < α) (hβ : 0 < β) (hγ : 0 < γ) (hs : α + β + γ = 180)
+    (hβα : β ≤ α) (hγα : γ ≤ α) : MulanWins θ {α, β, γ} := by
+  have hθ90 : θ ≤ 90 := by
+    have : (2 : ℝ) ≤ n := by exact_mod_cast hn
+    nlinarith
+  by_cases hαθ : θ < α
+  · -- j = ⌊γ/θ⌋ + 1
+    set j := ⌊γ / θ⌋₊ + 1 with hjdef
+    have h1 : γ / θ < j := by rw [hjdef]; push_cast; exact Nat.lt_floor_add_one _
+    have h2 : (⌊γ / θ⌋₊ : ℝ) ≤ γ / θ := Nat.floor_le (div_nonneg hγ.le hθ.le)
+    have hlo : γ < j * θ := by rwa [div_lt_iff₀ hθ] at h1
+    have hhi : j * θ < 180 - β := by
+      have : (⌊γ / θ⌋₊ : ℝ) * θ ≤ γ := by rwa [le_div_iff₀ hθ] at h2
+      rw [hjdef]; push_cast; nlinarith
+    exact cut_win hθ hnθ hβ hγ hs (by omega) hlo hhi
+  · push Not at hαθ
+    rcases eq_or_lt_of_le (le_trans hγα hαθ) with h | h
+    · exact MulanWins.win (by simp [HasAngle, h])
+    · exact cut_win hθ hnθ hβ hγ hs (j := 1) le_rfl (by simpa using h) (by
+        simp only [Nat.cast_one, one_mul]; nlinarith)
+
+lemma win_tri {θ : ℝ} (hθ : 0 < θ) {n : ℕ} (hn : 2 ≤ n) (hnθ : (n : ℝ) * θ = 180)
+    (s : Multiset ℝ) (hs : IsTriangle s) : MulanWins θ s := by
+  obtain ⟨hc, hpos, hsum⟩ := hs
+  obtain ⟨a, b, c, rfl⟩ := Multiset.card_eq_three.mp hc
+  have ha := hpos a (by simp); have hb := hpos b (by simp); have hc' := hpos c (by simp)
+  rw [sum3] at hsum
+  rcases le_total b a with hab | hab <;> rcases le_total c a with hac | hac <;>
+    rcases le_total c b with hbc | hbc
+  all_goals first
+    | exact win_ordered hθ hn hnθ ha hb hc' hsum (by linarith) (by linarith)
+    | (have := win_ordered hθ hn hnθ hb ha hc' (by linarith) (by linarith) (by linarith)
+       convert this using 1; perm3)
+    | (have := win_ordered hθ hn hnθ hc' ha hb (by linarith) (by linarith) (by linarith)
+       convert this using 1; perm3)
+
+/-- Shan-Yu's invariant: angle sum 180 and no angle is an integer multiple of `θ`. -/
+def Bad (θ : ℝ) (s : Multiset ℝ) : Prop := s.sum = 180 ∧ ∀ y ∈ s, ∀ k : ℤ, y ≠ k * θ
+
+lemma not_wins_of_bad {θ : ℝ} (h180 : ∀ m : ℤ, (180 : ℝ) ≠ m * θ) {s : Multiset ℝ}
+    (hw : MulanWins θ s) : ¬ Bad θ s := by
+  induction hw with
+  | win h => exact fun hb => hb.2 θ h 1 (by simp)
+  | @move s L R hcut _ _ ihL ihR =>
+    intro hb
+    obtain ⟨α, β, γ, x, rfl, hγx, hxβ, rfl, rfl⟩ := hcut
+    obtain ⟨hsum, hnm⟩ := hb
+    rw [sum3] at hsum
+    have nα := hnm α (by simp); have nβ := hnm β (by simp); have nγ := hnm γ (by simp)
+    have hL : ∃ y ∈ ({β, x, 180 - β - x} : Multiset ℝ), ∃ k : ℤ, y = k * θ := by
+      by_contra hc; push Not at hc; exact ihL ⟨by rw [sum3]; ring, hc⟩
+    have hR : ∃ y ∈ ({γ, 180 - x, x - γ} : Multiset ℝ), ∃ k : ℤ, y = k * θ := by
+      by_contra hc; push Not at hc; exact ihR ⟨by rw [sum3]; ring, hc⟩
+    obtain ⟨y, hy, k, hk⟩ := hL
+    obtain ⟨z, hz, m, hm⟩ := hR
+    rw [mem3] at hy hz
+    rcases hy with rfl | rfl | rfl <;> rcases hz with rfl | rfl | rfl
+    · exact nβ k hk
+    · exact nβ k hk
+    · exact nβ k hk
+    · exact nγ m hm
+    · exact h180 (k + m) (by push_cast; linarith)
+    · exact nγ (k - m) (by push_cast; linarith)
+    · exact nγ m hm
+    · exact nβ (m - k) (by push_cast; linarith)
+    · exact nα (k + m) (by push_cast; linarith)
+
+theorem main_theorem (θ : ℝ) (hθ0 : 0 < θ) (hθ180 : θ < 180) :
+    MulanCanGuarantee θ ↔ ∃ n : ℕ, 2 ≤ n ∧ θ = 180 / n := by
+  constructor
+  · intro hM
+    by_contra hno
+    push Not at hno
+    have h180 : ∀ m : ℤ, (180 : ℝ) ≠ m * θ := by
+      intro m hm
+      have hmpos : (0 : ℤ) < m := by
+        have : (0 : ℝ) < m * θ := by linarith
+        exact_mod_cast pos_of_mul_pos_left this hθ0.le
+      have hm2 : (2 : ℤ) ≤ m := by
+        by_contra h1
+        have : m = 1 := by omega
+        subst this; simp at hm; linarith
+      apply hno m.toNat (by omega)
+      have : ((m.toNat : ℕ) : ℝ) = (m : ℝ) := by exact_mod_cast Int.toNat_of_nonneg hmpos.le
+      rw [this, hm]; field_simp
+    let s0 : Multiset ℝ := {θ / 2, θ / 2, 180 - θ}
+    have hs0 : IsTriangle s0 := by
+      refine ⟨by simp [s0], ?_, by simp only [s0, sum3]; ring⟩
+      intro y hy; simp only [s0, mem3] at hy; rcases hy with rfl | rfl | rfl <;> linarith
+    apply not_wins_of_bad h180 (hM s0 hs0)
+    refine ⟨by simp only [s0, sum3]; ring, ?_⟩
+    intro y hy k hk
+    simp only [s0, mem3] at hy
+    rcases hy with rfl | rfl | rfl
+    · have : (2 * k - 1 : ℝ) * θ = 0 := by linarith
+      rcases mul_eq_zero.mp this with h | h
+      · have : (2 * k - 1 : ℤ) = 0 := by exact_mod_cast h
+        omega
+      · linarith
+    · have : (2 * k - 1 : ℝ) * θ = 0 := by linarith
+      rcases mul_eq_zero.mp this with h | h
+      · have : (2 * k - 1 : ℤ) = 0 := by exact_mod_cast h
+        omega
+      · linarith
+    · exact h180 (k + 1) (by push_cast; linarith)
+  · rintro ⟨n, hn, rfl⟩ s hs
+    have hn0 : (0 : ℝ) < n := by exact_mod_cast (by omega : 0 < n)
+    have hθ' : 0 < 180 / (n : ℝ) := by positivity
+    exact win_tri hθ' hn (by field_simp) s hs
+
+end TriangleGame
