@@ -1,0 +1,234 @@
+import Mathlib
+set_option backward.isDefEq.respectTransparency false
+
+/-!
+IMO 2026 Problem 6 (gcd-greedy sequence), solved blind 2026-10-22. Statement verbatim from
+junaid-hasan/2026_problems `p6.lean` (checked against the official English text). No solutions were read.
+
+Idea (0-indexed, a₀ = first term; "small" prime = prime ≤ a₀).
+* Criterion: b ≥ a₀ sharing a factor with every smaller term is a term (greedy rule).
+* KEY LEMMA: any two terms share a SMALL prime. Minimal counterexample: a_j is the first term with an earlier
+  a_i sharing no small prime. They share some prime q > a₀. Let r = product of the small primes of a_i, so
+  q·r ∣ a_i. Take the least power r^k ≥ a₀; then r^k < r·a₀ < r·q ≤ a_i < a_j. Every term below a_j shares a
+  small prime with a_i (minimality), hence divides-into r^k, so r^k is a term by the criterion. Then a_j shares a
+  prime with r^k, i.e. a small prime of a_i: contradiction.
+* So for b ≥ a₀: b is a term iff b shares a small prime with every term, which depends only on b mod
+  L = ∏_{p ≤ a₀} p. With a_T = a₀ + L, induction gives a_{n+T} = a_n + L.
+(This closes conjecture (C) of IMO2026_NOTES.md, numerically verified there for a₀ < 1200.)
+Checked: `repl.py check` PASS and `lake env lean` exit 0; `#print axioms main_theorem` = [propext, Classical.choice, Quot.sound].
+-/
+
+/-- The predicate stating that `a : ℕ → ℕ` (0-indexed) is a sequence satisfying Definition 1:
+each term exceeds `1`, and each subsequent term is the smallest integer strictly larger than the
+previous one that shares a common factor with every earlier term. -/
+def IsValidSeq (a : ℕ → ℕ) : Prop :=
+  (∀ n, 1 < a n) ∧
+  (∀ n, a n < a (n + 1) ∧
+        (∀ i ≤ n, 1 < Nat.gcd (a (n + 1)) (a i)) ∧
+        (∀ b, a n < b → b < a (n + 1) → ∃ i ≤ n, Nat.gcd b (a i) = 1))
+
+namespace IMO2026P6
+
+variable {a : ℕ → ℕ}
+
+lemma smono (ha : IsValidSeq a) : StrictMono a := strictMono_nat_of_lt_succ fun n => (ha.2 n).1
+
+lemma gcd_pair (ha : IsValidSeq a) {i j : ℕ} (hij : i < j) : 1 < Nat.gcd (a j) (a i) := by
+  obtain ⟨k, rfl⟩ : ∃ k, j = k + 1 := ⟨j - 1, by omega⟩
+  exact (ha.2 k).2.1 i (by omega)
+
+/-- Any `b ≥ a 0` sharing a factor with every smaller term is itself a term. -/
+lemma term_of (ha : IsValidSeq a) {b : ℕ} (hb : a 0 ≤ b)
+    (h : ∀ m, a m < b → 1 < Nat.gcd b (a m)) : ∃ k, a k = b := by
+  classical
+  have hex : ∃ m, b < a m := ⟨b + 1, Nat.lt_of_lt_of_le (Nat.lt_succ_self b) ((smono ha).id_le _)⟩
+  have hm : b < a (Nat.find hex) := Nat.find_spec hex
+  have hm0 : Nat.find hex ≠ 0 := by
+    intro h0; rw [h0] at hm; omega
+  obtain ⟨n, hn⟩ : ∃ n, Nat.find hex = n + 1 := ⟨Nat.find hex - 1, by omega⟩
+  have hle : a n ≤ b := by
+    have := Nat.find_min hex (show n < Nat.find hex by omega)
+    push Not at this; exact this
+  rcases eq_or_lt_of_le hle with heq | hlt
+  · exact ⟨n, heq⟩
+  · exfalso
+    rw [hn] at hm
+    obtain ⟨i, hi, hg⟩ := (ha.2 n).2.2 b hlt hm
+    have := h i (lt_of_le_of_lt ((smono ha).monotone hi) hlt)
+    omega
+
+/-- `x` and `y` share a prime `≤ a 0`. -/
+def S (a : ℕ → ℕ) (x y : ℕ) : Prop := ∃ p, p.Prime ∧ p ≤ a 0 ∧ p ∣ x ∧ p ∣ y
+
+lemma S_symm {x y : ℕ} (h : S a x y) : S a y x := by
+  obtain ⟨p, hp, hle, h1, h2⟩ := h; exact ⟨p, hp, hle, h2, h1⟩
+
+lemma small_self (ha : IsValidSeq a) (i : ℕ) : S a (a i) (a i) := by
+  have g : 1 < Nat.gcd (a i) (a 0) := by
+    rcases Nat.eq_zero_or_pos i with rfl | hi
+    · rw [Nat.gcd_self]; exact ha.1 0
+    · exact gcd_pair ha hi
+  have hp := Nat.minFac_prime (show Nat.gcd (a i) (a 0) ≠ 1 by omega)
+  have hd := Nat.minFac_dvd (Nat.gcd (a i) (a 0))
+  refine ⟨_, hp, Nat.le_of_dvd (by have := ha.1 0; omega) (hd.trans (Nat.gcd_dvd_right _ _)),
+    hd.trans (Nat.gcd_dvd_left _ _), hd.trans (Nat.gcd_dvd_left _ _)⟩
+
+/-- Key lemma: any two terms share a prime `≤ a 0`. -/
+lemma share_small (ha : IsValidSeq a) : ∀ j i, i < j → S a (a i) (a j) := by
+  classical
+  intro j
+  induction j using Nat.strong_induction_on with
+  | _ j IH =>
+  intro i hij
+  by_contra hns
+  -- all pairs below `j` share a small prime with `a i`
+  have hpair : ∀ m < j, S a (a i) (a m) := by
+    intro m hm
+    rcases lt_trichotomy m i with h | rfl | h
+    · exact S_symm (IH i hij m h)
+    · exact small_self ha m
+    · exact IH m hm i h
+  -- a common prime `q` of `a i`, `a j`, necessarily `> a 0`
+  have g := gcd_pair ha hij
+  have hq := Nat.minFac_prime (show Nat.gcd (a j) (a i) ≠ 1 by omega)
+  have hqd := Nat.minFac_dvd (Nat.gcd (a j) (a i))
+  set q := Nat.minFac (Nat.gcd (a j) (a i))
+  have hqj : q ∣ a j := hqd.trans (Nat.gcd_dvd_left _ _)
+  have hqi : q ∣ a i := hqd.trans (Nat.gcd_dvd_right _ _)
+  have hq0 : a 0 < q := by
+    by_contra hle; push Not at hle; exact hns ⟨q, hq, hle, hqi, hqj⟩
+  -- `r` = product of the primes `≤ a 0` dividing `a i`
+  set F := (Finset.range (a 0 + 1)).filter (fun p => p.Prime ∧ p ∣ a i) with hF
+  set r := ∏ p ∈ F, p with hr
+  have memF : ∀ {p}, p ∈ F ↔ p.Prime ∧ p ≤ a 0 ∧ p ∣ a i := by
+    intro p; simp only [hF, Finset.mem_filter, Finset.mem_range]; constructor
+    · rintro ⟨h1, h2, h3⟩; exact ⟨h2, by omega, h3⟩
+    · rintro ⟨h1, h2, h3⟩; exact ⟨by omega, h1, h3⟩
+  have hrdvd : r ∣ a i := Finset.prod_primes_dvd (a i)
+    (fun p hp => (memF.1 hp).1.prime) (fun p hp => (memF.1 hp).2.2)
+  have hrpos : 0 < r := Finset.prod_pos fun p hp => (memF.1 hp).1.pos
+  have hr2 : 2 ≤ r := by
+    obtain ⟨p, hp, hle, hd, -⟩ := small_self ha i
+    have : p ∣ r := Finset.dvd_prod_of_mem _ (memF.2 ⟨hp, hle, hd⟩)
+    exact le_trans hp.two_le (Nat.le_of_dvd hrpos this)
+  have hqr : Nat.Coprime q r := by
+    rw [Nat.Prime.coprime_iff_not_dvd hq]
+    intro hd
+    obtain ⟨p, hpF, hqp⟩ := (Prime.dvd_finsetProd_iff hq.prime _).1 hd
+    have := (Nat.prime_dvd_prime_iff_eq hq (memF.1 hpF).1).1 hqp
+    have := (memF.1 hpF).2.1; omega
+  have hrq : q * r ≤ a i :=
+    Nat.le_of_dvd (by have := ha.1 i; omega) (Nat.Coprime.mul_dvd_of_dvd_of_dvd hqr hqi hrdvd)
+  -- `y = r ^ k`, the least power of `r` that is `≥ a 0`
+  have hex : ∃ k, a 0 ≤ r ^ k :=
+    ⟨a 0, le_of_lt (lt_of_lt_of_le (Nat.lt_pow_self (by omega : 1 < 2))
+      (Nat.pow_le_pow_left hr2 _))⟩
+  set k := Nat.find hex
+  have hk : a 0 ≤ r ^ k := Nat.find_spec hex
+  have hk0 : k ≠ 0 := by
+    intro h0; rw [h0, pow_zero] at hk; have := ha.1 0; omega
+  have hkm : r ^ (k - 1) < a 0 := by
+    have := Nat.find_min hex (show k - 1 < k by omega); push Not at this; exact this
+  have hy : r ^ k < a j := by
+    have e : r ^ k = r * r ^ (k - 1) := by rw [← pow_succ']; congr 1; omega
+    have h1 : r * r ^ (k - 1) < r * a 0 := Nat.mul_lt_mul_of_pos_left hkm hrpos
+    have h2 : r * a 0 < r * q := Nat.mul_lt_mul_of_pos_left hq0 hrpos
+    have h3 : a i < a j := smono ha hij
+    nlinarith [e]
+  -- `y` is a term
+  obtain ⟨k', hk'⟩ : ∃ k', a k' = r ^ k := by
+    apply term_of ha hk
+    intro m hm
+    have hmj : m < j := (smono ha).lt_iff_lt.1 (lt_trans hm hy)
+    obtain ⟨p, hp, hle, hpi, hpm⟩ := hpair m hmj
+    have hpr : p ∣ r := Finset.dvd_prod_of_mem _ (memF.2 ⟨hp, hle, hpi⟩)
+    have hpy : p ∣ r ^ k := hpr.trans (dvd_pow_self r hk0)
+    have hgpos : 0 < Nat.gcd (r ^ k) (a m) := Nat.gcd_pos_of_pos_left _ (pow_pos hrpos k)
+    exact lt_of_lt_of_le hp.one_lt (Nat.le_of_dvd hgpos (Nat.dvd_gcd hpy hpm))
+  -- so `a j` shares a prime with `r ^ k`, which is a small prime of `a i`
+  have hk'j : k' < j := (smono ha).lt_iff_lt.1 (hk' ▸ hy)
+  have g2 := gcd_pair ha hk'j
+  rw [hk'] at g2
+  have hp2 := Nat.minFac_prime (show Nat.gcd (a j) (r ^ k) ≠ 1 by omega)
+  have hd2 := Nat.minFac_dvd (Nat.gcd (a j) (r ^ k))
+  set p := Nat.minFac (Nat.gcd (a j) (r ^ k))
+  have hpj : p ∣ a j := hd2.trans (Nat.gcd_dvd_left _ _)
+  have hpr : p ∣ r := hp2.dvd_of_dvd_pow (hd2.trans (Nat.gcd_dvd_right _ _))
+  obtain ⟨p', hp'F, hpp'⟩ := (Prime.dvd_finsetProd_iff hp2.prime _).1 hpr
+  have := (Nat.prime_dvd_prime_iff_eq hp2 (memF.1 hp'F).1).1 hpp'
+  subst this
+  exact hns ⟨p, hp2, (memF.1 hp'F).2.1, (memF.1 hp'F).2.2, hpj⟩
+
+/-- The modulus: product of the primes `≤ a 0`. -/
+def Lmod (a : ℕ → ℕ) : ℕ := ∏ p ∈ (Finset.range (a 0 + 1)).filter Nat.Prime, p
+
+lemma dvd_Lmod {p : ℕ} (hp : p.Prime) (hle : p ≤ a 0) : p ∣ Lmod a :=
+  Finset.dvd_prod_of_mem _ (Finset.mem_filter.2 ⟨Finset.mem_range.2 (by omega), hp⟩)
+
+lemma Lmod_pos : 0 < Lmod a := Finset.prod_pos fun p hp => (Finset.mem_filter.1 hp).2.pos
+
+/-- Membership criterion: for `b ≥ a 0`, `b` is a term iff it shares a small prime with every term. -/
+lemma mem_iff (ha : IsValidSeq a) {b : ℕ} (hb : a 0 ≤ b) :
+    (∃ k, a k = b) ↔ ∀ m, S a b (a m) := by
+  constructor
+  · rintro ⟨k, rfl⟩ m
+    rcases lt_trichotomy k m with h | rfl | h
+    · exact share_small ha m k h
+    · exact small_self ha k
+    · exact S_symm (share_small ha k m h)
+  · intro h
+    apply term_of ha hb
+    intro m _
+    obtain ⟨p, hp, -, h1, h2⟩ := h m
+    have hbpos : 0 < b := by have := ha.1 0; omega
+    exact lt_of_lt_of_le hp.one_lt (Nat.le_of_dvd (Nat.gcd_pos_of_pos_left _ hbpos)
+      (Nat.dvd_gcd h1 h2))
+
+lemma S_shift {b y : ℕ} : S a b y ↔ S a (b + Lmod a) y := by
+  constructor
+  · rintro ⟨p, hp, hle, h1, h2⟩; exact ⟨p, hp, hle, dvd_add h1 (dvd_Lmod hp hle), h2⟩
+  · rintro ⟨p, hp, hle, h1, h2⟩
+    exact ⟨p, hp, hle, (Nat.dvd_add_left (dvd_Lmod hp hle)).1 h1, h2⟩
+
+lemma shift (ha : IsValidSeq a) {b : ℕ} (hb : a 0 ≤ b) :
+    (∃ k, a k = b) ↔ ∃ k, a k = b + Lmod a := by
+  rw [mem_iff ha hb, mem_iff ha (by omega)]
+  exact forall_congr' fun m => S_shift
+
+/-- For any sequence satisfying Definition 1, there exist positive integers `T` and `L` such that
+`a (n + T) = a n + L` for every `n`. Equivalently, the sequence of consecutive differences is
+purely periodic. -/
+theorem _root_.main_theorem (a : ℕ → ℕ) (ha : IsValidSeq a) :
+    ∃ T L : ℕ, 0 < T ∧ 0 < L ∧ ∀ n, a (n + T) = a n + L := by
+  have hL := Lmod_pos (a := a)
+  obtain ⟨T, hT⟩ := (shift ha (le_refl (a 0))).1 ⟨0, rfl⟩
+  have hTpos : 0 < T := by
+    rcases Nat.eq_zero_or_pos T with rfl | h
+    · omega
+    · exact h
+  have hmono := smono ha
+  have key : ∀ n, a (n + T) = a n + Lmod a := by
+    intro n
+    induction n with
+    | zero => simpa using hT
+    | succ n ih =>
+      have h0 : a 0 ≤ a (n + 1) := hmono.monotone (Nat.zero_le _)
+      obtain ⟨k, hk⟩ := (shift ha h0).1 ⟨n + 1, rfl⟩
+      have hlt : a (n + T) < a k := by rw [ih, hk]; have : a n < a (n + 1) := hmono (by omega); omega
+      have hk1 : n + T < k := hmono.lt_iff_lt.1 hlt
+      rcases eq_or_lt_of_le (show n + T + 1 ≤ k by omega) with he | hgt
+      · rw [show n + 1 + T = n + T + 1 by omega, he, hk]
+      · exfalso
+        -- `z = a (n+T+1)` lies strictly between `a n + L` and `a (n+1) + L`
+        set z := a (n + T + 1)
+        have hz1 : a n + Lmod a < z := by rw [← ih]; exact hmono (by omega)
+        have hz2 : z < a (n + 1) + Lmod a := by rw [← hk]; exact hmono hgt
+        have hw0 : a 0 ≤ z - Lmod a := by
+          have := hmono.monotone (Nat.zero_le n); omega
+        obtain ⟨k2, hk2⟩ := (shift ha hw0).2 ⟨n + T + 1, by simp only [z]; omega⟩
+        have h1 : a n < a k2 := by omega
+        have h2 : a k2 < a (n + 1) := by omega
+        have := hmono.lt_iff_lt.1 h1; have := hmono.lt_iff_lt.1 h2; omega
+  exact ⟨T, Lmod a, hTpos, hL, key⟩
+
+end IMO2026P6

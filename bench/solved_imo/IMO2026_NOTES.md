@@ -14,9 +14,9 @@ measurement, not a first.
 | P3 (stick division game) | not attempted | — |
 | P4 (triangle-cutting game) | **solved** 2026-10-22: answer θ = 180/n; invariant "no angle is a multiple of θ", clean axioms | `imo_2026_p4.txt` |
 | P5 (functional inequality) | **solved**, clean axioms | `imo_2026_p5.txt` |
-| P6 (gcd-greedy sequence) | **not solved**: reduction plus a numerically verified conjecture, see below | — |
+| P6 (gcd-greedy sequence) | **solved** 2026-10-22: conjecture (C) proved by a minimal-counterexample argument (a power of the small radical is forced to be a term), clean axioms | `imo_2026_p6.txt` |
 
-## P6 notes (unsolved)
+## P6 notes (written 2026-10-02, when P6 was still unsolved; (C) was proved 2026-10-22, see `imo_2026_p6.txt`)
 
 Let A be the set of terms and P(x) the set of primes dividing x.
 * Every two terms share a prime (by construction, both ways). Conversely, any x ≥ a₁ whose prime set meets
