@@ -263,3 +263,16 @@ Escape: verify EVERY name via `python tools/premise_index.py query <name>`
 - `decide` could not synthesize `Decidable (∀ t < 35, …)` for a long implication chain; `∀ t ∈ Finset.range 35, …` works.
 - `omega` does not split a hypothesis that is a conjunction of `≠` facts; `obtain ⟨c1, …⟩ := h` first.
 
+
+## 2026-10-22 (IMO 2026 P2/P3/P4/P6 session)
+- `push_neg` is deprecated on this Mathlib: write `push Not`. `Prime.dvd_finset_prod_iff` → `Prime.dvd_finsetProd_iff`.
+- `set x := e with hx` only replaces occurrences that exist at that moment. Terms created later (e.g. `O - A` produced by
+  `dist_eq_norm`) stay raw and do not match `x`: rewrite with `← hx` first. After `clear_value`, lemmas stated with
+  the raw `inner ℝ b b` need `rw [← hB2]`.
+- `rcases h with rfl | rfl | rfl` on `p = A ∨ p = B ∨ p = C` may eliminate a statement variable (C) rather than p;
+  use named cases and `rw [h]`.
+- `midpoint_eq_smul_add` yields `⅟2 • (x + y)`: `rw [invOf_eq_inv]` before `module`.
+- A long coordinate proof (P2) blew the default heartbeats for the whole theorem; `set_option maxHeartbeats N in`
+  plus `clear_value` on the coordinate abbreviations fixed it (standalone compile ~3.5 min).
+- Unoriented angle equality → polynomial: use cos equality plus ⟨u,u⟩⟨v,v⟩ = ⟨u,v⟩² + cr²·Gram and a sign hypothesis
+  on the cross products (`angle_poly` in `bench/solved_imo/imo_2026_p2.txt`); no `oangle` needed.
