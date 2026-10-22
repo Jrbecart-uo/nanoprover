@@ -11,7 +11,7 @@ measurement, not a first.
 |---|---|---|
 | P1 (gcd/lcm board) | **solved**: all 5 statements, clean axioms | `imo_2026_p1.txt` |
 | P2 (geometry) | skipped: the statement file weakens "K strictly inside triangle ABL" to "K inside angle LBA" (and similarly for L), so it is not faithful | — |
-| P3 (stick division game) | not attempted | — |
+| P3 (stick division game) | **solved** 2026-10-22: geometric marking 1:2:…:2ⁿ + sign-vector lower bound; pigeonhole + matching cuts upper bound; all 6 theorems of the file, clean axioms | `imo_2026_p3.txt` |
 | P4 (triangle-cutting game) | **solved** 2026-10-22: answer θ = 180/n; invariant "no angle is a multiple of θ", clean axioms | `imo_2026_p4.txt` |
 | P5 (functional inequality) | **solved**, clean axioms | `imo_2026_p5.txt` |
 | P6 (gcd-greedy sequence) | **solved** 2026-10-22: conjecture (C) proved by a minimal-counterexample argument (a power of the small radical is forced to be a term), clean axioms | `imo_2026_p6.txt` |

@@ -1,0 +1,1357 @@
+import Mathlib
+set_option backward.isDefEq.respectTransparency false
+
+/-!
+IMO 2026 Problem 3 (Liu Bang / Xiang Yu stick division), solved blind 2026-10-22. Statement verbatim from
+junaid-hasan/2026_problems `p3.lean` (all six theorems proved, including the definition sanity checks).
+Caveats on the statement file: it gives the answer 2^n/(2^(n+1)-1), and it models the claiming phase
+as both players greedily taking the largest piece (optimal play, a standard fact, not proved here).
+
+Idea. Liu's share is (1 + D)/2, where D = p₀ - p₁ + p₂ - ⋯ over the pieces sorted in decreasing order.
+* Liu (lower_bound): mark so that the pieces are 1, 2, 4, …, 2ⁿ (over 2^(n+1)-1). With at most 2n+1 pieces,
+  the sorted pairing (p₀,p₁),(p₂,p₃),… has at most n pairs on n+1 original pieces, so some ±1/0 sign vector
+  y on the originals is nonzero and opposite on each pair (forest peeling, `sign_vector`). Then
+  D ≥ |Σ yⱼ 2ʲ|/M ≥ 1/M, since a nonzero ±1 combination of distinct powers of 2 is nonzero.
+* Xiang (upper_bound): among the 2^(n+1) subset sums of Liu's n+1 pieces, two are within 1/M (pigeonhole).
+  Halve the pieces in neither subset; on the symmetric difference, repeatedly cut the longer of a P-piece and
+  an N-piece to match the shorter (`split`). This leaves equal pairs plus leftovers of total ≤ 1/M, so D ≤ 1/M
+  (`D_le_singles`: equal pairs do not change D, a single y raises it by at most y).
+Checked: `repl.py check` PASS and `lake env lean` exit 0; `#print axioms` of all six theorems =
+[propext, Classical.choice, Quot.sound].
+-/
+
+open scoped BigOperators
+
+namespace LiuBangXiangYu
+
+/-- The multiset of piece lengths obtained by cutting `[0,1]` at the points of a
+finite set `S ⊆ (0,1)`.  We sort `S` ascending, prepend `0` and append `1`, and
+take consecutive differences.  The result is a list of `|S| + 1` positive reals
+summing to `1` (when `S ⊆ (0,1)`). -/
+noncomputable def pieceLengths (S : Finset ℝ) : List ℝ :=
+  let l : List ℝ := (0 : ℝ) :: (S.sort (· ≤ ·)) ++ [1]
+  List.zipWith (fun a b => b - a) l l.tail
+
+/-- The sum of the entries of a list `L` at the (0-indexed) even positions, after
+sorting `L` in non-increasing order.  These are the entries in the `1`st, `3`rd,
+`5`th, … positions of the sorted (decreasing) list, i.e. the pieces claimed by
+the first mover under the greedy claiming rule. -/
+noncomputable def firstPlayerShare (L : List ℝ) : ℝ :=
+  let sorted := L.mergeSort (· ≥ ·)
+  ((sorted.zipIdx.filter (fun p => p.2 % 2 = 0)).map (fun p => p.1)).sum
+
+/-- `L(A,B)`: Liu Bang's total length, given Liu Bang's marks `A` and Xiang Yu's
+marks `B`. -/
+noncomputable def L (A B : Finset ℝ) : ℝ :=
+  firstPlayerShare (pieceLengths (A ∪ B))
+
+/-- The set of admissible markings for a player: a finite subset of `(0,1)` of
+size at most `n`.  We encode it as a `Finset ℝ` subject to the side conditions. -/
+def AdmissibleMark (n : ℕ) (X : Finset ℝ) : Prop :=
+  (↑X ⊆ Set.Ioo (0 : ℝ) 1) ∧ X.card ≤ n
+
+/-- The value Liu Bang can guarantee.
+
+`V n` is the supremum over Liu Bang's admissible markings `A` of the infimum,
+over Xiang Yu's admissible markings `B` disjoint from `A`, of `L A B`. -/
+noncomputable def V (n : ℕ) : ℝ :=
+  ⨆ A : {A : Finset ℝ // AdmissibleMark n A},
+    ⨅ B : {B : Finset ℝ // AdmissibleMark n B ∧ Disjoint A.1 B}, L A.1 B.1
+
+/-- The claimed answer value `V(n) = 2^n / (2^(n+1) - 1)`. -/
+noncomputable def answer (n : ℕ) : ℝ := (2 : ℝ) ^ n / ((2 : ℝ) ^ (n + 1) - 1)
+
+/-! # Proof development (helpers) -/
+
+/-! ## Part A: alternating sums of non-increasing lists -/
+
+/-- `x₀ - x₁ + x₂ - ⋯` -/
+def alt : List ℝ → ℝ
+  | [] => 0
+  | x :: xs => x - alt xs
+
+/-- Insertion into a non-increasing list. -/
+noncomputable def ins (y : ℝ) : List ℝ → List ℝ
+  | [] => [y]
+  | x :: xs => if x ≤ y then y :: x :: xs else x :: ins y xs
+
+lemma ins_perm (y : ℝ) : ∀ l, List.Perm (ins y l) (y :: l)
+  | [] => by simp [ins]
+  | x :: xs => by
+    unfold ins; split_ifs
+    · exact List.Perm.refl _
+    · exact ((ins_perm y xs).cons x).trans (List.Perm.swap y x xs)
+
+lemma ins_sorted (y : ℝ) : ∀ l : List ℝ, l.Pairwise (· ≥ ·) → (ins y l).Pairwise (· ≥ ·)
+  | [] => fun _ => by simp [ins]
+  | x :: xs => fun h => by
+    unfold ins; split_ifs with hxy
+    · refine List.Pairwise.cons ?_ h
+      intro z hz
+      rcases List.mem_cons.1 hz with rfl | hz
+      · exact hxy
+      · exact le_trans (List.rel_of_pairwise_cons h hz) hxy
+    · rw [List.pairwise_cons] at h ⊢
+      refine ⟨?_, ins_sorted y xs h.2⟩
+      intro z hz
+      rcases List.mem_cons.1 ((ins_perm y xs).subset hz) with rfl | hz
+      · push Not at hxy; exact hxy.le
+      · exact h.1 z hz
+
+lemma msort_sorted (l : List ℝ) : (l.mergeSort (· ≥ ·)).Pairwise (· ≥ ·) := by
+  have := List.pairwise_mergeSort (le := fun a b : ℝ => decide (a ≥ b))
+    (fun a b c h1 h2 => by simp only [decide_eq_true_eq] at *; linarith)
+    (fun a b => by simpa using le_total b a) l
+  simpa using this
+
+lemma msort_perm (l : List ℝ) : List.Perm (l.mergeSort (· ≥ ·)) l := List.mergeSort_perm _ _
+
+lemma msort_eq_of_perm {l l' : List ℝ} (h : List.Perm l l') :
+    l.mergeSort (· ≥ ·) = l'.mergeSort (· ≥ ·) :=
+  List.Perm.eq_of_pairwise' (msort_sorted l) (msort_sorted l')
+    (((msort_perm l).trans h).trans (msort_perm l').symm)
+
+lemma msort_cons (y : ℝ) (l : List ℝ) :
+    (y :: l).mergeSort (· ≥ ·) = ins y (l.mergeSort (· ≥ ·)) :=
+  List.Perm.eq_of_pairwise' (msort_sorted _) (ins_sorted y _ (msort_sorted l))
+    ((msort_perm _).trans (((msort_perm l).cons y).symm.trans (ins_perm y _).symm))
+
+/-- `D l` = alternating sum of `l` sorted non-increasingly (first player's surplus). -/
+noncomputable def D (l : List ℝ) : ℝ := alt (l.mergeSort (· ≥ ·))
+
+lemma D_perm {l l' : List ℝ} (h : List.Perm l l') : D l = D l' := by
+  unfold D; rw [msort_eq_of_perm h]
+
+lemma evenSum (s : List ℝ) (k : ℕ) :
+    (((s.zipIdx k).filter (fun p => p.2 % 2 = 0)).map (fun p => p.1)).sum =
+      if k % 2 = 0 then (s.sum + alt s) / 2 else (s.sum - alt s) / 2 := by
+  induction s generalizing k with
+  | nil => simp [alt]
+  | cons x xs ih =>
+    rw [List.zipIdx_cons, List.filter_cons]
+    have ih' := ih (k + 1)
+    by_cases hk : k % 2 = 0
+    · have hk1 : ¬ (k + 1) % 2 = 0 := by omega
+      simp only [hk, hk1, decide_true, if_true, if_false, List.map_cons, List.sum_cons] at ih' ⊢
+      rw [ih']; simp only [alt, List.sum_cons]; ring
+    · have hk1 : (k + 1) % 2 = 0 := by omega
+      simp only [hk, hk1, decide_false, if_true, if_false, Bool.false_eq_true] at ih' ⊢
+      rw [ih']; simp only [alt, List.sum_cons]; ring
+
+lemma share_eq (L : List ℝ) : firstPlayerShare L = (L.sum + D L) / 2 := by
+  unfold firstPlayerShare D
+  have := evenSum (L.mergeSort (· ≥ ·)) 0
+  simp only [Nat.zero_mod, if_true] at this
+  rw [this, (msort_perm L).sum_eq]
+
+lemma alt_bounds : ∀ l : List ℝ, l.Pairwise (· ≥ ·) → (∀ x ∈ l, 0 ≤ x) →
+    0 ≤ alt l ∧ alt l ≤ l.headD 0
+  | [] => fun _ _ => by simp [alt]
+  | x :: xs => fun hs hn => by
+    rw [List.pairwise_cons] at hs
+    obtain ⟨h0, h1⟩ := alt_bounds xs hs.2 (fun z hz => hn z (List.mem_cons_of_mem _ hz))
+    have hx := hn x (by simp)
+    have hhd : xs.headD 0 ≤ x := by
+      cases xs with
+      | nil => simpa using hx
+      | cons z zs => exact hs.1 z (by simp)
+    simp only [alt, List.headD_cons]; constructor <;> linarith
+
+lemma alt_ins_close (y : ℝ) (hy : 0 ≤ y) : ∀ l : List ℝ, l.Pairwise (· ≥ ·) → (∀ x ∈ l, 0 ≤ x) →
+    |alt (ins y l) - alt l| ≤ y
+  | [] => fun _ _ => by simp [ins, alt, abs_of_nonneg hy]
+  | x :: xs => fun hs hn => by
+    unfold ins; split_ifs with hxy
+    · obtain ⟨h0, h1⟩ := alt_bounds (x :: xs) hs hn
+      simp only [List.headD_cons] at h1
+      rw [abs_le]; simp only [alt] at *; constructor <;> linarith
+    · rw [List.pairwise_cons] at hs
+      have := alt_ins_close y hy xs hs.2 (fun z hz => hn z (List.mem_cons_of_mem _ hz))
+      simp only [alt]
+      rw [show x - alt (ins y xs) - (x - alt xs) = -(alt (ins y xs) - alt xs) by ring, abs_neg]
+      exact this
+
+lemma alt_ins_ins (a : ℝ) : ∀ l : List ℝ, alt (ins a (ins a l)) = alt l
+  | [] => by simp [ins, alt]
+  | x :: xs => by
+    by_cases h1 : x ≤ a
+    · simp [ins, h1, alt]
+    · have := alt_ins_ins a xs
+      simp only [ins, h1, if_false, alt] at this ⊢; rw [this]
+
+lemma D_nonneg (l : List ℝ) (hl : ∀ x ∈ l, 0 ≤ x) : 0 ≤ D l :=
+  (alt_bounds _ (msort_sorted l) (fun x hx => hl x ((msort_perm l).subset hx))).1
+
+lemma D_le_sum (l : List ℝ) (hl : ∀ x ∈ l, 0 ≤ x) : D l ≤ l.sum := by
+  -- every element is ≤ sum, and D ≤ head
+  have hb := (alt_bounds _ (msort_sorted l) (fun x hx => hl x ((msort_perm l).subset hx))).2
+  unfold D
+  refine le_trans hb ?_
+  rcases h : l.mergeSort (· ≥ ·) with _ | ⟨z, zs⟩
+  · simp only [List.headD_nil]; exact List.sum_nonneg hl
+  · simp only [List.headD_cons]
+    have hz : z ∈ l := (msort_perm l).subset (by rw [h]; simp)
+    exact List.single_le_sum hl z hz
+
+lemma D_cons_le (y : ℝ) (hy : 0 ≤ y) (l : List ℝ) (hl : ∀ x ∈ l, 0 ≤ x) :
+    D (y :: l) ≤ D l + y := by
+  unfold D; rw [msort_cons]
+  have := alt_ins_close y hy _ (msort_sorted l) (fun x hx => hl x ((msort_perm l).subset hx))
+  rw [abs_le] at this; linarith
+
+lemma D_cons_cons (a : ℝ) (l : List ℝ) : D (a :: a :: l) = D l := by
+  unfold D; rw [msort_cons, msort_cons, alt_ins_ins]
+
+/-- Upper bound on the surplus: equal pairs cost nothing, singles cost their length. -/
+lemma D_le_singles (ps ss : List ℝ) (hs : ∀ x ∈ ss, 0 ≤ x) :
+    D (ps.flatMap (fun a => [a, a]) ++ ss) ≤ ss.sum := by
+  induction ps with
+  | nil =>
+    simp only [List.flatMap_nil, List.nil_append]
+    induction ss with
+    | nil => simp [D, alt]
+    | cons y ys ih =>
+      have hy := hs y (by simp)
+      have hys : ∀ x ∈ ys, 0 ≤ x := fun x hx => hs x (by simp [hx])
+      have := D_cons_le y hy ys hys
+      have := ih hys
+      simp only [List.sum_cons]; linarith
+  | cons a as ih =>
+    simp only [List.flatMap_cons, List.cons_append, List.nil_append]
+    rw [D_cons_cons]; exact ih
+/-! ## Part C: lower bound on the surplus via a sign vector on the original pieces -/
+
+/-- consecutive pairs of labels in a list: `(l₀,l₁), (l₂,l₃), …` -/
+def consPairs : List (ℝ × ℕ) → List (ℕ × ℕ)
+  | p :: q :: r => (p.2, q.2) :: consPairs r
+  | _ => []
+
+lemma consPairs_length : ∀ l : List (ℝ × ℕ), 2 * (consPairs l).length ≤ l.length
+  | [] => by simp [consPairs]
+  | [_] => by simp [consPairs]
+  | p :: q :: r => by have := consPairs_length r; simp [consPairs]; omega
+
+lemma consPairs_mem : ∀ (l : List (ℝ × ℕ)) (c : ℕ × ℕ), c ∈ consPairs l →
+    (∃ p ∈ l, p.2 = c.1) ∧ (∃ p ∈ l, p.2 = c.2)
+  | [] => by simp [consPairs]
+  | [_] => by simp [consPairs]
+  | p :: q :: r => by
+    intro c hc
+    simp only [consPairs, List.mem_cons] at hc
+    rcases hc with rfl | hc
+    · exact ⟨⟨p, by simp, rfl⟩, ⟨q, by simp, rfl⟩⟩
+    · obtain ⟨⟨a, ha, h1⟩, ⟨b, hb, h2⟩⟩ := consPairs_mem r c hc
+      exact ⟨⟨a, by simp [ha], h1⟩, ⟨b, by simp [hb], h2⟩⟩
+
+/-- With signs alternating along consecutive pairs, the signed sum is at most the alternating sum. -/
+lemma pair_bound (y : ℕ → ℤ) (hy : ∀ j, y j = -1 ∨ y j = 0 ∨ y j = 1) :
+    ∀ l : List (ℝ × ℕ), (l.map Prod.fst).Pairwise (· ≥ ·) → (∀ p ∈ l, 0 ≤ p.1) →
+      (∀ c ∈ consPairs l, y c.1 = - y c.2) →
+      (l.map (fun p => (y p.2 : ℝ) * p.1)).sum ≤ alt (l.map Prod.fst)
+  | [] => fun _ _ _ => by simp [alt]
+  | [p] => fun _ hn _ => by
+    have h0 := hn p (by simp)
+    simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, alt]
+    rcases hy p.2 with h | h | h <;> rw [h] <;> push_cast <;> linarith
+  | p :: q :: r => fun hs hn hc => by
+    simp only [List.map_cons, List.pairwise_cons, List.mem_cons] at hs
+    have hpq : q.1 ≤ p.1 := hs.1 q.1 (Or.inl rfl)
+    have hsr : (r.map Prod.fst).Pairwise (· ≥ ·) := hs.2.2
+    have ih := pair_bound y hy r hsr (fun z hz => hn z (by simp [hz]))
+      (fun c hc' => hc c (by simp [consPairs, hc']))
+    have hpq' : y p.2 = - y q.2 := hc (p.2, q.2) (by simp [consPairs])
+    simp only [List.map_cons, List.sum_cons, alt]
+    have key : (y p.2 : ℝ) * p.1 + (y q.2 : ℝ) * q.1 = (y p.2 : ℝ) * (p.1 - q.1) := by
+      rw [show (y q.2 : ℝ) = - (y p.2 : ℝ) by rw [hpq']; push_cast; ring]; ring
+    have hb : (y p.2 : ℝ) * (p.1 - q.1) ≤ p.1 - q.1 := by
+      rcases hy p.2 with h | h | h <;> rw [h] <;> push_cast <;> nlinarith
+    linarith
+
+lemma two_le_countP {α : Type*} {l : List α} {P : α → Bool} {a b : α} (ha : a ∈ l) (hb : b ∈ l)
+    (hab : a ≠ b) (hpa : P a) (hpb : P b) : 2 ≤ l.countP P := by
+  classical
+  rw [List.countP_eq_length_filter]
+  have h1 : a ∈ l.filter P := List.mem_filter.2 ⟨ha, hpa⟩
+  have h2 : b ∈ l.filter P := List.mem_filter.2 ⟨hb, hpb⟩
+  have : ({a, b} : Finset α) ⊆ (l.filter P).toFinset := by
+    intro x hx; simp only [Finset.mem_insert, Finset.mem_singleton] at hx
+    rcases hx with rfl | rfl
+    · exact List.mem_toFinset.2 h1
+    · exact List.mem_toFinset.2 h2
+  have := Finset.card_le_card this
+  rw [Finset.card_pair hab] at this
+  exact this.trans (List.toFinset_card_le _)
+
+lemma sum_countP_eq {α : Type*} (f : α → ℕ) (V : Finset ℕ) :
+    ∀ C : List α, (∀ c ∈ C, f c ∈ V) → ∑ w ∈ V, C.countP (fun c => f c = w) = C.length
+  | [] => by simp
+  | c :: C => fun h => by
+    simp only [List.countP_cons, Finset.sum_add_distrib, List.length_cons]
+    rw [sum_countP_eq f V C (fun c hc => h c (by simp [hc]))]
+    simp [Finset.sum_ite_eq', h c (by simp)]
+
+/-- Sign lemma: fewer constraints `y u = - y v` than vertices ⇒ a nonzero `{-1,0,1}` solution. -/
+lemma sign_vector : ∀ (k : ℕ) (C : List (ℕ × ℕ)) (V : Finset ℕ), V.card = k →
+    (∀ c ∈ C, c.1 ∈ V ∧ c.2 ∈ V) → C.length < V.card →
+    ∃ y : ℕ → ℤ, (∀ j, y j = -1 ∨ y j = 0 ∨ y j = 1) ∧ (∀ j ∉ V, y j = 0) ∧
+      (∃ j ∈ V, y j ≠ 0) ∧ ∀ c ∈ C, y c.1 = - y c.2 := by
+  intro k
+  induction k with
+  | zero => intro C V hk _ hlt; omega
+  | succ k ih =>
+  intro C V hk hCV hlt
+  classical
+  by_cases hiso : ∃ w ∈ V, ∀ c ∈ C, c.1 ≠ w ∧ c.2 ≠ w
+  · obtain ⟨w, hw, hc⟩ := hiso
+    refine ⟨fun j => if j = w then 1 else 0, fun j => by by_cases h : j = w <;> simp [h],
+      fun j hj => by simp [show j ≠ w from fun h => hj (h ▸ hw)], ⟨w, hw, by simp⟩, ?_⟩
+    intro c hcC
+    simp [(hc c hcC).1, (hc c hcC).2]
+  · have hiso' : ∀ w ∈ V, ∃ c ∈ C, c.1 = w ∨ c.2 = w := by
+      intro w hw; by_contra h; push Not at h; exact hiso ⟨w, hw, fun c hc => h c hc⟩
+    -- degree counting
+    let deg : ℕ → ℕ := fun w => C.countP (fun c => c.1 = w) + C.countP (fun c => c.2 = w)
+    have hsum : ∑ w ∈ V, deg w = 2 * C.length := by
+      simp only [deg, Finset.sum_add_distrib]
+      rw [sum_countP_eq (fun c => c.1) V C (fun c hc => (hCV c hc).1),
+        sum_countP_eq (fun c => c.2) V C (fun c hc => (hCV c hc).2)]; ring
+    obtain ⟨w, hw, hdeg⟩ : ∃ w ∈ V, deg w < 2 := by
+      apply Finset.exists_lt_of_sum_lt
+      rw [hsum, Finset.sum_const, smul_eq_mul]; omega
+    obtain ⟨c0, hc0, hc0w⟩ := hiso' w hw
+    -- c0 is the only constraint touching w, and it is not a loop
+    have hnl : ¬ (c0.1 = w ∧ c0.2 = w) := by
+      rintro ⟨h1, h2⟩
+      have a1 : 0 < C.countP (fun c => c.1 = w) := List.countP_pos_iff.2 ⟨c0, hc0, by simp [h1]⟩
+      have a2 : 0 < C.countP (fun c => c.2 = w) := List.countP_pos_iff.2 ⟨c0, hc0, by simp [h2]⟩
+      simp only [deg] at hdeg; omega
+    have honly : ∀ c ∈ C, (c.1 = w ∨ c.2 = w) → c = c0 := by
+      intro c hc htw
+      by_contra hne
+      rcases hc0w with h0 | h0 <;> rcases htw with h | h
+      · have := two_le_countP (P := fun c : ℕ × ℕ => decide (c.1 = w)) hc hc0 hne
+          (by simp [h]) (by simp [h0]); simp only [deg] at hdeg; omega
+      · have a1 : 0 < C.countP (fun c => c.1 = w) := List.countP_pos_iff.2 ⟨c0, hc0, by simp [h0]⟩
+        have a2 : 0 < C.countP (fun c => c.2 = w) := List.countP_pos_iff.2 ⟨c, hc, by simp [h]⟩
+        simp only [deg] at hdeg; omega
+      · have a1 : 0 < C.countP (fun c => c.1 = w) := List.countP_pos_iff.2 ⟨c, hc, by simp [h]⟩
+        have a2 : 0 < C.countP (fun c => c.2 = w) := List.countP_pos_iff.2 ⟨c0, hc0, by simp [h0]⟩
+        simp only [deg] at hdeg; omega
+      · have := two_le_countP (P := fun c : ℕ × ℕ => decide (c.2 = w)) hc hc0 hne
+          (by simp [h]) (by simp [h0]); simp only [deg] at hdeg; omega
+    -- the other endpoint
+    set v := if c0.1 = w then c0.2 else c0.1 with hv
+    have hvw : v ≠ w := by
+      rw [hv]; split_ifs with h
+      · exact fun h2 => hnl ⟨h, h2⟩
+      · exact h
+    have hvV : v ∈ V := by rw [hv]; split_ifs; exact (hCV c0 hc0).2; exact (hCV c0 hc0).1
+    -- recurse on V \ {w} without the constraints touching w
+    let C' := C.filter (fun c => ¬ (c.1 = w ∨ c.2 = w))
+    have hC'lt : C'.length < C.length :=
+      List.length_filter_lt_length_iff_exists.2 ⟨c0, hc0, by simp only [decide_eq_true_eq, not_not]; exact hc0w⟩
+    have hcard : (V.erase w).card = k := by rw [Finset.card_erase_of_mem hw]; omega
+    obtain ⟨y', hy'v, hy'out, ⟨j, hjV, hj⟩, hy'C⟩ := ih C' (V.erase w) hcard
+      (by
+        intro c hc
+        obtain ⟨hcC, hcw⟩ := List.mem_filter.1 hc
+        simp only [decide_eq_true_eq, not_or] at hcw
+        exact ⟨Finset.mem_erase.2 ⟨hcw.1, (hCV c hcC).1⟩, Finset.mem_erase.2 ⟨hcw.2, (hCV c hcC).2⟩⟩)
+      (by rw [hcard]; omega)
+    refine ⟨Function.update y' w (- y' v), ?_, ?_, ⟨j, (Finset.mem_erase.1 hjV).2, ?_⟩, ?_⟩
+    · intro i
+      by_cases hi : i = w
+      · subst hi; simp only [Function.update_self]; rcases hy'v v with h | h | h <;> simp [h]
+      · rw [Function.update_of_ne hi]; exact hy'v i
+    · intro i hi
+      have hiw : i ≠ w := fun h => hi (h ▸ hw)
+      rw [Function.update_of_ne hiw]
+      exact hy'out i (fun h => hi (Finset.mem_erase.1 h).2)
+    · rw [Function.update_of_ne (Finset.mem_erase.1 hjV).1]; exact hj
+    · intro c hc
+      by_cases htw : c.1 = w ∨ c.2 = w
+      · have := honly c hc htw
+        subst this
+        by_cases h1 : c.1 = w
+        · have hv' : v = c.2 := by rw [hv, if_pos h1]
+          rw [h1, Function.update_self, ← hv', Function.update_of_ne hvw]
+        · have hv' : v = c.1 := by rw [hv, if_neg h1]
+          have h2 : c.2 = w := htw.resolve_left h1
+          rw [h2, Function.update_self, ← hv', Function.update_of_ne hvw]; ring
+      · push Not at htw
+        rw [Function.update_of_ne htw.1, Function.update_of_ne htw.2]
+        exact hy'C c (List.mem_filter.2 ⟨hc, by simp [htw.1, htw.2]⟩)
+
+/-- A nonzero `{-1,0,1}` combination of `1, 2, …, 2ⁿ` is nonzero. -/
+lemma pow2_comb_ne_zero : ∀ (n : ℕ) (y : ℕ → ℤ), (∀ j, y j = -1 ∨ y j = 0 ∨ y j = 1) →
+    (∃ j < n + 1, y j ≠ 0) → ∑ j ∈ Finset.range (n + 1), y j * 2 ^ j ≠ 0
+  | 0, y, _, ⟨j, hj, hy⟩ => by
+    have : j = 0 := by omega
+    subst this; simpa using hy
+  | n + 1, y, hv, ⟨j, hj, hy⟩ => by
+    rw [Finset.sum_range_succ']
+    have hshift : ∑ i ∈ Finset.range (n + 1), y (i + 1) * 2 ^ (i + 1) =
+        2 * ∑ i ∈ Finset.range (n + 1), y (i + 1) * 2 ^ i := by
+      rw [Finset.mul_sum]; refine Finset.sum_congr rfl fun i _ => by ring
+    rw [hshift]
+    by_cases h0 : y 0 = 0
+    · rw [h0]
+      have hj0 : j ≠ 0 := fun h => hy (h ▸ h0)
+      have := pow2_comb_ne_zero n (fun i => y (i + 1)) (fun i => hv (i + 1))
+        ⟨j - 1, by omega, by rw [show j - 1 + 1 = j by omega]; exact hy⟩
+      simp only [pow_zero, mul_one, add_zero]; omega
+    · simp only [pow_zero, mul_one]
+      rcases hv 0 with h | h | h
+      · rw [h]; omega
+      · exact absurd h h0
+      · rw [h]; omega
+
+lemma sum_by_label (f : ℕ → ℝ) (n : ℕ) : ∀ X : List (ℝ × ℕ), (∀ p ∈ X, p.2 < n + 1) →
+    (X.map (fun p => f p.2 * p.1)).sum =
+      ∑ j ∈ Finset.range (n + 1), f j * ((X.filter (fun p => p.2 = j)).map Prod.fst).sum
+  | [] => fun _ => by simp
+  | p :: X => fun h => by
+    rw [List.map_cons, List.sum_cons, sum_by_label f n X (fun q hq => h q (by simp [hq]))]
+    have hp : p.2 ∈ Finset.range (n + 1) := Finset.mem_range.2 (h p (by simp))
+    simp only [List.filter_cons]
+    have : ∀ j ∈ Finset.range (n + 1), f j * ((if decide (p.2 = j) = true then
+        p :: X.filter (fun p => p.2 = j) else X.filter (fun p => p.2 = j)).map Prod.fst).sum =
+        (if p.2 = j then f j * p.1 else 0) + f j * ((X.filter (fun p => p.2 = j)).map Prod.fst).sum := by
+      intro j _; by_cases hj : p.2 = j <;> simp [hj]; ring
+    rw [Finset.sum_congr rfl this, Finset.sum_add_distrib, Finset.sum_ite_eq]
+    simp [hp]
+
+/-- **Lower bound engine.** Pieces labelled by `n+1` groups with group sums `2^j / M`, at most `2n+1`
+pieces in total: the surplus is at least `1/M`. -/
+lemma D_ge_of_groups (n : ℕ) (X : List (ℝ × ℕ)) (hnn : ∀ p ∈ X, 0 ≤ p.1)
+    (hlab : ∀ p ∈ X, p.2 < n + 1) (hlen : X.length ≤ 2 * n + 1)
+    (hgrp : ∀ j < n + 1, ((X.filter (fun p => p.2 = j)).map Prod.fst).sum =
+      (2 : ℝ) ^ j / ((2 : ℝ) ^ (n + 1) - 1)) :
+    1 / ((2 : ℝ) ^ (n + 1) - 1) ≤ D (X.map Prod.fst) := by
+  have hM : (1 : ℝ) ≤ (2 : ℝ) ^ (n + 1) - 1 := by
+    have : (2 : ℝ) ≤ 2 ^ (n + 1) := by
+      calc (2 : ℝ) = 2 ^ 1 := by norm_num
+        _ ≤ 2 ^ (n + 1) := pow_le_pow_right₀ (by norm_num) (by omega)
+    linarith
+  set M := (2 : ℝ) ^ (n + 1) - 1
+  -- sort by value
+  set Xs := X.mergeSort (fun p q => decide (p.1 ≥ q.1)) with hXs
+  have hperm : List.Perm Xs X := List.mergeSort_perm _ _
+  have hsortv : (Xs.map Prod.fst).Pairwise (· ≥ ·) := by
+    have := List.pairwise_mergeSort (le := fun p q : ℝ × ℕ => decide (p.1 ≥ q.1))
+      (fun a b c h1 h2 => by simp only [decide_eq_true_eq] at *; linarith)
+      (fun a b => by simpa using le_total b.1 a.1) X
+    rw [List.pairwise_map]; simpa using this
+  have hDeq : D (X.map Prod.fst) = alt (Xs.map Prod.fst) := by
+    unfold D
+    congr 1
+    exact List.Perm.eq_of_pairwise' (msort_sorted _) hsortv
+      ((msort_perm _).trans (hperm.map Prod.fst).symm)
+  -- the sign vector
+  have hCV : ∀ c ∈ consPairs Xs, c.1 ∈ Finset.range (n + 1) ∧ c.2 ∈ Finset.range (n + 1) := by
+    intro c hc
+    obtain ⟨⟨a, ha, h1⟩, ⟨b, hb, h2⟩⟩ := consPairs_mem Xs c hc
+    exact ⟨Finset.mem_range.2 (h1 ▸ hlab a (hperm.subset ha)),
+      Finset.mem_range.2 (h2 ▸ hlab b (hperm.subset hb))⟩
+  have hClen : (consPairs Xs).length < (Finset.range (n + 1)).card := by
+    have := consPairs_length Xs
+    rw [hperm.length_eq] at this; rw [Finset.card_range]; omega
+  obtain ⟨y, hyv, -, ⟨j0, hj0, hyj0⟩, hyC⟩ := sign_vector _ _ _ rfl hCV hClen
+  have hnnXs : ∀ p ∈ Xs, 0 ≤ p.1 := fun p hp => hnn p (hperm.subset hp)
+  have b1 := pair_bound y hyv Xs hsortv hnnXs hyC
+  have b2 := pair_bound (fun j => - y j)
+    (fun j => by rcases hyv j with h | h | h <;> simp [h]) Xs hsortv hnnXs
+    (fun c hc => by simp [hyC c hc])
+  -- rewrite the signed sum through the groups
+  have hS : ∀ (f : ℕ → ℝ), (Xs.map (fun p => f p.2 * p.1)).sum =
+      (∑ j ∈ Finset.range (n + 1), f j * 2 ^ j) / M := by
+    intro f
+    rw [(hperm.map _).sum_eq, sum_by_label f n X hlab, Finset.sum_div]
+    refine Finset.sum_congr rfl fun j hj => ?_
+    rw [hgrp j (Finset.mem_range.1 hj)]; ring
+  have e1 := hS (fun j => (y j : ℝ))
+  have e2 := hS (fun j => ((- y j : ℤ) : ℝ))
+  rw [e1] at b1; rw [e2] at b2
+  push_cast at b2
+  have hz := pow2_comb_ne_zero n y hyv ⟨j0, Finset.mem_range.1 hj0, hyj0⟩
+  have hz' : (1 : ℝ) ≤ |∑ j ∈ Finset.range (n + 1), (y j : ℝ) * 2 ^ j| := by
+    have : (1 : ℤ) ≤ |∑ j ∈ Finset.range (n + 1), y j * 2 ^ j| := Int.one_le_abs hz
+    exact_mod_cast this
+  rw [hDeq]
+  have hneg : ∑ j ∈ Finset.range (n + 1), -(y j : ℝ) * 2 ^ j =
+      - ∑ j ∈ Finset.range (n + 1), (y j : ℝ) * 2 ^ j := by
+    rw [← Finset.sum_neg_distrib]; refine Finset.sum_congr rfl fun j _ => by ring
+  rw [hneg] at b2
+  have hMpos : 0 < M := by linarith
+  rcases abs_cases (∑ j ∈ Finset.range (n + 1), (y j : ℝ) * 2 ^ j) with ⟨h, -⟩ | ⟨h, -⟩
+  · rw [h] at hz'
+    calc 1 / M ≤ (∑ j ∈ Finset.range (n + 1), (y j : ℝ) * 2 ^ j) / M :=
+          div_le_div_of_nonneg_right hz' hMpos.le
+      _ ≤ _ := b1
+  · rw [h] at hz'
+    calc 1 / M ≤ (-∑ j ∈ Finset.range (n + 1), (y j : ℝ) * 2 ^ j) / M :=
+          div_le_div_of_nonneg_right hz' hMpos.le
+      _ ≤ _ := b2
+/-! ## Part D: the intervals of a cut set, and inserting one cut -/
+
+/-- consecutive pairs `(l₀,l₁), (l₁,l₂), …` -/
+def cps : List ℝ → List (ℝ × ℝ)
+  | a :: b :: l => (a, b) :: cps (b :: l)
+  | _ => []
+
+/-- length of an interval -/
+def len (p : ℝ × ℝ) : ℝ := p.2 - p.1
+
+lemma zipWith_eq_cps : ∀ l : List ℝ, List.zipWith (fun a b => b - a) l l.tail = (cps l).map len
+  | [] => rfl
+  | [_] => rfl
+  | a :: b :: l => by
+    have := zipWith_eq_cps (b :: l)
+    simp only [List.tail_cons] at this
+    simp only [List.tail_cons, List.zipWith_cons_cons, cps, List.map_cons, len, this]
+
+/-- the cut points with the two ends -/
+noncomputable def pts (S : Finset ℝ) : List ℝ := (0 : ℝ) :: (S.sort (· ≤ ·)) ++ [1]
+
+/-- the pieces as intervals -/
+noncomputable def ivs (S : Finset ℝ) : List (ℝ × ℝ) := cps (pts S)
+
+lemma pieceLengths_eq (S : Finset ℝ) : pieceLengths S = (ivs S).map len := by
+  unfold pieceLengths ivs pts; exact zipWith_eq_cps _
+
+lemma pts_sorted {S : Finset ℝ} (hS : ↑S ⊆ Set.Ioo (0 : ℝ) 1) : (pts S).Pairwise (· < ·) := by
+  have h1 : (S.sort (· ≤ ·)).Pairwise (· < ·) :=
+    ((Finset.pairwise_sort S (· ≤ ·)).and (Finset.sort_nodup S (· ≤ ·))).imp
+      fun h => lt_of_le_of_ne h.1 h.2
+  have hmem : ∀ x ∈ S.sort (· ≤ ·), 0 < x ∧ x < 1 := fun x hx =>
+    hS (Finset.mem_sort (· ≤ ·) |>.1 hx)
+  unfold pts
+  rw [List.cons_append, List.pairwise_cons, List.pairwise_append]
+  refine ⟨?_, h1, by simp, ?_⟩
+  · intro x hx
+    rcases List.mem_append.1 hx with hx | hx
+    · exact (hmem x hx).1
+    · simp at hx; rw [hx]; norm_num
+  · intro x hx y hy; simp at hy; rw [hy]; exact (hmem x hx).2
+
+lemma cps_mem : ∀ (l : List ℝ) (p : ℝ × ℝ), p ∈ cps l → p.1 ∈ l ∧ p.2 ∈ l
+  | a :: b :: l, p, hp => by
+    simp only [cps, List.mem_cons] at hp
+    rcases hp with rfl | hp
+    · simp
+    · have := cps_mem (b :: l) p hp
+      exact ⟨List.mem_cons_of_mem _ this.1, List.mem_cons_of_mem _ this.2⟩
+  | [], _, hp => by simp [cps] at hp
+  | [_], _, hp => by simp [cps] at hp
+
+lemma cps_lt : ∀ (l : List ℝ), l.Pairwise (· < ·) → ∀ p ∈ cps l, p.1 < p.2
+  | a :: b :: l, hl, p, hp => by
+    simp only [cps, List.mem_cons] at hp
+    rcases hp with rfl | hp
+    · exact List.rel_of_pairwise_cons hl (by simp)
+    · exact cps_lt (b :: l) (List.Pairwise.of_cons hl) p hp
+  | [], _, _, hp => by simp [cps] at hp
+  | [_], _, _, hp => by simp [cps] at hp
+
+/-- nothing of `l` lies strictly inside a consecutive pair -/
+lemma cps_free : ∀ (l : List ℝ), l.Pairwise (· < ·) → ∀ p ∈ cps l, ∀ x ∈ l, ¬ (p.1 < x ∧ x < p.2)
+  | a :: b :: l, hl, p, hp, x, hx => by
+    have hab : ∀ z ∈ b :: l, a < z := fun z hz => List.rel_of_pairwise_cons hl hz
+    have hbl : ∀ z ∈ l, b < z := fun z hz =>
+      List.rel_of_pairwise_cons (List.Pairwise.of_cons hl) hz
+    simp only [cps, List.mem_cons] at hp
+    rcases hp with rfl | hp
+    · rintro ⟨h1, h2⟩
+      simp only [List.mem_cons] at hx
+      rcases hx with rfl | rfl | hx
+      · exact lt_irrefl _ h1
+      · exact lt_irrefl _ h2
+      · exact lt_asymm h2 (hbl x hx)
+    · rcases List.mem_cons.1 hx with rfl | hx
+      · rintro ⟨h1, -⟩
+        exact lt_asymm h1 (hab p.1 (cps_mem _ p hp).1)
+      · exact cps_free (b :: l) (List.Pairwise.of_cons hl) p hp x hx
+  | [], _, _, hp, _, _ => by simp [cps] at hp
+  | [_], _, _, hp, _, _ => by simp [cps] at hp
+
+lemma cps_sum : ∀ (a : ℝ) (l : List ℝ), ((cps (a :: l)).map len).sum = (a :: l).getLast (by simp) - a
+  | a, [] => by simp [cps]
+  | a, b :: l => by
+    have := cps_sum b l
+    simp only [cps, List.map_cons, List.sum_cons, this, len, List.getLast_cons_cons]; ring
+
+lemma ivs_sum (S : Finset ℝ) : ((ivs S).map len).sum = 1 := by
+  unfold ivs pts
+  rw [List.cons_append, cps_sum]; simp
+
+lemma cps_ins (c v0 : ℝ) : ∀ (L : List ℝ) (u0 : ℝ), (u0 :: (L ++ [v0])).Pairwise (· < ·) →
+    u0 < c → c < v0 → c ∉ L → ∀ u v : ℝ, (u, v) ∈ cps (u0 :: (L ++ [v0])) → u < c → c < v →
+    (↑(cps (u0 :: (L.orderedInsert (· ≤ ·) c ++ [v0]))) : Multiset (ℝ × ℝ)) =
+      (u, c) ::ₘ (c, v) ::ₘ (↑(cps (u0 :: (L ++ [v0]))) : Multiset (ℝ × ℝ)).erase (u, v)
+  | [], u0, _, _, _, _, u, v, huv, _, _ => by
+    simp only [List.nil_append, cps, List.mem_cons, Prod.mk.injEq, List.not_mem_nil, or_false]
+      at huv
+    obtain ⟨rfl, rfl⟩ := huv
+    simp [cps]; rfl
+  | x :: L, u0, hl, hu0, hv0, hcL, u, v, huv, huc, hcv => by
+    have hxs : ∀ z ∈ x :: (L ++ [v0]), x ≤ z := by
+      intro z hz
+      rcases List.mem_cons.1 hz with rfl | hz
+      · exact le_rfl
+      · exact (List.rel_of_pairwise_cons (List.Pairwise.of_cons hl) hz).le
+    simp only [List.cons_append, cps] at huv
+    rw [List.orderedInsert_cons]
+    split_ifs with hcx
+    · -- the cut falls in the first interval `(u0, x)`
+      have hcx' : c < x := lt_of_le_of_ne hcx (fun h => hcL (h ▸ List.mem_cons_self))
+      have huv' : (u, v) = (u0, x) := by
+        rcases List.mem_cons.1 huv with h | h
+        · exact h
+        · have := hxs u (cps_mem _ _ h).1; linarith
+      obtain ⟨rfl, rfl⟩ := Prod.mk.injEq _ _ _ _ ▸ huv'
+      simp [cps, Multiset.erase_cons_head]
+    · push Not at hcx
+      have hne : (u, v) ≠ (u0, x) := by
+        intro h; simp only [Prod.mk.injEq] at h; linarith [h.2]
+      have huv' : (u, v) ∈ cps (x :: (L ++ [v0])) := (List.mem_cons.1 huv).resolve_left hne
+      have ih := cps_ins c v0 L x (List.Pairwise.of_cons hl) hcx hv0
+        (fun h => hcL (List.mem_cons_of_mem _ h)) u v huv' huc hcv
+      simp only [List.cons_append, cps, ← Multiset.cons_coe]
+      rw [ih, Multiset.erase_cons_tail _ hne.symm]
+      rw [Multiset.cons_swap (u0, x) (u, c), Multiset.cons_swap (u0, x) (c, v)]
+
+lemma sort_insert' {S : Finset ℝ} {c : ℝ} (hc : c ∉ S) :
+    (insert c S).sort (· ≤ ·) = (S.sort (· ≤ ·)).orderedInsert (· ≤ ·) c := by
+  apply List.Perm.eq_of_pairwise' (Finset.pairwise_sort _ _)
+    (List.Pairwise.orderedInsert c _ (Finset.pairwise_sort _ _))
+  rw [← Multiset.coe_eq_coe, Finset.sort_eq, Finset.insert_val_of_notMem hc,
+    ← Finset.sort_eq S (· ≤ ·), Multiset.cons_coe, Multiset.coe_eq_coe]
+  exact (List.perm_orderedInsert _ c _).symm
+
+/-- **Inserting a cut** `c` inside the piece `(u,v)` replaces it by `(u,c)` and `(c,v)`. -/
+lemma ivs_insert {S : Finset ℝ} (hS : ↑S ⊆ Set.Ioo (0 : ℝ) 1) {c : ℝ} (hc0 : 0 < c) (hc1 : c < 1)
+    (hcS : c ∉ S) {u v : ℝ} (huv : (u, v) ∈ ivs S) (huc : u < c) (hcv : c < v) :
+    (↑(ivs (insert c S)) : Multiset (ℝ × ℝ)) =
+      (u, c) ::ₘ (c, v) ::ₘ (↑(ivs S) : Multiset (ℝ × ℝ)).erase (u, v) := by
+  have hl := pts_sorted hS
+  unfold ivs pts at *
+  rw [sort_insert' hcS]
+  rw [List.cons_append] at hl huv ⊢
+  exact cps_ins c 1 _ 0 hl hc0 hc1 (fun h => hcS ((Finset.mem_sort _).1 h)) u v huv huc hcv
+
+lemma ivs_lt {S : Finset ℝ} (hS : ↑S ⊆ Set.Ioo (0 : ℝ) 1) : ∀ p ∈ ivs S, p.1 < p.2 :=
+  cps_lt _ (pts_sorted hS)
+
+lemma ivs_bounds {S : Finset ℝ} (hS : ↑S ⊆ Set.Ioo (0 : ℝ) 1) :
+    ∀ p ∈ ivs S, 0 ≤ p.1 ∧ p.2 ≤ 1 := by
+  intro p hp
+  have hm := cps_mem _ p hp
+  have hb : ∀ x ∈ pts S, 0 ≤ x ∧ x ≤ 1 := by
+    intro x hx
+    unfold pts at hx
+    simp only [List.cons_append, List.mem_cons, List.mem_append, Finset.mem_sort,
+      List.mem_singleton, List.not_mem_nil, or_false] at hx
+    rcases hx with rfl | hx | rfl
+    · norm_num
+    · have := hS hx; exact ⟨this.1.le, this.2.le⟩
+    · norm_num
+  exact ⟨(hb _ hm.1).1, (hb _ hm.2).2⟩
+
+lemma ivs_free {S : Finset ℝ} (hS : ↑S ⊆ Set.Ioo (0 : ℝ) 1) :
+    ∀ p ∈ ivs S, ∀ x ∈ S, ¬ (p.1 < x ∧ x < p.2) := by
+  intro p hp x hx
+  apply cps_free _ (pts_sorted hS) p hp x
+  unfold pts; simp [Finset.mem_sort, hx]
+/-! ## Part E: Liu's geometric marking and the lower bound -/
+
+lemma cps_bracket (c : ℝ) : ∀ (l : List ℝ) (a : ℝ), (a :: l).Pairwise (· < ·) → a < c →
+    c < (a :: l).getLast (by simp) → c ∉ l → ∃ p ∈ cps (a :: l), p.1 < c ∧ c < p.2
+  | [], a, _, h1, h2, _ => by simp at h2; linarith
+  | b :: l, a, hl, h1, h2, hc => by
+    by_cases hcb : c < b
+    · exact ⟨(a, b), by simp [cps], h1, hcb⟩
+    · have hbc : b < c := lt_of_le_of_ne (not_lt.1 hcb) (fun h => hc (h ▸ List.mem_cons_self))
+      obtain ⟨p, hp, hp1, hp2⟩ := cps_bracket c l b (List.Pairwise.of_cons hl) hbc
+        (by simpa [List.getLast_cons_cons] using h2) (fun h => hc (List.mem_cons_of_mem _ h))
+      exact ⟨p, by simp only [cps, List.mem_cons]; exact Or.inr hp, hp1, hp2⟩
+
+lemma ivs_bracket {S : Finset ℝ} (hS : ↑S ⊆ Set.Ioo (0 : ℝ) 1) {c : ℝ} (hc0 : 0 < c) (hc1 : c < 1)
+    (hcS : c ∉ S) : ∃ p ∈ ivs S, p.1 < c ∧ c < p.2 := by
+  have hl := pts_sorted hS
+  unfold ivs; unfold pts at hl ⊢
+  rw [List.cons_append] at hl ⊢
+  exact cps_bracket c _ 0 hl hc0 (by simpa using hc1)
+    (by simp only [List.mem_append, Finset.mem_sort, List.mem_singleton, not_or]
+        exact ⟨hcS, hc1.ne⟩)
+
+/-- the invariant: labelled pieces with the right group sums -/
+def Inv (n : ℕ) (S : Finset ℝ) (Mx : Multiset (ℝ × ℝ × ℕ)) (k : ℕ) : Prop :=
+  Mx.map (fun t => (t.1, t.2.1)) = (↑(ivs S) : Multiset (ℝ × ℝ)) ∧ (∀ t ∈ Mx, t.2.2 < n + 1) ∧
+  (∀ j < n + 1, ((Mx.filter (fun t => t.2.2 = j)).map (fun t => t.2.1 - t.1)).sum =
+      (2 : ℝ) ^ j / ((2 : ℝ) ^ (n + 1) - 1)) ∧ Mx.card = n + 1 + k
+
+lemma Inv_step {n : ℕ} {S : Finset ℝ} (hS : ↑S ⊆ Set.Ioo (0 : ℝ) 1) {Mx : Multiset (ℝ × ℝ × ℕ)}
+    {k : ℕ} (hI : Inv n S Mx k) {c : ℝ} (hc0 : 0 < c) (hc1 : c < 1) (hcS : c ∉ S) :
+    ∃ Mx', Inv n (insert c S) Mx' (k + 1) := by
+  classical
+  obtain ⟨h1, h2, h3, h4⟩ := hI
+  obtain ⟨⟨u, v⟩, huv, huc, hcv⟩ := ivs_bracket hS hc0 hc1 hcS
+  have hmem : (u, v) ∈ Mx.map (fun t => (t.1, t.2.1)) := by rw [h1]; exact huv
+  obtain ⟨t, ht, htuv⟩ := Multiset.mem_map.1 hmem
+  obtain ⟨Mx₀, rfl⟩ := Multiset.exists_cons_of_mem ht
+  obtain ⟨tu, tv, j⟩ := t
+  simp only [Prod.mk.injEq] at htuv
+  obtain ⟨rfl, rfl⟩ := htuv
+  refine ⟨(tu, c, j) ::ₘ (c, tv, j) ::ₘ Mx₀, ?_, ?_, ?_, ?_⟩
+  · rw [ivs_insert hS hc0 hc1 hcS huv huc hcv, ← h1]
+    simp
+  · intro t' ht'
+    simp only [Multiset.mem_cons] at ht'
+    rcases ht' with rfl | rfl | ht'
+    · simpa using h2 (tu, tv, j) (by simp)
+    · simpa using h2 (tu, tv, j) (by simp)
+    · exact h2 t' (by simp [ht'])
+  · intro j' hj'
+    have := h3 j' hj'
+    rw [← this]
+    simp only [Multiset.filter_cons]
+    by_cases hj : j = j'
+    · subst hj; simp; ring
+    · simp [hj]
+  · simp at h4 ⊢; omega
+
+/-- Liu's marks: `α j = (2^j - 1) / (2^(n+1) - 1)` for `j = 1, …, n`. -/
+noncomputable def α (n j : ℕ) : ℝ := ((2 : ℝ) ^ j - 1) / ((2 : ℝ) ^ (n + 1) - 1)
+
+lemma M_pos (n : ℕ) : (0 : ℝ) < (2 : ℝ) ^ (n + 1) - 1 := by
+  have : (2 : ℝ) ≤ 2 ^ (n + 1) := by
+    calc (2 : ℝ) = 2 ^ 1 := by norm_num
+      _ ≤ 2 ^ (n + 1) := pow_le_pow_right₀ (by norm_num) (by omega)
+  linarith
+
+lemma α_strictMono (n : ℕ) : StrictMono (α n) := by
+  intro i j hij
+  unfold α
+  apply div_lt_div_of_pos_right _ (M_pos n)
+  have : (2 : ℝ) ^ i < 2 ^ j := pow_lt_pow_right₀ (by norm_num) hij
+  linarith
+
+noncomputable def liuList (n : ℕ) : List ℝ := (List.range' 1 n).map (α n)
+
+noncomputable def liuSet (n : ℕ) : Finset ℝ := (liuList n).toFinset
+
+lemma liuList_sorted (n : ℕ) : (liuList n).Pairwise (· < ·) := by
+  unfold liuList; rw [List.pairwise_map]
+  exact (List.pairwise_lt_range' (s := 1) (n := n)).imp fun h => α_strictMono n h
+
+lemma liuSet_sort (n : ℕ) : (liuSet n).sort (· ≤ ·) = liuList n := by
+  apply List.Perm.eq_of_pairwise' (Finset.pairwise_sort _ _)
+    ((liuList_sorted n).imp le_of_lt)
+  rw [← Multiset.coe_eq_coe, Finset.sort_eq]
+  unfold liuSet
+  rw [List.toFinset_val, List.Nodup.dedup ((liuList_sorted n).imp ne_of_lt)]
+
+lemma liuSet_adm (n : ℕ) : AdmissibleMark n (liuSet n) := by
+  constructor
+  · intro x hx
+    simp only [liuSet, liuList, Finset.mem_coe, List.mem_toFinset, List.mem_map, List.mem_range'_1]
+      at hx
+    obtain ⟨j, ⟨hj1, hj2⟩, rfl⟩ := hx
+    have hM := M_pos n
+    have h2 : (2 : ℝ) ≤ 2 ^ j := by
+      calc (2 : ℝ) = 2 ^ 1 := by norm_num
+        _ ≤ 2 ^ j := pow_le_pow_right₀ (by norm_num) hj1
+    have h3 : (2 : ℝ) ^ j < 2 ^ (n + 1) := pow_lt_pow_right₀ (by norm_num) (by omega)
+    constructor
+    · unfold α; apply div_pos _ hM; linarith
+    · unfold α; rw [div_lt_one hM]; linarith
+  · unfold liuSet
+    exact (List.toFinset_card_le _).trans (by simp [liuList])
+
+lemma cps_map_range' (f : ℕ → ℝ) : ∀ (k s : ℕ),
+    cps ((List.range' s (k + 1)).map f) = (List.range' s k).map (fun j => (f j, f (j + 1)))
+  | 0, s => by simp [cps]
+  | k + 1, s => by
+    rw [List.range'_succ, List.map_cons, List.range'_succ, List.map_cons]
+    have := cps_map_range' f k (s + 1)
+    rw [List.range'_succ, List.map_cons] at this
+    simp only [cps, this, List.range'_succ, List.map_cons]
+
+lemma liu_ivs (n : ℕ) :
+    ivs (liuSet n) = (List.range' 0 (n + 1)).map (fun j => (α n j, α n (j + 1))) := by
+  unfold ivs pts
+  rw [liuSet_sort]
+  have h0 : α n 0 = 0 := by simp [α]
+  have h1 : α n (n + 1) = 1 := by unfold α; exact div_self (M_pos n).ne'
+  have : (0 : ℝ) :: liuList n ++ [1] = (List.range' 0 (n + 2)).map (α n) := by
+    rw [show n + 2 = (n + 1) + 1 by ring, List.range'_1_concat, List.range'_succ]
+    simp [liuList, h0, h1]
+  rw [this, cps_map_range']
+
+lemma filter_range'_eq (j : ℕ) : ∀ k s : ℕ, s ≤ j → j < s + k →
+    (List.range' s k).filter (fun i => decide (i = j)) = [j]
+  | 0, s, h1, h2 => by omega
+  | k + 1, s, h1, h2 => by
+    rw [List.range'_succ, List.filter_cons]
+    by_cases hs : s = j
+    · subst hs
+      simp only [decide_true, if_true, List.cons.injEq, true_and]
+      rw [List.filter_eq_nil_iff]
+      intro i hi; simp only [List.mem_range'_1] at hi; simp; omega
+    · simp only [hs, decide_false, Bool.false_eq_true, if_false]
+      exact filter_range'_eq j k (s + 1) (by omega) (by omega)
+
+lemma Inv_init (n : ℕ) : ∃ Mx, Inv n (liuSet n) Mx 0 := by
+  classical
+  refine ⟨↑((List.range' 0 (n + 1)).map (fun j => (α n j, α n (j + 1), j))), ?_, ?_, ?_, ?_⟩
+  · rw [liu_ivs]; simp [Function.comp_def]
+  · intro t ht
+    simp only [Multiset.mem_coe, List.mem_map, List.mem_range'_1] at ht
+    obtain ⟨j, hj, rfl⟩ := ht; simp; omega
+  · intro j hj
+    rw [Multiset.filter_coe, List.filter_map, Multiset.map_coe, Multiset.sum_coe]
+    have hf : ((fun t : ℝ × ℝ × ℕ => decide (t.2.2 = j)) ∘ fun i => (α n i, α n (i + 1), i)) =
+        fun i => decide (i = j) := by funext i; simp
+    rw [hf, filter_range'_eq j (n + 1) 0 (by omega) (by omega)]
+    simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, add_zero]
+    unfold α
+    have hM := (M_pos n).ne'
+    field_simp
+    ring
+  · simp
+lemma Inv_all (n : ℕ) : ∀ B : Finset ℝ, ↑B ⊆ Set.Ioo (0 : ℝ) 1 → Disjoint (liuSet n) B →
+    ∃ Mx, Inv n (liuSet n ∪ B) Mx B.card := by
+  classical
+  intro B
+  induction B using Finset.induction_on with
+  | empty => intro _ _; simpa using Inv_init n
+  | @insert c B hcB ih =>
+    intro hB hD
+    have hB' : ↑B ⊆ Set.Ioo (0 : ℝ) 1 := fun x hx => hB (by simp [hx])
+    have hD' : Disjoint (liuSet n) B := Finset.disjoint_of_subset_right (Finset.subset_insert _ _) hD
+    obtain ⟨Mx, hMx⟩ := ih hB' hD'
+    have hS : ↑(liuSet n ∪ B) ⊆ Set.Ioo (0 : ℝ) 1 := by
+      rw [Finset.coe_union]; exact Set.union_subset (liuSet_adm n).1 hB'
+    have hc := hB (by simp : c ∈ (↑(insert c B) : Set ℝ))
+    have hcA : c ∉ liuSet n := fun h => Finset.disjoint_left.1 hD h (by simp)
+    obtain ⟨Mx', h'⟩ := Inv_step hS hMx hc.1 hc.2 (by simp [hcA, hcB])
+    refine ⟨Mx', ?_⟩
+    rw [Finset.union_insert, Finset.card_insert_of_notMem hcB]; exact h'
+
+lemma lower_bound_aux (n : ℕ) (B : Finset ℝ) (hB : AdmissibleMark n B)
+    (hD : Disjoint (liuSet n) B) :
+    (2 : ℝ) ^ n / ((2 : ℝ) ^ (n + 1) - 1) ≤ L (liuSet n) B := by
+  classical
+  obtain ⟨Mx, h1, h2, h3, h4⟩ := Inv_all n B hB.1 hD
+  have hS : ↑(liuSet n ∪ B) ⊆ Set.Ioo (0 : ℝ) 1 := by
+    rw [Finset.coe_union]; exact Set.union_subset (liuSet_adm n).1 hB.1
+  set X := (Mx.toList).map (fun t => (t.2.1 - t.1, t.2.2)) with hX
+  have hpl : D (pieceLengths (liuSet n ∪ B)) = D (X.map Prod.fst) := by
+    apply D_perm
+    rw [← Multiset.coe_eq_coe, pieceLengths_eq, ← Multiset.map_coe, ← h1, hX, List.map_map,
+      ← Multiset.map_coe, Multiset.coe_toList, Multiset.map_map]
+    rfl
+  have hge := D_ge_of_groups n X
+    (by
+      intro p hp
+      simp only [hX, List.mem_map, Multiset.mem_toList] at hp
+      obtain ⟨t, ht, rfl⟩ := hp
+      have : (t.1, t.2.1) ∈ (↑(ivs (liuSet n ∪ B)) : Multiset (ℝ × ℝ)) := by
+        rw [← h1]; exact Multiset.mem_map_of_mem _ ht
+      have := ivs_lt hS _ this
+      simp only at this ⊢; linarith)
+    (by
+      intro p hp
+      simp only [hX, List.mem_map, Multiset.mem_toList] at hp
+      obtain ⟨t, ht, rfl⟩ := hp; exact h2 t ht)
+    (by
+      simp only [hX, List.length_map, Multiset.length_toList, h4]
+      have := hB.2; omega)
+    (by
+      intro j hj
+      rw [← h3 j hj, hX, List.filter_map, List.map_map]
+      conv_rhs => rw [← Multiset.coe_toList Mx]
+      rw [Multiset.filter_coe, Multiset.map_coe, Multiset.sum_coe]
+      rfl)
+  unfold L
+  rw [share_eq, pieceLengths_eq, ivs_sum, ← pieceLengths_eq, hpl]
+  have hM := M_pos n
+  have : (2 : ℝ) ^ n / ((2 : ℝ) ^ (n + 1) - 1) = (1 + 1 / ((2 : ℝ) ^ (n + 1) - 1)) / 2 := by
+    field_simp; ring
+  rw [this]; linarith
+
+theorem lower_bound' (n : ℕ) (hn : 0 < n) :
+    ∃ A : Finset ℝ, AdmissibleMark n A ∧
+      ∀ B : Finset ℝ, AdmissibleMark n B → Disjoint A B →
+        (2 : ℝ) ^ n / ((2 : ℝ) ^ (n + 1) - 1) ≤ L A B :=
+  ⟨liuSet n, liuSet_adm n, fun B hB hD => lower_bound_aux n B hB hD⟩
+
+/-! ## Part F: Xiang's answer — halving and splitting -/
+
+/-- a multiset of intervals whose lengths come in equal pairs -/
+def PairedLen (H : Multiset (ℝ × ℝ)) : Prop :=
+  ∃ E : List ℝ, H.map len = (↑(E.flatMap (fun a => [a, a])) : Multiset ℝ)
+
+lemma PairedLen_zero : PairedLen 0 := ⟨[], by simp⟩
+
+lemma PairedLen_add {H H' : Multiset (ℝ × ℝ)} (h : PairedLen H) (h' : PairedLen H') :
+    PairedLen (H + H') := by
+  obtain ⟨E, hE⟩ := h; obtain ⟨E', hE'⟩ := h'
+  exact ⟨E ++ E', by rw [Multiset.map_add, hE, hE', List.flatMap_append, ← Multiset.coe_add]⟩
+
+lemma PairedLen_cons2 {H : Multiset (ℝ × ℝ)} (h : PairedLen H) (p q : ℝ × ℝ) (hpq : len p = len q) :
+    PairedLen (p ::ₘ q ::ₘ H) := by
+  obtain ⟨E, hE⟩ := h
+  exact ⟨len p :: E, by simp [hE, hpq]⟩
+
+lemma mem_ivs_of {S : Finset ℝ} {p : ℝ × ℝ} {X : Multiset (ℝ × ℝ)}
+    (h : (↑(ivs S) : Multiset (ℝ × ℝ)) = p ::ₘ X) : p ∈ ivs S := by
+  rw [← Multiset.mem_coe, h]; exact Multiset.mem_cons_self _ _
+
+/-- cutting inside a piece gives a legal new mark -/
+lemma cut_ok {S : Finset ℝ} (hS : ↑S ⊆ Set.Ioo (0 : ℝ) 1) {p : ℝ × ℝ} (hp : p ∈ ivs S) {c : ℝ}
+    (h1 : p.1 < c) (h2 : c < p.2) : 0 < c ∧ c < 1 ∧ c ∉ S := by
+  have hb := ivs_bounds hS p hp
+  exact ⟨by linarith [hb.1], by linarith [hb.2], fun hc => ivs_free hS p hp c hc ⟨h1, h2⟩⟩
+
+lemma halve (W : Multiset (ℝ × ℝ)) : ∀ (S : Finset ℝ) (U : Multiset (ℝ × ℝ)),
+    ↑S ⊆ Set.Ioo (0 : ℝ) 1 → (↑(ivs S) : Multiset (ℝ × ℝ)) = W + U →
+    ∃ B' : Finset ℝ, Disjoint S B' ∧ ↑B' ⊆ Set.Ioo (0 : ℝ) 1 ∧ B'.card ≤ W.card ∧
+      ∃ H, (↑(ivs (S ∪ B')) : Multiset (ℝ × ℝ)) = U + H ∧ PairedLen H := by
+  classical
+  induction W using Multiset.induction_on with
+  | empty =>
+    intro S U _ h
+    exact ⟨∅, by simp, by simp, by simp, 0, by simpa using h, PairedLen_zero⟩
+  | cons w W ih =>
+    intro S U hS h
+    obtain ⟨u, v⟩ := w
+    have e : (↑(ivs S) : Multiset (ℝ × ℝ)) = (u, v) ::ₘ (W + U) := by rw [h, Multiset.cons_add]
+    have hp := mem_ivs_of e
+    have huv := ivs_lt hS _ hp
+    simp only at huv
+    set c := (u + v) / 2
+    have hc1 : u < c := by simp only [c]; linarith
+    have hc2 : c < v := by simp only [c]; linarith
+    obtain ⟨hc0, hc1', hcS⟩ := cut_ok hS hp hc1 hc2
+    have hS1 : ↑(insert c S) ⊆ Set.Ioo (0 : ℝ) 1 := by
+      rw [Finset.coe_insert]; exact Set.insert_subset ⟨hc0, hc1'⟩ hS
+    have e1 : (↑(ivs (insert c S)) : Multiset (ℝ × ℝ)) = W + ((u, c) ::ₘ (c, v) ::ₘ U) := by
+      rw [ivs_insert hS hc0 hc1' hcS hp hc1 hc2, e, Multiset.erase_cons_head]
+      simp only [← Multiset.singleton_add]; abel
+    obtain ⟨B'', hD, hB, hcard, H, hH, hP⟩ := ih (insert c S) _ hS1 e1
+    refine ⟨insert c B'', ?_, ?_, ?_, (u, c) ::ₘ (c, v) ::ₘ H, ?_, ?_⟩
+    · rw [Finset.disjoint_insert_right]
+      exact ⟨hcS, Finset.disjoint_of_subset_left (Finset.subset_insert _ _) hD⟩
+    · rw [Finset.coe_insert]; exact Set.insert_subset ⟨hc0, hc1'⟩ hB
+    · calc (insert c B'').card ≤ B''.card + 1 := Finset.card_insert_le _ _
+        _ ≤ W.card + 1 := by omega
+        _ = ((u, v) ::ₘ W).card := by simp
+    · rw [Finset.union_insert, ← Finset.insert_union, hH]
+      simp only [← Multiset.singleton_add]; abel
+    · exact PairedLen_cons2 hP _ _ (by simp only [len, c]; ring)
+
+lemma sum_len_pos {S : Finset ℝ} (hS : ↑S ⊆ Set.Ioo (0 : ℝ) 1) {K X : Multiset (ℝ × ℝ)}
+    (h : (↑(ivs S) : Multiset (ℝ × ℝ)) = K + X) (hK : K ≠ 0) : 0 < (K.map len).sum := by
+  have hpos : ∀ p ∈ K, 0 < len p := by
+    intro p hp
+    have : p ∈ ivs S := by rw [← Multiset.mem_coe, h]; exact Multiset.mem_add.2 (Or.inl hp)
+    have := ivs_lt hS p this; simp only [len]; linarith
+  obtain ⟨a, ha⟩ := Multiset.exists_mem_of_ne_zero hK
+  obtain ⟨K', rfl⟩ := Multiset.exists_cons_of_mem ha
+  rw [Multiset.map_cons, Multiset.sum_cons]
+  have h1 := hpos a (Multiset.mem_cons_self _ _)
+  have h2 : 0 ≤ (K'.map len).sum := Multiset.sum_nonneg fun x hx => by
+    obtain ⟨p, hp, rfl⟩ := Multiset.mem_map.1 hx
+    exact (hpos p (Multiset.mem_cons_of_mem hp)).le
+  linarith
+
+lemma split : ∀ (m : ℕ) (KP KN U : Multiset (ℝ × ℝ)) (S : Finset ℝ), KP.card + KN.card = m →
+    ↑S ⊆ Set.Ioo (0 : ℝ) 1 → (↑(ivs S) : Multiset (ℝ × ℝ)) = KP + KN + U →
+    (KN.map len).sum ≤ (KP.map len).sum →
+    ∃ B' : Finset ℝ, Disjoint S B' ∧ ↑B' ⊆ Set.Ioo (0 : ℝ) 1 ∧ B'.card ≤ m - 1 ∧
+      ∃ H R, (↑(ivs (S ∪ B')) : Multiset (ℝ × ℝ)) = U + H + R ∧ PairedLen H ∧
+        (R.map len).sum = (KP.map len).sum - (KN.map len).sum := by
+  classical
+  intro m
+  induction m using Nat.strong_induction_on with
+  | _ m ih =>
+  intro KP KN U S hm hS h hsum
+  by_cases hKN : KN = 0
+  · subst hKN
+    refine ⟨∅, by simp, by simp, by simp, 0, KP, ?_, PairedLen_zero, by simp⟩
+    rw [Finset.union_empty, h]; simp only [add_zero, zero_add]; abel
+  by_cases hKP : KP = 0
+  · exfalso; subst hKP
+    have := sum_len_pos hS (K := KN) (X := U) (by rw [h]; simp) hKN
+    simp at hsum; linarith
+  obtain ⟨p, hp0⟩ := Multiset.exists_mem_of_ne_zero hKP
+  obtain ⟨KP₀, rfl⟩ := Multiset.exists_cons_of_mem hp0
+  obtain ⟨q, hq0⟩ := Multiset.exists_mem_of_ne_zero hKN
+  obtain ⟨KN₀, rfl⟩ := Multiset.exists_cons_of_mem hq0
+  obtain ⟨u, v⟩ := p
+  obtain ⟨u', v'⟩ := q
+  simp only [Multiset.card_cons] at hm
+  simp only [Multiset.map_cons, Multiset.sum_cons] at hsum ⊢
+  have ep : (↑(ivs S) : Multiset (ℝ × ℝ)) = (u, v) ::ₘ ((u', v') ::ₘ (KP₀ + KN₀ + U)) := by
+    rw [h]; simp only [← Multiset.singleton_add]; abel
+  have eq : (↑(ivs S) : Multiset (ℝ × ℝ)) = (u', v') ::ₘ ((u, v) ::ₘ (KP₀ + KN₀ + U)) := by
+    rw [ep, Multiset.cons_swap]
+  have hp := mem_ivs_of ep
+  have hq := mem_ivs_of eq
+  have huv := ivs_lt hS _ hp
+  have huv' := ivs_lt hS _ hq
+  simp only at huv huv'
+  rcases lt_trichotomy (len (u, v)) (len (u', v')) with hlt | heq | hgt
+  · -- cut q at `u' + len p`
+    set c := u' + len (u, v)
+    have hc1 : u' < c := by simp only [c, len]; linarith
+    have hc2 : c < v' := by simp only [c, len] at hlt ⊢; linarith
+    obtain ⟨hc0, hc1', hcS⟩ := cut_ok hS hq hc1 hc2
+    have hS1 : ↑(insert c S) ⊆ Set.Ioo (0 : ℝ) 1 := by
+      rw [Finset.coe_insert]; exact Set.insert_subset ⟨hc0, hc1'⟩ hS
+    have e1 : (↑(ivs (insert c S)) : Multiset (ℝ × ℝ)) =
+        KP₀ + ((c, v') ::ₘ KN₀) + ((u, v) ::ₘ (u', c) ::ₘ U) := by
+      rw [ivs_insert hS hc0 hc1' hcS hq hc1 hc2, eq, Multiset.erase_cons_head]
+      simp only [← Multiset.singleton_add]; abel
+    obtain ⟨B'', hD, hB, hcard, H, R, hH, hP, hR⟩ := ih (m - 1) (by omega) KP₀ ((c, v') ::ₘ KN₀)
+      _ (insert c S) (by simp; omega) hS1 e1
+      (by simp only [Multiset.map_cons, Multiset.sum_cons, c, len] at hsum ⊢; linarith)
+    refine ⟨insert c B'', ?_, ?_, ?_, (u, v) ::ₘ (u', c) ::ₘ H, R, ?_, ?_, ?_⟩
+    · rw [Finset.disjoint_insert_right]
+      exact ⟨hcS, Finset.disjoint_of_subset_left (Finset.subset_insert _ _) hD⟩
+    · rw [Finset.coe_insert]; exact Set.insert_subset ⟨hc0, hc1'⟩ hB
+    · have := Finset.card_insert_le c B''; omega
+    · rw [Finset.union_insert, ← Finset.insert_union, hH]
+      simp only [← Multiset.singleton_add]; abel
+    · exact PairedLen_cons2 hP _ _ (by simp only [len, c]; ring)
+    · rw [hR]; simp only [Multiset.map_cons, Multiset.sum_cons, c, len]; ring
+  · -- equal lengths: pair them directly
+    obtain ⟨B', hD, hB, hcard, H, R, hH, hP, hR⟩ := ih (m - 2) (by omega) KP₀ KN₀
+      ((u, v) ::ₘ (u', v') ::ₘ U) S (by omega) hS
+      (by rw [ep]; simp only [← Multiset.singleton_add]; abel)
+      (by linarith [heq])
+    refine ⟨B', hD, hB, by omega, (u, v) ::ₘ (u', v') ::ₘ H, R, ?_, PairedLen_cons2 hP _ _ heq, ?_⟩
+    · rw [hH]; simp only [← Multiset.singleton_add]; abel
+    · rw [hR]; linarith [heq]
+  · -- cut p at `u + len q`
+    set c := u + len (u', v')
+    have hc1 : u < c := by simp only [c, len]; linarith
+    have hc2 : c < v := by simp only [c, len] at hgt ⊢; linarith
+    obtain ⟨hc0, hc1', hcS⟩ := cut_ok hS hp hc1 hc2
+    have hS1 : ↑(insert c S) ⊆ Set.Ioo (0 : ℝ) 1 := by
+      rw [Finset.coe_insert]; exact Set.insert_subset ⟨hc0, hc1'⟩ hS
+    have e1 : (↑(ivs (insert c S)) : Multiset (ℝ × ℝ)) =
+        ((c, v) ::ₘ KP₀) + KN₀ + ((u, c) ::ₘ (u', v') ::ₘ U) := by
+      rw [ivs_insert hS hc0 hc1' hcS hp hc1 hc2, ep, Multiset.erase_cons_head]
+      simp only [← Multiset.singleton_add]; abel
+    obtain ⟨B'', hD, hB, hcard, H, R, hH, hP, hR⟩ := ih (m - 1) (by omega) ((c, v) ::ₘ KP₀) KN₀
+      _ (insert c S) (by simp; omega) hS1 e1
+      (by simp only [Multiset.map_cons, Multiset.sum_cons, c, len] at hsum ⊢; linarith)
+    refine ⟨insert c B'', ?_, ?_, ?_, (u, c) ::ₘ (u', v') ::ₘ H, R, ?_, ?_, ?_⟩
+    · rw [Finset.disjoint_insert_right]
+      exact ⟨hcS, Finset.disjoint_of_subset_left (Finset.subset_insert _ _) hD⟩
+    · rw [Finset.coe_insert]; exact Set.insert_subset ⟨hc0, hc1'⟩ hB
+    · have := Finset.card_insert_le c B''; omega
+    · rw [Finset.union_insert, ← Finset.insert_union, hH]
+      simp only [← Multiset.singleton_add]; abel
+    · exact PairedLen_cons2 hP _ _ (by simp only [len, c]; ring)
+    · rw [hR]; simp only [Multiset.map_cons, Multiset.sum_cons, c, len]; ring
+
+/-! ## Part F2: pigeonhole and Xiang's marking -/
+
+lemma cps_length : ∀ l : List ℝ, (cps l).length = l.length - 1
+  | [] => rfl
+  | [_] => rfl
+  | a :: b :: l => by have := cps_length (b :: l); simp [cps, this]
+
+lemma ivs_length (S : Finset ℝ) : (ivs S).length = S.card + 1 := by
+  unfold ivs pts; rw [cps_length]; simp [Finset.length_sort]
+
+/-- multiset as a sum of singletons over indices -/
+lemma coe_eq_sum_range (d : ℝ × ℝ) : ∀ l : List (ℝ × ℝ),
+    (↑l : Multiset (ℝ × ℝ)) = ∑ i ∈ Finset.range l.length, ({l.getD i d} : Multiset (ℝ × ℝ))
+  | [] => by simp
+  | x :: xs => by
+    rw [List.length_cons, Finset.sum_range_succ']
+    simp only [List.getD_cons_succ, List.getD_cons_zero]
+    rw [← coe_eq_sum_range d xs, ← Multiset.cons_coe, ← Multiset.singleton_add, add_comm]
+
+lemma map_sum_singletons (g : ℕ → ℝ × ℝ) (s : Finset ℕ) :
+    ((∑ i ∈ s, ({g i} : Multiset (ℝ × ℝ))).map len).sum = ∑ i ∈ s, len (g i) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | @insert a s ha ih => rw [Finset.sum_insert ha, Finset.sum_insert ha, Multiset.map_add,
+      Multiset.sum_add, ih]; simp
+
+lemma card_sum_singletons (g : ℕ → ℝ × ℝ) (s : Finset ℕ) :
+    (∑ i ∈ s, ({g i} : Multiset (ℝ × ℝ))).card = s.card := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | @insert a s ha ih => rw [Finset.sum_insert ha, Multiset.card_add, ih,
+      Finset.card_insert_of_notMem ha]; simp; ring
+
+/-- boxes of width `1/K` -/
+lemma box (K : ℕ) (hK : 1 ≤ K) {x y : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) (hy0 : 0 ≤ y) (hy1 : y ≤ 1)
+    (h : min ⌊x * K⌋₊ (K - 1) = min ⌊y * K⌋₊ (K - 1)) : x - y ≤ 1 / K := by
+  have hKr : (1 : ℝ) ≤ K := by exact_mod_cast hK
+  have hKpos : (0 : ℝ) < K := by linarith
+  have ha1 := Nat.floor_le (mul_nonneg hx0 hKpos.le)
+  have ha2 := Nat.lt_floor_add_one (x * K)
+  have hb1 := Nat.floor_le (mul_nonneg hy0 hKpos.le)
+  have hb2 := Nat.lt_floor_add_one (y * K)
+  have key : x * K - y * K ≤ 1 := by
+    rcases (by omega : ⌊x * K⌋₊ = ⌊y * K⌋₊ ∨ (K - 1 ≤ ⌊x * K⌋₊ ∧ K - 1 ≤ ⌊y * K⌋₊)) with e | ⟨e1, e2⟩
+    · rw [e] at ha2; linarith
+    · have : ((K - 1 : ℕ) : ℝ) = K - 1 := by rw [Nat.cast_sub hK]; simp
+      have e2' : ((K - 1 : ℕ) : ℝ) ≤ ⌊y * K⌋₊ := by exact_mod_cast e2
+      rw [this] at e2'
+      nlinarith
+  rw [le_div_iff₀ hKpos]; linarith
+
+/-- Xiang's answer once two index sets with close sums are found. -/
+lemma xiang_of_close (n : ℕ) (A : Finset ℝ) (hA : AdmissibleMark n A) (hcard : A.card = n)
+    (I J : Finset ℕ) (hI : I ⊆ Finset.range (n + 1)) (hJ : J ⊆ Finset.range (n + 1)) (hIJ : I ≠ J)
+    (hle : ∑ i ∈ J, len ((ivs A).getD i (0, 0)) ≤ ∑ i ∈ I, len ((ivs A).getD i (0, 0)))
+    (hclose : ∑ i ∈ I, len ((ivs A).getD i (0, 0)) - ∑ i ∈ J, len ((ivs A).getD i (0, 0)) ≤
+      1 / ((2 : ℝ) ^ (n + 1) - 1)) :
+    ∃ B : Finset ℝ, AdmissibleMark n B ∧ Disjoint A B ∧
+      L A B ≤ (2 : ℝ) ^ n / ((2 : ℝ) ^ (n + 1) - 1) := by
+  classical
+  set g : ℕ → ℝ × ℝ := fun i => (ivs A).getD i (0, 0) with hg
+  set P := I \ J
+  set N := J \ I
+  set R := (Finset.range (n + 1) \ P) \ N
+  have hPr : P ⊆ Finset.range (n + 1) := fun x hx => hI (Finset.mem_sdiff.1 hx).1
+  have hNr : N ⊆ Finset.range (n + 1) \ P := by
+    intro x hx
+    obtain ⟨hxJ, hxI⟩ := Finset.mem_sdiff.1 hx
+    exact Finset.mem_sdiff.2 ⟨hJ hxJ, fun h => hxI (Finset.mem_sdiff.1 h).1⟩
+  set KP := ∑ i ∈ P, ({g i} : Multiset (ℝ × ℝ))
+  set KN := ∑ i ∈ N, ({g i} : Multiset (ℝ × ℝ))
+  set KU := ∑ i ∈ R, ({g i} : Multiset (ℝ × ℝ))
+  have hlen : (ivs A).length = n + 1 := by rw [ivs_length, hcard]
+  have hsplit : (↑(ivs A) : Multiset (ℝ × ℝ)) = KU + (KP + KN) := by
+    rw [coe_eq_sum_range (0, 0) (ivs A), hlen]
+    rw [← Finset.sum_sdiff hPr, ← Finset.sum_sdiff hNr]
+    abel
+  have hσ : ∀ s : Finset ℕ, ∑ i ∈ s, len (g i) = ∑ i ∈ s, len ((ivs A).getD i (0, 0)) :=
+    fun s => rfl
+  -- sums of P and N
+  have hPN : ∑ i ∈ P, len (g i) - ∑ i ∈ N, len (g i) =
+      ∑ i ∈ I, len (g i) - ∑ i ∈ J, len (g i) := by
+    have e1 := Finset.sum_sdiff (f := fun i => len (g i)) (Finset.inter_subset_left : I ∩ J ⊆ I)
+    have e2 := Finset.sum_sdiff (f := fun i => len (g i)) (Finset.inter_subset_right : I ∩ J ⊆ J)
+    rw [Finset.sdiff_inter_self_left] at e1
+    rw [Finset.sdiff_inter_self_right] at e2
+    linarith
+  -- halve the untouched pieces
+  obtain ⟨B1, hD1, hB1, hc1, H1, hH1, hP1⟩ := halve KU A (KP + KN) hA.1 hsplit
+  have hS1 : ↑(A ∪ B1) ⊆ Set.Ioo (0 : ℝ) 1 := by
+    rw [Finset.coe_union]; exact Set.union_subset hA.1 hB1
+  -- split the signed pieces
+  obtain ⟨B2, hD2, hB2, hc2, H2, R2, hH2, hP2, hR2⟩ :=
+    split (KP.card + KN.card) KP KN H1 (A ∪ B1) rfl hS1 hH1
+      (by
+        rw [map_sum_singletons, map_sum_singletons]
+        have := hPN; rw [hσ, hσ] at this; linarith)
+  have hcP := card_sum_singletons g P
+  have hcN := card_sum_singletons g N
+  have hcU := card_sum_singletons g R
+  have hPN1 : 1 ≤ P.card + N.card := by
+    by_contra h0
+    have hP0 : P = ∅ := Finset.card_eq_zero.1 (by omega)
+    have hN0 : N = ∅ := Finset.card_eq_zero.1 (by omega)
+    exact hIJ (Finset.Subset.antisymm (Finset.sdiff_eq_empty_iff_subset.1 hP0)
+      (Finset.sdiff_eq_empty_iff_subset.1 hN0))
+  have hRc : R.card + P.card + N.card = n + 1 := by
+    have h1 := Finset.card_sdiff_of_subset hNr
+    have h2 := Finset.card_sdiff_of_subset hPr
+    have h3 := Finset.card_le_card hNr
+    have h4 := Finset.card_le_card hPr
+    simp only [Finset.card_range] at h2 h4
+    simp only [R]; rw [h1, h2]; rw [Finset.card_sdiff_of_subset hPr, Finset.card_range] at h3
+    omega
+  refine ⟨B1 ∪ B2, ⟨?_, ?_⟩, ?_, ?_⟩
+  · rw [Finset.coe_union]; exact Set.union_subset hB1 hB2
+  · have := Finset.card_union_le B1 B2
+    rw [hcU] at hc1; rw [hcP, hcN] at hc2
+    omega
+  · rw [Finset.disjoint_union_right]
+    exact ⟨hD1, Finset.disjoint_of_subset_left Finset.subset_union_left hD2⟩
+  · unfold L
+    rw [← Finset.union_assoc, share_eq, pieceLengths_eq, ivs_sum]
+    obtain ⟨E, hE⟩ := PairedLen_add hP1 hP2
+    have hS2 : ↑(A ∪ B1 ∪ B2) ⊆ Set.Ioo (0 : ℝ) 1 := by
+      rw [Finset.coe_union]; exact Set.union_subset hS1 hB2
+    have hperm : List.Perm ((ivs (A ∪ B1 ∪ B2)).map len)
+        (E.flatMap (fun a => [a, a]) ++ (R2.map len).toList) := by
+      rw [← Multiset.coe_eq_coe, ← Multiset.map_coe, hH2, ← Multiset.coe_add, ← hE,
+        Multiset.coe_toList]
+      simp only [Multiset.map_add]
+    have hnn : ∀ x ∈ (R2.map len).toList, 0 ≤ x := by
+      intro x hx
+      rw [Multiset.mem_toList] at hx
+      obtain ⟨p, hp, rfl⟩ := Multiset.mem_map.1 hx
+      have : p ∈ ivs (A ∪ B1 ∪ B2) := by
+        rw [← Multiset.mem_coe, hH2]; exact Multiset.mem_add.2 (Or.inr hp)
+      have := ivs_lt hS2 p this; simp only [len]; linarith
+    have hD := D_le_singles E _ hnn
+    rw [← D_perm hperm] at hD
+    have hRs : (R2.map len).toList.sum ≤ 1 / ((2 : ℝ) ^ (n + 1) - 1) := by
+      rw [Multiset.sum_toList, hR2, map_sum_singletons, map_sum_singletons]
+      have := hPN; rw [hσ, hσ, hσ, hσ] at this; linarith
+    have hM := M_pos n
+    have : (2 : ℝ) ^ n / ((2 : ℝ) ^ (n + 1) - 1) = (1 + 1 / ((2 : ℝ) ^ (n + 1) - 1)) / 2 := by
+      field_simp; ring
+    rw [this]; linarith
+
+theorem upper_bound' (n : ℕ) (hn : 0 < n) :
+    ∀ A : Finset ℝ, AdmissibleMark n A →
+      ∃ B : Finset ℝ, AdmissibleMark n B ∧ Disjoint A B ∧
+        L A B ≤ (2 : ℝ) ^ n / ((2 : ℝ) ^ (n + 1) - 1) := by
+  classical
+  intro A hA
+  have hM := M_pos n
+  have hhalf : (1 : ℝ) / 2 ≤ (2 : ℝ) ^ n / ((2 : ℝ) ^ (n + 1) - 1) := by
+    rw [div_le_div_iff₀ (by norm_num) hM]; rw [pow_succ]; linarith
+  rcases lt_or_eq_of_le hA.2 with hlt | heq
+  · -- fewer than `n` marks: halve every piece
+    obtain ⟨B, hD, hB, hc, H, hH, hP⟩ := halve (↑(ivs A)) A 0 hA.1 (by simp)
+    refine ⟨B, ⟨hB, ?_⟩, hD, ?_⟩
+    · rw [Multiset.coe_card, ivs_length] at hc; omega
+    · unfold L
+      rw [share_eq, pieceLengths_eq, ivs_sum]
+      obtain ⟨E, hE⟩ := hP
+      have hperm : List.Perm ((ivs (A ∪ B)).map len) (E.flatMap (fun a => [a, a]) ++ []) := by
+        rw [← Multiset.coe_eq_coe, ← Multiset.map_coe, hH, zero_add, hE, List.append_nil]
+      have hD0 := D_le_singles E [] (by simp)
+      rw [← D_perm hperm] at hD0
+      simp at hD0; linarith
+  · -- exactly `n` marks: pigeonhole on the `2^(n+1)` subsets of pieces
+    set K : ℕ := 2 ^ (n + 1) - 1 with hKdef
+    have hK1 : 1 ≤ K := by
+      have : 2 ≤ 2 ^ (n + 1) := by
+        calc 2 = 2 ^ 1 := by norm_num
+          _ ≤ 2 ^ (n + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+      omega
+    have hKr : (K : ℝ) = (2 : ℝ) ^ (n + 1) - 1 := by
+      rw [hKdef, Nat.cast_sub (Nat.one_le_two_pow), Nat.cast_pow]; norm_num
+    set σ : Finset ℕ → ℝ := fun s => ∑ i ∈ s, len ((ivs A).getD i (0, 0)) with hσdef
+    have hlen : (ivs A).length = n + 1 := by rw [ivs_length, heq]
+    have hpos : ∀ i ∈ Finset.range (n + 1), 0 ≤ len ((ivs A).getD i (0, 0)) := by
+      intro i hi
+      have hi' : i < (ivs A).length := by rw [hlen]; exact Finset.mem_range.1 hi
+      rw [List.getD_eq_getElem _ _ hi']
+      have := ivs_lt hA.1 _ (List.getElem_mem hi'); simp only [len]; linarith
+    have htot : σ (Finset.range (n + 1)) = 1 := by
+      have := ivs_sum A
+      rw [← Multiset.sum_coe, ← Multiset.map_coe, coe_eq_sum_range (0, 0), map_sum_singletons,
+        hlen] at this
+      exact this
+    have hσb : ∀ s ∈ (Finset.range (n + 1)).powerset, 0 ≤ σ s ∧ σ s ≤ 1 := by
+      intro s hs
+      rw [Finset.mem_powerset] at hs
+      exact ⟨Finset.sum_nonneg fun i hi => hpos i (hs hi),
+        htot ▸ Finset.sum_le_sum_of_subset_of_nonneg hs (fun i hi _ => hpos i hi)⟩
+    obtain ⟨I, hI, J, hJ, hIJ, hf⟩ := Finset.exists_ne_map_eq_of_card_lt_of_maps_to
+      (s := (Finset.range (n + 1)).powerset) (t := Finset.range K)
+      (f := fun s => min ⌊σ s * K⌋₊ (K - 1))
+      (by
+        rw [Finset.card_powerset, Finset.card_range, Finset.card_range]
+        have : 1 ≤ 2 ^ (n + 1) := Nat.one_le_two_pow
+        omega)
+      (fun s _ => Finset.mem_range.2 (lt_of_le_of_lt (min_le_right _ _) (Nat.sub_lt (by omega) one_pos)))
+    have b1 := box K hK1 (hσb I hI).1 (hσb I hI).2 (hσb J hJ).1 (hσb J hJ).2 hf
+    have b2 := box K hK1 (hσb J hJ).1 (hσb J hJ).2 (hσb I hI).1 (hσb I hI).2 hf.symm
+    rw [hKr] at b1 b2
+    rw [Finset.mem_powerset] at hI hJ
+    rcases le_total (σ J) (σ I) with h | h
+    · exact xiang_of_close n A hA heq I J hI hJ hIJ h b1
+    · exact xiang_of_close n A hA heq J I hJ hI hIJ.symm h b2
+
+
+/-! ## Correctness statements for the definitions
+
+These pin down that the encoded definitions behave as intended. -/
+
+/-- The piece lengths of an admissible cut set sum to `1` (the total stick
+length). -/
+theorem pieceLengths_sum (S : Finset ℝ) (hS : ↑S ⊆ Set.Ioo (0 : ℝ) 1) :
+    (pieceLengths S).sum = 1 := by
+  rw [pieceLengths_eq]; exact ivs_sum S
+
+/-- There are `|S| + 1` pieces. -/
+theorem pieceLengths_length (S : Finset ℝ) :
+    (pieceLengths S).length = S.card + 1 := by
+  rw [pieceLengths_eq, List.length_map, ivs_length]
+
+/-- Basic sanity bound: Liu Bang's share lies in `[0, 1]` for admissible cut
+sets (it is a subset-sum of the piece lengths, which are nonnegative and sum to
+`1`). -/
+theorem L_mem_Icc (A B : Finset ℝ)
+    (hA : ↑A ⊆ Set.Ioo (0 : ℝ) 1) (hB : ↑B ⊆ Set.Ioo (0 : ℝ) 1) :
+    L A B ∈ Set.Icc (0 : ℝ) 1 := by
+  have hS : ↑(A ∪ B) ⊆ Set.Ioo (0 : ℝ) 1 := by
+    rw [Finset.coe_union]; exact Set.union_subset hA hB
+  have hnn : ∀ x ∈ pieceLengths (A ∪ B), 0 ≤ x := by
+    intro x hx
+    rw [pieceLengths_eq, List.mem_map] at hx
+    obtain ⟨p, hp, rfl⟩ := hx
+    have := ivs_lt hS p hp; simp only [len]; linarith
+  have h1 := D_nonneg _ hnn
+  have h2 := D_le_sum _ hnn
+  have hsum : (pieceLengths (A ∪ B)).sum = 1 := by rw [pieceLengths_eq]; exact ivs_sum _
+  unfold L; rw [share_eq, hsum]; rw [hsum] at h2
+  constructor <;> linarith
+
+/-! ## Main Statements -/
+
+/-- **Main statement.** For every positive integer `n`, Liu Bang's guaranteed
+value equals `2^n / (2^(n+1) - 1)`. -/
+theorem V_eq (n : ℕ) (hn : 0 < n) : V n = (2 : ℝ) ^ n / ((2 : ℝ) ^ (n + 1) - 1) := by
+  classical
+  have hM := M_pos n
+  have hL : ∀ A B : Finset ℝ, AdmissibleMark n A → AdmissibleMark n B → L A B ∈ Set.Icc (0 : ℝ) 1 :=
+    fun A B hA hB => L_mem_Icc A B hA.1 hB.1
+  have hemp : AdmissibleMark n (∅ : Finset ℝ) := ⟨by simp, by simp⟩
+  haveI : Nonempty {A : Finset ℝ // AdmissibleMark n A} := ⟨⟨∅, hemp⟩⟩
+  haveI hne : ∀ A : {A : Finset ℝ // AdmissibleMark n A},
+      Nonempty {B : Finset ℝ // AdmissibleMark n B ∧ Disjoint A.1 B} :=
+    fun A => ⟨⟨∅, hemp, Finset.disjoint_empty_right _⟩⟩
+  have hbdd : ∀ A : {A : Finset ℝ // AdmissibleMark n A},
+      BddBelow (Set.range fun B : {B : Finset ℝ // AdmissibleMark n B ∧ Disjoint A.1 B} => L A.1 B.1) :=
+    fun A => ⟨0, by rintro _ ⟨B, rfl⟩; exact (hL A.1 B.1 A.2 B.2.1).1⟩
+  have hup : ∀ A : {A : Finset ℝ // AdmissibleMark n A},
+      (⨅ B : {B : Finset ℝ // AdmissibleMark n B ∧ Disjoint A.1 B}, L A.1 B.1) ≤
+        (2 : ℝ) ^ n / ((2 : ℝ) ^ (n + 1) - 1) := by
+    intro A
+    obtain ⟨B, hB, hD, hLB⟩ := upper_bound' n hn A.1 A.2
+    exact (ciInf_le (hbdd A) ⟨B, hB, hD⟩).trans hLB
+  apply le_antisymm
+  · exact ciSup_le hup
+  · obtain ⟨A, hA, hlow⟩ := lower_bound' n hn
+    refine le_trans ?_ (le_ciSup ⟨_, by rintro _ ⟨A', rfl⟩; exact hup A'⟩ ⟨A, hA⟩)
+    exact le_ciInf fun B => hlow B.1 B.2.1 B.2.2
+
+/-- **Lower bound.** Liu Bang has an admissible marking `A` such that for every
+admissible marking `B` disjoint from `A`, his guaranteed share is at least
+`2^n / (2^(n+1) - 1)`. -/
+theorem lower_bound (n : ℕ) (hn : 0 < n) :
+    ∃ A : Finset ℝ, AdmissibleMark n A ∧
+      ∀ B : Finset ℝ, AdmissibleMark n B → Disjoint A B →
+        (2 : ℝ) ^ n / ((2 : ℝ) ^ (n + 1) - 1) ≤ L A B :=
+  lower_bound' n hn
+
+/-- **Upper bound / optimality.** For every admissible marking `A` of Liu Bang,
+Xiang Yu has an admissible marking `B` disjoint from `A` with
+`L A B ≤ 2^n / (2^(n+1) - 1)`, so Liu Bang cannot guarantee more. -/
+theorem upper_bound (n : ℕ) (hn : 0 < n) :
+    ∀ A : Finset ℝ, AdmissibleMark n A →
+      ∃ B : Finset ℝ, AdmissibleMark n B ∧ Disjoint A B ∧
+        L A B ≤ (2 : ℝ) ^ n / ((2 : ℝ) ^ (n + 1) - 1) :=
+  upper_bound' n hn
+
+end LiuBangXiangYu
