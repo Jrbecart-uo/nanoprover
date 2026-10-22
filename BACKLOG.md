@@ -91,6 +91,7 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   Tooling tip: sympy finds `linear_combination` multipliers (install with `pip --target` into scratch).
   2026-09-28 cleanup deleted ~58 GB of clones in `external/` (NS evidence kept in `verification/ns/`).
 
+- **2026-10-22: IMO 2026 6/6 solved blind in Lean** (P2, P3, P4, P6 added; `bench/solved_imo/IMO2026_NOTES.md`).
 - **PLAN (2026-10-08), ranked:**
   1. ✅ 2026-10-08: **PE #1012 SOLVED** (`euler/p1012*.py`; answer given in chat, user submits). **#1013** is already
      live (25 divisors, sigma divisible by 25, sum below 1e15) — next.

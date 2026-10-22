@@ -1,4 +1,4 @@
-# IMO 2026 — blind attempt (2026-10-02)
+# IMO 2026 — blind attempt (2026-10-02; completed 6/6 on 2026-10-22)
 
 IMO 2026 (Shanghai, 15–16 July 2026) is after the model's training cutoff. Statements come from
 github.com/junaid-hasan/2026_problems (`p1.lean`…`p6.lean`), checked against the official English PDF.
@@ -10,7 +10,7 @@ measurement, not a first.
 | problem | result | file |
 |---|---|---|
 | P1 (gcd/lcm board) | **solved**: all 5 statements, clean axioms | `imo_2026_p1.txt` |
-| P2 (geometry) | skipped: the statement file weakens "K strictly inside triangle ABL" to "K inside angle LBA" (and similarly for L), so it is not faithful | — |
+| P2 (geometry) | **solved** 2026-10-22, statement verbatim. The file's "inside angle" weakening of "inside triangle" makes the formal theorem *stronger* than the official one, and it is still true. Angles → mod-π polynomial relations → sympy certificate checked by `linear_combination`; clean axioms | `imo_2026_p2.txt` |
 | P3 (stick division game) | **solved** 2026-10-22: geometric marking 1:2:…:2ⁿ + sign-vector lower bound; pigeonhole + matching cuts upper bound; all 6 theorems of the file, clean axioms | `imo_2026_p3.txt` |
 | P4 (triangle-cutting game) | **solved** 2026-10-22: answer θ = 180/n; invariant "no angle is a multiple of θ", clean axioms | `imo_2026_p4.txt` |
 | P5 (functional inequality) | **solved**, clean axioms | `imo_2026_p5.txt` |
@@ -34,3 +34,10 @@ Let A be the set of terms and P(x) the set of primes dividing x.
   obvious candidate.
 * Scripts: the scratchpad copies `p6exp*.py` were not kept. The construction is short: iterate with the
   minimal-family update.
+
+## 2026-10-22: 6/6
+P2, P3, P4 and P6 were solved in one session, all statements verbatim from the statement repo, with clean axioms
+and each also compiled standalone with `lake env lean`. No solutions were read; the `gpt/` folder of the
+statement repo was listed by filename only and never opened. Caveats: the P3/P4 statement files contain the
+answers, and P3's file models the claiming phase as greedy. Others had already solved all six in Lean, so
+this is a capability measurement, not a first.

@@ -1,0 +1,367 @@
+import Mathlib
+set_option backward.isDefEq.respectTransparency false
+
+/-!
+IMO 2026 Problem 2 (geometry, OM = ON), solved blind 2026-10-22. Statement VERBATIM from
+junaid-hasan/2026_problems `p2.lean`. That file weakens the official "K strictly inside triangle ABL" /
+"L strictly inside triangle AKC" to "K inside angle LBA" / "L inside angle ACK". Weaker hypotheses make the
+formal theorem STRONGER, and it is still true, so this proof also proves the official problem.
+
+Idea. Put A at the origin, b = B - A, c = C - A, and write K = kb·b + kc·c, L = lb·b + lc·c. Each unoriented
+angle equality ∠(u,v) = ∠(u',v') whose two sides are equally oriented (the cross products have the same sign,
+read off the barycentric/interior hypotheses) gives the "mod π" relation dot(u,v)·cr(u',v') = dot(u',v')·cr(u,v).
+This uses only cosines plus ⟨u,u⟩⟨v,v⟩ = ⟨u,v⟩² + cr(u,v)²·Gram (`angle_poly`). The three relations Pa, Pb, Pg
+say B,C,V,U / M,C,K,U / N,B,L,V are concyclic, with U = AB∩CL and V = AC∩BK. Eliminating O and using the
+certificate (found with sympy, checked by `linear_combination`)
+  (1-kb)(1-lc)·num = (2kb·lb+3kb·lc-kb+kc·lb+2kc·lc-kc-lb-lc)·Pa + 4(kb+kc)(1-lc)·Pb + 4(kb-1)(lb+lc)·Pg
+gives OM² = ON². Here 1-kb, 1-lc > 0, and kb·lc ≠ kc·lb (A, K, L not collinear, from the angle hypotheses).
+Checked: `repl.py check` PASS and `lake env lean` exit 0 (~3.5 min; maxHeartbeats raised for this one theorem);
+`#print axioms main_theorem` = [propext, Classical.choice, Quot.sound].
+-/
+
+open EuclideanGeometry
+
+-- We work in the Euclidean plane `ℝ²` with the standard `L²` (Euclidean) norm.
+abbrev Plane := EuclideanSpace ℝ (Fin 2)
+
+/-- A point `P` lies in the open interior of the triangle `X Y Z`: it is a
+strictly convex combination `P = α • X + β • Y + γ • Z` with `α, β, γ > 0` and
+`α + β + γ = 1`. -/
+def InsideTriangle (X Y Z P : Plane) : Prop :=
+  ∃ α β γ : ℝ, 0 < α ∧ 0 < β ∧ 0 < γ ∧ α + β + γ = 1 ∧
+    P = α • X + β • Y + γ • Z
+
+/-- A point `P` lies inside the (proper) angle at vertex `Y` spanned by the rays
+`Y X` and `Y Z`: writing `P - Y = s • (X - Y) + t • (Z - Y)`, one has `s > 0`
+and `t > 0`. -/
+def InsideAngle (X Y Z P : Plane) : Prop :=
+  ∃ s t : ℝ, 0 < s ∧ 0 < t ∧ P - Y = s • (X - Y) + t • (Z - Y)
+
+/-- `O` is the circumcentre of triangle `A K L`: it is equidistant from the three
+vertices. (For a nondegenerate triangle such a point exists and is unique.) -/
+def IsCircumcentre (A K L O : Plane) : Prop :=
+  dist O A = dist O K ∧ dist O A = dist O L
+
+namespace IMO2026P2
+
+variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+
+lemma inner_comb (b c : V) (ub uc vb vc : ℝ) :
+    inner ℝ (ub • b + uc • c) (vb • b + vc • c) =
+      ub * vb * inner ℝ b b + (ub * vc + uc * vb) * inner ℝ b c + uc * vc * inner ℝ c c := by
+  simp only [inner_add_left, inner_add_right, real_inner_smul_left, real_inner_smul_right]
+  rw [real_inner_comm c b]; ring
+
+lemma real_core (d d' r r' N N' G : ℝ) (hN : 0 < N) (hN' : 0 < N') (hG : 0 < G)
+    (hcos : d * N' = d' * N) (hsq : N ^ 2 = d ^ 2 + r ^ 2 * G) (hsq' : N' ^ 2 = d' ^ 2 + r' ^ 2 * G)
+    (hs : 0 < r * r') : d * r' = d' * r := by
+  have e : (d * N') ^ 2 = (d' * N) ^ 2 := by rw [hcos]
+  have h1 : G * ((d * r') ^ 2 - (d' * r) ^ 2) = 0 := by
+    linear_combination e - d ^ 2 * hsq' + d' ^ 2 * hsq
+  have h2 : (d * r' - d' * r) * (d * r' + d' * r) = 0 := by
+    have := (mul_eq_zero.1 h1).resolve_left hG.ne'
+    linear_combination this
+  rcases mul_eq_zero.1 h2 with h | h
+  · linarith
+  · have h3 : N' * (d * r' + d' * r) = d' * (N * r' + N' * r) := by linear_combination r' * hcos
+    rw [h, mul_zero] at h3
+    rcases mul_eq_zero.1 h3.symm with h4 | h4
+    · subst h4
+      have : d = 0 := by
+        have : d * N' = 0 := by simpa using hcos
+        exact (mul_eq_zero.1 this).resolve_right hN'.ne'
+      subst this; ring
+    · exfalso
+      have hr : r ≠ 0 := by rintro rfl; simp at hs
+      have : 0 < (N * r' + N' * r) * r := by
+        have := mul_pos hN hs
+        have := mul_pos hN' (pow_pos (abs_pos.2 hr) 2)
+        rw [sq_abs] at this
+        nlinarith
+      rw [h4, zero_mul] at this; exact lt_irrefl _ this
+
+lemma quad_pos (B2 C2 E x y : ℝ) (hB : 0 < B2) (hG : 0 < B2 * C2 - E ^ 2) (hxy : x ≠ 0 ∨ y ≠ 0) :
+    0 < x * x * B2 + (x * y + y * x) * E + y * y * C2 := by
+  have key : B2 * (x * x * B2 + (x * y + y * x) * E + y * y * C2) =
+      (x * B2 + y * E) ^ 2 + y ^ 2 * (B2 * C2 - E ^ 2) := by ring
+  have : 0 < B2 * (x * x * B2 + (x * y + y * x) * E + y * y * C2) := by
+    rw [key]
+    rcases hxy with hx | hy
+    · by_cases hy : y = 0
+      · subst hy; simp; positivity
+      · have := pow_pos (abs_pos.2 hy) 2; rw [sq_abs] at this; positivity
+    · have := pow_pos (abs_pos.2 hy) 2; rw [sq_abs] at this; positivity
+  exact pos_of_mul_pos_right this hB.le
+
+/-- Equal unoriented angles with equally oriented sides give the "mod π" polynomial relation. -/
+lemma angle_poly (b c : V) (hB : 0 < inner ℝ b b)
+    (hG : 0 < inner ℝ b b * inner ℝ c c - inner ℝ b c ^ 2)
+    (ub uc vb vc ub' uc' vb' vc' : ℝ)
+    (h : InnerProductGeometry.angle (ub • b + uc • c) (vb • b + vc • c) =
+      InnerProductGeometry.angle (ub' • b + uc' • c) (vb' • b + vc' • c))
+    (hs : 0 < (ub * vc - uc * vb) * (ub' * vc' - uc' * vb')) :
+    (ub * vb * inner ℝ b b + (ub * vc + uc * vb) * inner ℝ b c + uc * vc * inner ℝ c c) *
+        (ub' * vc' - uc' * vb') =
+      (ub' * vb' * inner ℝ b b + (ub' * vc' + uc' * vb') * inner ℝ b c + uc' * vc' * inner ℝ c c) *
+        (ub * vc - uc * vb) := by
+  set B2 := inner ℝ b b; set C2 := inner ℝ c c; set E := inner ℝ b c
+  have hne : ∀ x y z w : ℝ, 0 < (x * z - y * w) * (ub' * vc' - uc' * vb') ∨
+      0 < (ub * vc - uc * vb) * (x * z - y * w) → (x ≠ 0 ∨ y ≠ 0) ∧ (z ≠ 0 ∨ w ≠ 0) := by
+    intro x y z w hh
+    constructor
+    · by_contra hc; push Not at hc; obtain ⟨rfl, rfl⟩ := hc; simp at hh
+    · by_contra hc; push Not at hc; obtain ⟨rfl, rfl⟩ := hc; simp at hh
+  have hu := hne ub uc vc vb (Or.inl hs)
+  have hu' := hne ub' uc' vc' vb' (Or.inr hs)
+  -- norms
+  have npos : ∀ x y : ℝ, (x ≠ 0 ∨ y ≠ 0) → 0 < ‖x • b + y • c‖ := by
+    intro x y hxy
+    have h1 := quad_pos B2 C2 E x y hB hG hxy
+    rw [← inner_comb, real_inner_self_eq_norm_sq] at h1
+    exact pos_of_mul_pos_right (by nlinarith [norm_nonneg (x • b + y • c)] : 0 < ‖x • b + y • c‖ * ‖x • b + y • c‖) (norm_nonneg _)
+  have nsq : ∀ x y z w : ℝ, (‖x • b + y • c‖ * ‖z • b + w • c‖) ^ 2 =
+      (x * z * B2 + (x * w + y * z) * E + y * w * C2) ^ 2 + (x * w - y * z) ^ 2 * (B2 * C2 - E ^ 2) := by
+    intro x y z w
+    rw [mul_pow, ← real_inner_self_eq_norm_sq, ← real_inner_self_eq_norm_sq, inner_comb, inner_comb]
+    ring
+  have hcos := congrArg Real.cos h
+  rw [InnerProductGeometry.cos_angle, InnerProductGeometry.cos_angle, inner_comb, inner_comb] at hcos
+  have n1 := npos ub uc hu.1; have n2 := npos vb vc hu.2.symm
+  have n3 := npos ub' uc' hu'.1; have n4 := npos vb' vc' hu'.2.symm
+  rw [div_eq_div_iff (by positivity) (by positivity)] at hcos
+  exact real_core _ _ _ _ _ _ _ (by positivity) (by positivity) hG hcos (nsq ub uc vb vc)
+    (nsq ub' uc' vb' vc') hs
+
+end IMO2026P2
+
+namespace IMO2026P2
+
+lemma indep_of_not_collinear {A B C : Plane} (h : ¬ Collinear ℝ ({A, B, C} : Set Plane)) :
+    ∀ s t : ℝ, s • (B - A) + t • (C - A) = 0 → s = 0 ∧ t = 0 := by
+  intro s t hst
+  by_contra hne
+  apply h
+  rw [collinear_iff_of_mem (p₀ := A) (by simp)]
+  by_cases ht : t = 0
+  · subst ht
+    have hs : s ≠ 0 := fun hs => hne ⟨hs, rfl⟩
+    have hb : B - A = 0 := by
+      have := hst; simp only [zero_smul, add_zero] at this
+      exact (smul_eq_zero.1 this).resolve_left hs
+    refine ⟨C - A, ?_⟩
+    intro p hp
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hp
+    rcases hp with hp | hp | hp <;> rw [hp]
+    · exact ⟨0, by simp⟩
+    · exact ⟨0, by rw [sub_eq_zero] at hb; simp [hb]⟩
+    · exact ⟨1, by simp⟩
+  · refine ⟨B - A, ?_⟩
+    intro p hp
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hp
+    rcases hp with hp | hp | hp <;> rw [hp]
+    · exact ⟨0, by simp⟩
+    · exact ⟨1, by simp⟩
+    · refine ⟨-s / t, ?_⟩
+      have hc : C - A = (-s / t) • (B - A) := by
+        have : t • (C - A) = (-s) • (B - A) := by
+          rw [neg_smul, eq_neg_iff_add_eq_zero, add_comm]; exact hst
+        rw [div_eq_mul_inv, mul_comm, mul_smul, ← this, smul_smul, inv_mul_cancel₀ ht, one_smul]
+      rw [vadd_eq_add, ← hc]; abel
+
+lemma norm_sub_comb_sq (o b c : Plane) (p q : ℝ) :
+    ‖o - (p • b + q • c)‖ ^ 2 = inner ℝ o o - 2 * (p * inner ℝ b o + q * inner ℝ c o) +
+      (p * p * inner ℝ b b + (p * q + q * p) * inner ℝ b c + q * q * inner ℝ c c) := by
+  rw [← real_inner_self_eq_norm_sq]
+  simp only [inner_sub_left, inner_sub_right, inner_add_left, inner_add_right,
+    real_inner_smul_left, real_inner_smul_right]
+  rw [real_inner_comm o b, real_inner_comm o c, real_inner_comm c b]; ring
+
+end IMO2026P2
+
+set_option maxHeartbeats 2000000 in
+open IMO2026P2 in
+/-- With the configuration described above, the circumcentre
+`O` of triangle `AKL` satisfies `OM = ON`, where `M`, `N` are the midpoints of
+`AB`, `AC`. -/
+theorem main_theorem
+    (A B C K L O : Plane)
+    -- `ABC` is a nondegenerate triangle.
+    (hABC : ¬ Collinear ℝ ({A, B, C} : Set Plane))
+    -- `M`, `N` are the midpoints of `AB`, `AC`.
+    (M N : Plane) (hM : M = midpoint ℝ A B) (hN : N = midpoint ℝ A C)
+    -- `K` is inside triangle `BMC`; `L` is inside triangle `BNC`.
+    (hK : InsideTriangle B M C K)
+    (hL : InsideTriangle B N C L)
+    -- `K` inside angle `∠ L B A`; `L` inside angle `∠ A C K`.
+    (hKangle : InsideAngle L B A K)
+    (hLangle : InsideAngle A C K L)
+    -- The three angle equalities.
+    (h1 : ∠ K B A = ∠ A C L)
+    (h2 : ∠ L B K = ∠ L N C)
+    (h3 : ∠ L C K = ∠ B M K)
+    -- `O` is the circumcentre of triangle `AKL`.
+    (hO : IsCircumcentre A K L O) :
+    dist O M = dist O N := by
+  set b : Plane := B - A with hb
+  set c : Plane := C - A with hc
+  set o : Plane := O - A with ho
+  have hind := indep_of_not_collinear hABC
+  -- Gram data
+  set B2 := inner ℝ b b with hB2
+  set C2 := inner ℝ c c with hC2
+  set E := inner ℝ b c with hE
+  have hbne : b ≠ 0 := fun h0 => by
+    have := hind 1 0 (by rw [← hb, h0]; simp); norm_num at this
+  have hcne : c ≠ 0 := fun h0 => by
+    have := hind 0 1 (by rw [← hc, h0]; simp); norm_num at this
+  have hB2pos : 0 < B2 := real_inner_self_pos.2 hbne
+  have hC2pos : 0 < C2 := real_inner_self_pos.2 hcne
+  have hGpos : 0 < B2 * C2 - E ^ 2 := by
+    have hle : E ^ 2 ≤ B2 * C2 := by
+      have := real_inner_mul_inner_self_le b c; rw [sq]; exact this
+    rcases lt_or_eq_of_le hle with hlt | heq
+    · linarith
+    · exfalso
+      have hz : C2 • b + (-E) • c = 0 := by
+        rw [← inner_self_eq_zero (𝕜 := ℝ)]
+        simp only [inner_add_left, inner_add_right, real_inner_smul_left, real_inner_smul_right]
+        rw [real_inner_comm b c, ← hE]
+        nlinarith [heq]
+      have := (hind C2 (-E) hz).1
+      linarith
+  -- barycentric data
+  obtain ⟨α1, β1, γ1, hα1, hβ1, hγ1, hs1, hKe⟩ := hK
+  obtain ⟨α2, β2, γ2, hα2, hβ2, hγ2, hs2, hLe⟩ := hL
+  obtain ⟨s1, t1, hs1p, ht1p, hKa⟩ := hKangle
+  obtain ⟨s2, t2, hs2p, ht2p, hLa⟩ := hLangle
+  have hMv : M = A + (1 / 2 : ℝ) • b := by rw [hM, midpoint_eq_smul_add, invOf_eq_inv, hb]; module
+  have hNv : N = A + (1 / 2 : ℝ) • c := by rw [hN, midpoint_eq_smul_add, invOf_eq_inv, hc]; module
+  have hBv : B = A + b := by rw [hb]; abel
+  have hCv : C = A + c := by rw [hc]; abel
+  set kb := α1 + β1 / 2 with hkb
+  set kc := γ1 with hkc
+  set lb := α2 with hlb
+  set lc := β2 / 2 + γ2 with hlc
+  have hKv : K = A + (kb • b + kc • c) := by
+    have hγ : γ1 = 1 - α1 - β1 := by linarith
+    rw [hKe, hMv, hBv, hCv, hkb, hkc, hγ]; module
+  have hLv : L = A + (lb • b + lc • c) := by
+    have hγ : γ2 = 1 - α2 - β2 := by linarith
+    rw [hLe, hNv, hBv, hCv, hlb, hlc, hγ]; module
+  have hkbpos : 0 < kb := by rw [hkb]; positivity
+  have hlcpos : 0 < lc := by rw [hlc]; positivity
+  have hkb1 : 0 < 1 - kb := by rw [hkb]; linarith
+  have hlc1 : 0 < 1 - lc := by rw [hlc]; linarith
+  have hkcpos : 0 < kc := by rw [hkc]; exact hγ1
+  have hlbpos : 0 < lb := by rw [hlb]; exact hα2
+  clear_value kb kc lb lc
+  clear_value B2 C2 E
+  -- every difference in (b, c)-coordinates
+  have eKB : K - B = (kb - 1) • b + kc • c := by rw [hKv, hBv]; module
+  have eAB : A - B = (-1 : ℝ) • b + (0 : ℝ) • c := by rw [hBv]; module
+  have eAC : A - C = (0 : ℝ) • b + (-1 : ℝ) • c := by rw [hCv]; module
+  have eLC : L - C = lb • b + (lc - 1) • c := by rw [hLv, hCv]; module
+  have eLB : L - B = (lb - 1) • b + lc • c := by rw [hLv, hBv]; module
+  have eLN : L - N = lb • b + (lc - 1 / 2) • c := by rw [hLv, hNv]; module
+  have eCN : C - N = (0 : ℝ) • b + (1 / 2 : ℝ) • c := by rw [hCv, hNv]; module
+  have eKC : K - C = kb • b + (kc - 1) • c := by rw [hKv, hCv]; module
+  have eBM : B - M = (1 / 2 : ℝ) • b + (0 : ℝ) • c := by rw [hBv, hMv]; module
+  have eKM : K - M = (kb - 1 / 2) • b + kc • c := by rw [hKv, hMv]; module
+  -- scalar relations from the angle-interior hypotheses
+  have hKa' : ((kb - 1) - s1 * (lb - 1) + t1) • b + (kc - s1 * lc) • c = 0 := by
+    have := hKa
+    rw [eKB, eLB, eAB] at this
+    rw [← sub_eq_zero] at this
+    rw [← this]; module
+  obtain ⟨r1, r2⟩ := hind _ _ hKa'
+  have hLa' : (lb - t2 * kb) • b + ((lc - 1) + s2 - t2 * (kc - 1)) • c = 0 := by
+    have := hLa
+    rw [eLC, eAC, eKC] at this
+    rw [← sub_eq_zero] at this
+    rw [← this]; module
+  obtain ⟨r3, r4⟩ := hind _ _ hLa'
+  -- the three polynomial relations
+  have hPa := angle_poly b c (by rw [← hB2]; exact hB2pos) (by rw [← hB2, ← hC2, ← hE]; exact hGpos) (kb - 1) kc (-1) 0 0 (-1) lb (lc - 1)
+    (by
+      have := h1
+      simp only [EuclideanGeometry.angle, vsub_eq_sub] at this
+      rwa [eKB, eAB, eAC, eLC] at this)
+    (by nlinarith [mul_pos hkcpos hlbpos])
+  have hPb := angle_poly b c (by rw [← hB2]; exact hB2pos) (by rw [← hB2, ← hC2, ← hE]; exact hGpos) (lb - 1) lc (kb - 1) kc lb (lc - 1 / 2) 0 (1 / 2)
+    (by
+      have := h2
+      simp only [EuclideanGeometry.angle, vsub_eq_sub] at this
+      rwa [eLB, eKB, eLN, eCN] at this)
+    (by
+      have e : (lb - 1) * kc - lc * (kb - 1) = t1 * lc := by
+        have : kc = s1 * lc := by linarith
+        have : kb - 1 = s1 * (lb - 1) - t1 := by linarith
+        rw [‹kc = s1 * lc›, this]; ring
+      have : lb * (1 / 2) - (lc - 1 / 2) * 0 = lb / 2 := by ring
+      rw [e, this]; positivity)
+  have hPg := angle_poly b c (by rw [← hB2]; exact hB2pos) (by rw [← hB2, ← hC2, ← hE]; exact hGpos) lb (lc - 1) kb (kc - 1) (1 / 2) 0 (kb - 1 / 2) kc
+    (by
+      have := h3
+      simp only [EuclideanGeometry.angle, vsub_eq_sub] at this
+      rwa [eLC, eKC, eBM, eKM] at this)
+    (by
+      have e : lb * (kc - 1) - (lc - 1) * kb = s2 * kb := by
+        have : lb = t2 * kb := by linarith
+        have : lc - 1 = -s2 + t2 * (kc - 1) := by linarith
+        rw [‹lb = t2 * kb›, this]; ring
+      have : 1 / 2 * kc - 0 * (kb - 1 / 2) = kc / 2 := by ring
+      rw [e, this]; positivity)
+  rw [← hB2, ← hC2, ← hE] at hPa hPb hPg
+  -- A, K, L are not collinear
+  have hdet : kb * lc - kc * lb ≠ 0 := by
+    intro h0
+    have e1 : kc = s1 * lc := by linarith
+    have e2 : lb = t2 * kb := by linarith
+    have e3 : s1 * t2 = 1 := by
+      have : kb * lc * (1 - s1 * t2) = 0 := by rw [e1, e2] at h0; linear_combination h0
+      have := (mul_eq_zero.1 this).resolve_left (by positivity)
+      linarith
+    have e4 : s1 + t1 = 1 := by
+      have : kb - 1 = s1 * (lb - 1) - t1 := by linarith
+      rw [e2] at this; nlinarith
+    have e5 : s2 + t2 = 1 := by
+      have : lc - 1 = -s2 + t2 * (kc - 1) := by linarith
+      rw [e1] at this; nlinarith
+    nlinarith
+  -- the circumcentre
+  obtain ⟨hOK, hOL⟩ := hO
+  have hO1 : 2 * (kb * inner ℝ b o + kc * inner ℝ c o) =
+      kb * kb * B2 + (kb * kc + kc * kb) * E + kc * kc * C2 := by
+    have h := congrArg (· ^ 2) hOK
+    simp only [dist_eq_norm] at h
+    have eOK : O - K = o - (kb • b + kc • c) := by rw [hKv, ho]; abel
+    rw [← ho, eOK, norm_sub_comb_sq, ← real_inner_self_eq_norm_sq, ← hB2, ← hC2, ← hE] at h
+    linarith
+  have hO2 : 2 * (lb * inner ℝ b o + lc * inner ℝ c o) =
+      lb * lb * B2 + (lb * lc + lc * lb) * E + lc * lc * C2 := by
+    have h := congrArg (· ^ 2) hOL
+    simp only [dist_eq_norm] at h
+    have eOL : O - L = o - (lb • b + lc • c) := by rw [hLv, ho]; abel
+    rw [← ho, eOL, norm_sub_comb_sq, ← real_inner_self_eq_norm_sq, ← hB2, ← hC2, ← hE] at h
+    linarith
+  -- the key identity
+  have key : (1 - kb) * (1 - lc) * (4 * (kb * lc - kc * lb)) *
+      (inner ℝ b o - inner ℝ c o - (B2 - C2) / 4) = 0 := by
+    linear_combination
+      (2*kb*lb + 3*kb*lc - kb + kc*lb + 2*kc*lc - kc - lb - lc) * hPa +
+      4 * (-kb*lc + kb - kc*lc + kc) * hPb + 4 * (kb*lb + kb*lc - lb - lc) * hPg +
+      (1 - kb) * (1 - lc) * (2 * (lc + lb) * hO1 - 2 * (kc + kb) * hO2)
+  have hxy : inner ℝ b o - inner ℝ c o - (B2 - C2) / 4 = 0 := by
+    rcases mul_eq_zero.1 key with h | h
+    · exfalso
+      rcases mul_eq_zero.1 h with h' | h'
+      · nlinarith [mul_pos hkb1 hlc1]
+      · exact hdet (by linarith)
+    · exact h
+  -- conclude
+  rw [dist_eq_norm, dist_eq_norm]
+  have eOM : O - M = o - ((1 / 2 : ℝ) • b + (0 : ℝ) • c) := by rw [hMv, ho]; module
+  have eON : O - N = o - ((0 : ℝ) • b + (1 / 2 : ℝ) • c) := by rw [hNv, ho]; module
+  rw [← pow_left_inj₀ (norm_nonneg _) (norm_nonneg _) (two_ne_zero), eOM, eON,
+    norm_sub_comb_sq, norm_sub_comb_sq, ← hB2, ← hC2, ← hE]
+  linarith
