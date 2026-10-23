@@ -67,7 +67,7 @@ and propose next tasks. Ranked by leverage within each track. Last updated
   certificates + a Lean variant for lambda > s*mu; (3) other tracks. Tools: `rolloutg.c`, `viterbi.c`,
   `exactsp.c`, `nbrw.c` (WINSEL env = one-per-window selection), `exactmin.c`, `hmean.c`, `rollout.c`.
 - Forum (erdosproblems.com/forum/thread/1110): no comments yet on the (7,2) claim (checked 2026-09-29 afternoon).
-- Work is on `main`; REPL daemon stopped. nanoprover repo still PRIVATE. Public results repo:
+- Work is on `main`; REPL daemon stopped. nanoprover repo PUBLIC since 2026-10-23 (fresh repo, history scrubbed of PE code/answers; pre-scrub history in the PRIVATE `Jrbecart-uo/nanoprover-old`). Pushing = publishing. Public results repo:
   https://github.com/Jrbecart-uo/erdos-1110-72 (root = (7,2); `4-3/` = (4,3); release `v43-certificate` = 410 MB table).
 - **Erdős #1110 (density of non-representables), our results:**
   - **(7,2) positive lower density** — `erdos/1110/NOTE.md`, Lean reduction `erdos/1110/lean/E1110.lean`.
