@@ -232,13 +232,9 @@ names (milliseconds, kills hallucinated lemma names before the kernel), then
 checks a whole round of candidates in ONE batched kernel call
 (`bench/scalp_run.py`).
 
-**Project Euler #1005** (`euler/`), published days before this run: median
-increasing-prime list summing to 2026. Counting DP + lexicographic unranking
-over 59,284,153,745,615 lists (enumeration impossible); reproduces the
-problem's worked example and matches brute force on N=5..80. The found list's
-certificate — 24 elements all prime, strictly increasing, sum 2026, product
-ending [withheld] — is **kernel-verified** (`euler/p1005_verify.lean`).
-Median-ness rests on the cross-validated DP; stated honestly.
+**Project Euler #1005**, published days before this run, was solved and its
+answer certificate kernel-verified in Lean. The code and answer are kept out of
+this repo: Project Euler asks that solutions past #100 not be published.
 **Confirmed correct by Project Euler** (2026-07-10, "On The Ball" award —
 solved while it was the site's most recent problem): the one non-formal link
 in the chain was validated by independent external adjudication.

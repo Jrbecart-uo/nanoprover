@@ -14,3 +14,4 @@ external/
 erdos/triage_batch*.txt
 erdos/1110/data_43/*.xz
 erdos/1110/data_pow/*.xz
+euler/

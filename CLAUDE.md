@@ -108,7 +108,8 @@ Without the daemon, a one-off check is `lake env lean <file>` with cwd=`mathlib4
   not formalized. Always state that boundary; never claim the conjecture is certified.
 - **Other areas** — `discovery/` (evolutionary program search on open constructive
   problems; claimed records must be re-verified as a family over growing N —
-  finite-N improvements have been mirages), `euler/` (Project Euler solutions),
+  finite-N improvements have been mirages), Project Euler solutions (kept OUTSIDE the repo in `~/tmp/euler/`;
+  PE asks that solutions past #100 stay private, so never commit PE code or answers),
   `collatz/` (the two-loop discovery demo), `prop_poc/` (original propositional
   PoC), `sherpa.py` (interactive turn-by-turn prover).
 - Gitignored large checkouts at repo root: `mathlib4/` (with prebuilt cache),

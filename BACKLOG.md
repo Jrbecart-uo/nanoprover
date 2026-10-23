@@ -49,7 +49,7 @@ and propose next tasks. Ranked by leverage within each track. Last updated
 - **2026-09-30 (evening): +13 Putnam scalps → 113 + 1 vacuous** (+ 1976_b6 quasiperfect, 1999_a6): 2005_a1 (Erdős–Lewin {2,3}), 2025_a1, 2017_a2,
   1973_b1, 1966_b4 (Mirsky), 2007_b5, 2003_a4, 2017_b1, 1970_a2, 1995_a4 (cyclic lemma), 1965_b5 (bipartite); all `verify_scalps.py --kernel` ok. PE: #1012 not out until Oct 3.
 - **Project Euler #1008, #1009, #1010, #1011 SOLVED 2026-09-29** (all published Sep 5-26, after the model's
-  training cutoff; #1011 within its publication week). Code in `euler/` (`p1008.c` + `p1008_ref.py`, `p1009.py` +
+  training cutoff; #1011 within its publication week). Code in `~/tmp/euler/`, outside the repo (`p1008.c` + `p1008_ref.py`, `p1009.py` +
   `p1009_check.py`, `p1010.py`, `p1011.c` + `p1011_check.py` + `p1011_brute.py`); each answer cross-checked by an
   independent implementation and brute force at small sizes. Answers were given to the user in chat (not
   committed: PE asks not to publish); **the user submits them** — record site confirmations when reported.
@@ -93,7 +93,7 @@ and propose next tasks. Ranked by leverage within each track. Last updated
 
 - **2026-10-22: IMO 2026 6/6 solved blind in Lean** (P2, P3, P4, P6 added; `bench/solved_imo/IMO2026_NOTES.md`).
 - **PLAN (2026-10-08), ranked:**
-  1. ✅ 2026-10-08: **PE #1012 SOLVED** (`euler/p1012*.py`; answer given in chat, user submits). **#1013** is already
+  1. ✅ 2026-10-08: **PE #1012 SOLVED** (`~/tmp/euler/p1012*.py`; answer given in chat, user submits). **#1013** is already
      live (25 divisors, sigma divisible by 25, sum below 1e15) — next.
   2. **Collatz session** (user-requested): same loop as Erdős–Straus. Goals: Lean-checked residue-class descent
      certificates ("all n ≡ r mod 2^k drop below n within j steps"), a hypothesis log, honest framing.
@@ -228,7 +228,7 @@ essential here — a digon must be a cycle).
 - [x] **#1008-#1011** solved 2026-09-29 (answers with the user for submission; site confirmation pending).
 - [ ] **#1012** (and later) when it drops — proven pipeline, 3/3 site-confirmed before this batch
       (#1005 award, #1006 first-15-worldwide, #1007). Solve week-of-publication
-      for the clean no-contamination demonstration. Files: `euler/`.
+      for the clean no-contamination demonstration. Files: `~/tmp/euler/` (never commit PE code: PE asks that solutions past #100 stay private).
 
 ## Explicitly DECLINED
 - **Naskręcki's problem** — it is a FrontierMath **Tier-4 held-out benchmark
